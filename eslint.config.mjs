@@ -1,16 +1,16 @@
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { FlatCompat } from '@eslint/eslintrc';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import typescriptParser from '@typescript-eslint/parser';
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { FlatCompat } from '@eslint/eslintrc'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
+import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import typescriptParser from '@typescript-eslint/parser'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-});
+})
 
 const eslintConfig = [
   {
@@ -36,7 +36,7 @@ const eslintConfig = [
     'next/core-web-vitals',
     'next/typescript',
     'plugin:jsx-a11y/recommended',
-    'prettier',
+    'prettier'
   ),
   {
     // Base configuration for all files
@@ -51,8 +51,8 @@ const eslintConfig = [
       parser: typescriptParser,
     },
     rules: {
-      'react/display-name': 'off',
-      'react/no-unescaped-entities': 'off',
+      'react/display-name': 'error',
+      'react/no-unescaped-entities': 'error',
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -61,7 +61,7 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      '@typescript-eslint/await-thenable': 'off',
+      '@typescript-eslint/await-thenable': 'error',
       // JSX accessibility rules
       'jsx-a11y/alt-text': [
         'error',
@@ -104,10 +104,10 @@ const eslintConfig = [
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
       '@typescript-eslint/restrict-plus-operands': 'error',
       '@typescript-eslint/restrict-template-expressions': 'error',
       '@typescript-eslint/unbound-method': 'error',
@@ -139,6 +139,6 @@ const eslintConfig = [
       'max-lines': 'off',
     },
   },
-];
+]
 
-export default eslintConfig;
+export default eslintConfig

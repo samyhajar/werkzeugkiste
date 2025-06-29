@@ -38,15 +38,72 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Get user profile for role-based routing
+  let profile = null
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    profile = data
+  }
+
+  const isAuthPage =
+    request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/auth')
+  const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
+  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
+  const isHomePage = request.nextUrl.pathname === '/'
+
+  // If user is not authenticated
+  if (!user) {
+    if (!isAuthPage && !isHomePage) {
+      // Redirect to login page
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
+
+  // If user is authenticated but on auth pages, redirect based on role
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    if (profile?.role === 'admin') {
+      url.pathname = '/admin'
+    } else {
+      url.pathname = '/dashboard'
+    }
     return NextResponse.redirect(url)
+  }
+
+  // Role-based access control
+  if (user && profile) {
+    // Admin trying to access student dashboard
+    if (profile.role === 'admin' && isDashboardPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
+
+    // Student trying to access admin pages
+    if (profile.role === 'student' && isAdminPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // Redirect from home page based on role
+    if (isHomePage) {
+      const url = request.nextUrl.clone()
+      if (profile.role === 'admin') {
+        url.pathname = '/admin'
+      } else {
+        url.pathname = '/dashboard'
+      }
+      return NextResponse.redirect(url)
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
@@ -67,8 +124,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - api (API routes)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
