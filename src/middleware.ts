@@ -40,6 +40,8 @@ export async function middleware(request: NextRequest) {
 
   // Get user profile for role-based routing
   let profile = null
+  let userRole = 'student' // Default fallback role
+
   if (user) {
     const { data } = await supabase
       .from('profiles')
@@ -47,6 +49,13 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single()
     profile = data
+
+    // Fallback to user metadata if profile not found yet (timing issue)
+    if (!profile && user.user_metadata?.role) {
+      userRole = user.user_metadata.role as string
+    } else if (profile?.role) {
+      userRole = profile.role
+    }
   }
 
   const isAuthPage =
@@ -70,7 +79,7 @@ export async function middleware(request: NextRequest) {
   // If user is authenticated but on auth pages, redirect based on role
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    if (profile?.role === 'admin') {
+    if (userRole === 'admin') {
       url.pathname = '/admin'
     } else {
       url.pathname = '/dashboard'
@@ -79,16 +88,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Role-based access control
-  if (user && profile) {
+  if (user) {
     // Admin trying to access student dashboard
-    if (profile.role === 'admin' && isDashboardPage) {
+    if (userRole === 'admin' && isDashboardPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin'
       return NextResponse.redirect(url)
     }
 
     // Student trying to access admin pages
-    if (profile.role === 'student' && isAdminPage) {
+    if (userRole === 'student' && isAdminPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
@@ -97,7 +106,7 @@ export async function middleware(request: NextRequest) {
     // Redirect from home page based on role
     if (isHomePage) {
       const url = request.nextUrl.clone()
-      if (profile.role === 'admin') {
+      if (userRole === 'admin') {
         url.pathname = '/admin'
       } else {
         url.pathname = '/dashboard'

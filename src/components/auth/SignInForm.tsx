@@ -65,7 +65,7 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
   }
 
   return (
-    <form onSubmit={handleSignIn} className="space-y-4">
+    <form onSubmit={(e) => void handleSignIn(e)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signin-email">Email</Label>
         <Input
@@ -102,7 +102,7 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
           variant="outline"
           className="w-full"
           disabled={loading}
-          onClick={() => void handleSignInAPI(new Event('click') as unknown as React.FormEvent)}
+          onClick={(e) => void handleSignInAPI(e as unknown as React.FormEvent)}
         >
           {loading ? 'Signing in...' : 'Sign In (API)'}
         </Button>

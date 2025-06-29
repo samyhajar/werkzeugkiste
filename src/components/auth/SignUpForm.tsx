@@ -71,7 +71,7 @@ export default function SignUpForm({ onMessage }: SignUpFormProps) {
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4">
+    <form onSubmit={(e) => void handleSignUp(e)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signup-name">Full Name</Label>
         <Input
@@ -143,7 +143,7 @@ export default function SignUpForm({ onMessage }: SignUpFormProps) {
           variant="outline"
           className="w-full"
           disabled={loading}
-          onClick={() => void handleSignUpAPI(new Event('click') as unknown as React.FormEvent)}
+          onClick={(e) => void handleSignUpAPI(e as unknown as React.FormEvent)}
         >
           {loading ? 'Creating account...' : 'Create Account (API)'}
         </Button>

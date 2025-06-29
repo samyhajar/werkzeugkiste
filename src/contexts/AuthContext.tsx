@@ -122,6 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null)
 
       if (session?.user) {
+        // For new signups, add a small delay to allow database trigger to complete
+        if (event === 'SIGNED_IN' && !profile) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+
         // Fetch profile for the authenticated user
         const profileData = await fetchProfile(session.user.id)
         setProfile(profileData)
@@ -133,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [fetchProfile, supabase.auth])
+  }, [fetchProfile, supabase.auth, profile])
 
   const value = {
     user,
