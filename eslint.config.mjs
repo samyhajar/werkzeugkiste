@@ -136,7 +136,7 @@ const eslintConfig = [
       'src/components/ui/GalleryManager.tsx',
     ],
     rules: {
-      'max-lines': 'off',
+      'max-lines': '200',
     },
   },
 ]
