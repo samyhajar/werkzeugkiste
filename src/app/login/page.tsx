@@ -17,10 +17,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#486681] p-4">
+      <Card className="w-full max-w-md shadow-xl border border-[#486681]/20">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-brand-primary">
+          <CardTitle className="text-2xl font-bold text-[#486681]">
             Digi+ Learning Platform
           </CardTitle>
           <CardDescription>

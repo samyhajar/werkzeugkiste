@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
 import AdminStatsGrid from '@/components/dashboard/AdminStatsGrid'
 
@@ -70,11 +71,13 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
-                <Button className="h-auto p-6 flex flex-col items-center gap-2">
-                  <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Create Course</span>
+                <Button asChild className="h-auto p-6 flex flex-col items-center gap-2">
+                  <Link href="/admin/courses/new">
+                    <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Create Course</span>
+                  </Link>
                 </Button>
 
                 <Button variant="outline" className="h-auto p-6 flex flex-col items-center gap-2">

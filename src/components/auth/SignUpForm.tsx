@@ -133,15 +133,15 @@ export default function SignUpForm({ onMessage }: SignUpFormProps) {
       <div className="space-y-2">
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-[#486681] hover:bg-[#3d5970] text-white"
           disabled={loading}
         >
           {loading ? 'Creating account...' : 'Create Account'}
         </Button>
-                <Button
+        <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-[#486681] text-[#486681]"
           disabled={loading}
           onClick={(e) => void handleSignUpAPI(e as unknown as React.FormEvent)}
         >

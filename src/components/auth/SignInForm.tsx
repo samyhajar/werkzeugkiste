@@ -92,7 +92,7 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
       <div className="space-y-2">
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-[#486681] hover:bg-[#3d5970] text-white"
           disabled={loading}
         >
           {loading ? 'Signing in...' : 'Sign In'}
@@ -100,7 +100,7 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
                 <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-[#486681] text-[#486681]"
           disabled={loading}
           onClick={(e) => void handleSignInAPI(e as unknown as React.FormEvent)}
         >
