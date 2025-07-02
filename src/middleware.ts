@@ -64,10 +64,13 @@ export async function middleware(request: NextRequest) {
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
   const isHomePage = request.nextUrl.pathname === '/'
+  const isPublicPage = ['/digi-sammlung', '/ueber-uns', '/fragen'].some(p =>
+    request.nextUrl.pathname.startsWith(p)
+  )
 
   // If user is not authenticated
   if (!user) {
-    if (!isAuthPage && !isHomePage) {
+    if (!isAuthPage && !isHomePage && !isPublicPage) {
       // Redirect to login page
       const url = request.nextUrl.clone()
       url.pathname = '/login'

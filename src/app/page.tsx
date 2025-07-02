@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
+import PartnerSection from '@/components/shared/PartnerSection'
 
 type Course = Tables<'courses'>
 
@@ -58,7 +59,7 @@ export default async function Home({
         </div>
       </section>
 
-      {/* Partner Logos handled by global Footer */}
+      <PartnerSection />
     </>
   )
 }
