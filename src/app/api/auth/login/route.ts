@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server-client'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
+import type { Database } from '@/types/supabase'
+import { cookies } from 'next/headers'
 
 interface LoginBody {
   email: string
@@ -10,10 +12,10 @@ interface LoginBody {
  * POST /api/auth/login  – server‑side sign‑in
  *
  * 1. Verifies credentials with Supabase
- * 2. Writes sb‑access‑token / sb‑refresh‑token cookies via `cookieStore.set`
- * 3. Returns `{ user, profile }` as JSON
+ * 2. Writes sb‑access‑token / sb‑refresh‑token cookies via `response.cookies.set`
+ * 3. Returns `{ session, user, profile }` as JSON
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { email, password } = (await req.json()) as LoginBody
 
@@ -24,8 +26,24 @@ export async function POST(req: Request) {
       )
     }
 
-    /* ─── Supabase client tied to this route’s cookie store ─── */
-    const supabase = await createClient()
+    /* ─── Prepare response & Supabase client with cookie helpers ─── */
+    const response = new NextResponse(null, { status: 200 })
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookies().getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
+          },
+        },
+      }
+    )
 
     /* ─── Sign in ─── */
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -44,9 +62,14 @@ export async function POST(req: Request) {
       .eq('id', data.user.id)
       .single()
 
-    /* Cookies have already been written to the cookie store via
-       `createClient()`; returning any NextResponse will include them. */
-    return NextResponse.json({ user: data.user, profile }, { status: 200 })
+    /* ─── Return session JSON along with cookies ─── */
+    return new NextResponse(
+      JSON.stringify({ session: data.session, user: data.user, profile }),
+      {
+        status: 200,
+        headers: response.headers,
+      }
+    )
   } catch (err) {
     console.error('Login route error:', err)
     return NextResponse.json(
