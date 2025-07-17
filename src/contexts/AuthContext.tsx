@@ -52,18 +52,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      console.log('[AuthContext] fetchProfile called for userId:', userId)
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
 
-      if (error) {
-        console.error('❌ Error fetching profile:', error)
+        if (error) {
+          console.error('❌ Error fetching profile:', error)
+          console.error('❌ Error details:', error.message, error.code)
+          return null
+        }
+        console.log('✅ Fetched profile:', data)
+        return data
+      } catch (err) {
+        console.error('❌ Unexpected error fetching profile:', err)
         return null
       }
-      console.log('✅ Fetched profile:', data)
-      return data
     },
     [supabase]
   )
@@ -88,50 +95,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error }
   }
 
-
+  // Simplified signIn - let onAuthStateChange handle state updates
   const signIn = async (email: string, password: string) => {
-    console.log('[AuthContext] signIn called', { email });
-    setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log('[AuthContext] signInWithPassword result', { data, error });
-    if (!error && data.session) {
-      setSession(data.session);
-      setUser(data.session.user);
-      console.log('[AuthContext] session and user set', { session: data.session, user: data.session.user });
-      const fetchedProfile = await fetchProfile(data.session.user.id);
-      console.log('[AuthContext] fetchProfile result', { fetchedProfile });
-      setProfile(fetchedProfile);
-      console.log('[AuthContext] setProfile called', { fetchedProfile });
-    }
-    setLoading(false);
-    if (error) {
-      console.error('[AuthContext] signIn error', error);
-    }
-    return { error };
-  }
+    console.log('[AuthContext] signIn called', { email })
 
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    console.log('[AuthContext] signInWithPassword result', { error })
+    return { error }
+  }
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
-    setProfile(null)
+    // Don't manually clear state - let onAuthStateChange handle it
   }
 
   useEffect(() => {
     const init = async () => {
+      console.log('[AuthContext] Initializing...')
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
+
+      console.log('[AuthContext] Initial session:', session)
+
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
+        console.log('[AuthContext] Fetching profile for initial user:', session.user.id)
         const p = await fetchProfile(session.user.id)
-        setProfile(p)
+        console.log('[AuthContext] Initial profile fetch result:', p)
+        if (p && typeof p === 'object' && 'id' in p) {
+          setProfile(p as Profile)
+        } else {
+          setProfile(null)
+        }
       }
 
+      console.log('[AuthContext] Setting loading to false after init')
       setLoading(false)
+      console.log('[AuthContext] Initialization complete')
     }
 
     void init()
@@ -139,19 +147,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔁 Auth state change:', event, session)
+      console.log('🔁 Auth state change:', event, session?.user?.id)
+      console.log('[AuthContext] Current loading state before processing:', loading)
 
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        setProfile(p)
+        console.log('[AuthContext] Fetching profile for user:', session.user.id)
+
+        try {
+          const p = await Promise.race([
+            fetchProfile(session.user.id),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+            )
+          ])
+          console.log('[AuthContext] Profile fetch result:', p)
+          if (p && typeof p === 'object' && 'id' in p) {
+            setProfile(p as Profile)
+          } else {
+            setProfile(null)
+          }
+        } catch (error) {
+          console.error('[AuthContext] Profile fetch failed or timed out:', error)
+          setProfile(null)
+        }
+
+        console.log('[AuthContext] Setting loading to false after profile fetch')
+        setLoading(false)
       } else {
+        console.log('[AuthContext] No user, clearing profile and setting loading to false')
         setProfile(null)
+        setLoading(false)
       }
 
-      setLoading(false)
+      console.log('[AuthContext] Auth state change processing complete')
     })
 
     return () => subscription.unsubscribe()
