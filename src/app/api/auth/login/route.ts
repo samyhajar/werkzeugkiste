@@ -11,7 +11,7 @@ interface LoginBody {
  *
  * 1. Verifies credentials with Supabase
  * 2. Writes sb‑access‑token / sb‑refresh‑token cookies via `cookieStore.set`
- * 3. Returns `{ user, profile }` as JSON
+ * 3. Returns `{ session, user, profile }` as JSON
  */
 export async function POST(req: Request) {
   try {
@@ -46,7 +46,10 @@ export async function POST(req: Request) {
 
     /* Cookies have already been written to the cookie store via
        `createClient()`; returning any NextResponse will include them. */
-    return NextResponse.json({ user: data.user, profile }, { status: 200 })
+    return NextResponse.json(
+      { session: data.session, user: data.user, profile },
+      { status: 200 }
+    )
   } catch (err) {
     console.error('Login route error:', err)
     return NextResponse.json(
