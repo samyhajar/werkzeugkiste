@@ -57,9 +57,9 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
     }
   }
 
-  const isButtonDisabled = loading || authLoading
+  const isButtonDisabled = loading
   if (isButtonDisabled) {
-    console.log('[SignInForm] Button disabled', { loading, authLoading })
+    console.log('[SignInForm] Button disabled', { loading })
   }
 
   return (
