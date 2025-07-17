@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 export default function SignInForm({
   onMessage,
@@ -9,6 +10,7 @@ export default function SignInForm({
   onMessage: (msg: string, type: 'success' | 'error') => void
 }) {
   const router = useRouter()
+  const supabase = getBrowserClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,6 +20,8 @@ export default function SignInForm({
     setLoading(true)
     onMessage('', 'success') // clear previous message
 
+    console.log('[SignInForm] submitting', { email })
+
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       credentials: 'include', // must keep cookies
@@ -25,7 +29,10 @@ export default function SignInForm({
       body: JSON.stringify({ email, password }),
     })
 
+    console.log('[SignInForm] response', res.status)
+
     setLoading(false)
+    console.log('[SignInForm] finished', res.ok)
 
     if (!res.ok) {
       /* ---- Safe JSON (or text) extraction ---- */
@@ -40,8 +47,22 @@ export default function SignInForm({
           /* leave default */
         }
       }
+      console.error('[SignInForm] error', errorMsg)
       onMessage(errorMsg, 'error')
       return
+    }
+
+    console.log('[SignInForm] success')
+
+    const { session } = await res.json()
+    if (session) {
+      console.log('[SignInForm] setting Supabase session')
+      await supabase.auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      })
+      console.log('[SignInForm] session set, refreshing router')
+      router.refresh()
     }
 
     onMessage('Logged in ✔︎', 'success')

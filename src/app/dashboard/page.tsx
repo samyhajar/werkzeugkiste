@@ -10,6 +10,8 @@ import StudentCourseCards from '@/components/dashboard/StudentCourseCards'
 export default function Dashboard() {
   const { user, profile, role, loading, signOut } = useAuth()
 
+  console.log('[StudentDashboard] render', { user, profile, role, loading })
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -22,15 +24,18 @@ export default function Dashboard() {
   }
 
   if (!user || !profile) {
+    console.log('[StudentDashboard] no user/profile, redirecting to /login')
     redirect('/login')
   }
 
   // Ensure students don't access this if they somehow get here
   if (role === 'admin') {
+    console.log('[StudentDashboard] admin role detected, redirecting to /admin')
     redirect('/admin')
   }
 
   const handleLogout = async () => {
+    console.log('[StudentDashboard] logging out')
     await signOut()
     redirect('/login')
   }
