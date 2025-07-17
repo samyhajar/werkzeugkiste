@@ -90,25 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true) // <- Set loading to true at start
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    console.log('🔐 signIn result:', data, error)
-
+    console.log('[AuthContext] signIn called', { email });
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log('[AuthContext] signInWithPassword result', { data, error });
     if (!error && data.session) {
-      setSession(data.session)
-      setUser(data.session.user)
-      const fetchedProfile = await fetchProfile(data.session.user.id)
-      setProfile(fetchedProfile)
+      setSession(data.session);
+      setUser(data.session.user);
+      console.log('[AuthContext] session and user set', { session: data.session, user: data.session.user });
+      const fetchedProfile = await fetchProfile(data.session.user.id);
+      console.log('[AuthContext] fetchProfile result', { fetchedProfile });
+      setProfile(fetchedProfile);
+      console.log('[AuthContext] setProfile called', { fetchedProfile });
     }
-
-    setLoading(false) // <- Set loading to false at the end
-
-    return { error }
+    setLoading(false);
+    if (error) {
+      console.error('[AuthContext] signIn error', error);
+    }
+    return { error };
   }
 
 

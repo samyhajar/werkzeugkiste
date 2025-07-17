@@ -1,13 +1,13 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/browser-client'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = getBrowserClient()
 
   const handleLogout = async () => {
     setLoading(true)

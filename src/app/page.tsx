@@ -1,7 +1,7 @@
 import ModuleCard from '@/components/shared/ModuleCard'
 import DummyModuleCard from '@/components/shared/DummyModuleCard'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server-client'
 import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'

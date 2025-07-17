@@ -15,26 +15,34 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
   const { signIn, user, profile, loading: authLoading } = useAuth()
 
   // Redirect once user & profile are ready
   useEffect(() => {
+    console.log('[SignInForm] useEffect redirect check', { authLoading, user, profile })
     if (!authLoading && user && profile) {
       console.log('[SignInForm] Redirecting to dashboard')
       router.push('/dashboard')
     }
   }, [authLoading, user, profile, router])
 
+  useEffect(() => {
+    console.log('[SignInForm] loading state changed', { loading, authLoading })
+  }, [loading, authLoading])
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[SignInForm] handleSignIn called', { email, password })
     setLoading(true)
     console.log('[SignInForm] Submitting sign in', { email })
     try {
       const { error } = await signIn(email, password)
       console.log('[SignInForm] signIn result', { error })
       if (error) {
+        setError(error.message)
         onMessage(error.message, 'error')
       } else {
         onMessage('Sign in successful!', 'success')
@@ -45,7 +53,13 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
       onMessage('Unexpected error', 'error')
     } finally {
       setLoading(false)
+      console.log('[SignInForm] setLoading(false) called')
     }
+  }
+
+  const isButtonDisabled = loading || authLoading
+  if (isButtonDisabled) {
+    console.log('[SignInForm] Button disabled', { loading, authLoading })
   }
 
   return (
@@ -77,9 +91,9 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
         <Button
           type="submit"
           className="w-full bg-[#486681] hover:bg-[#3d5970] text-white"
-          disabled={loading || authLoading}
+          disabled={isButtonDisabled}
         >
-          {loading || authLoading ? 'Signing in...' : 'Sign In'}
+          {isButtonDisabled ? 'Signing in...' : 'Sign In'}
         </Button>
       </div>
     </form>
