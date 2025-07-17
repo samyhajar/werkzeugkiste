@@ -9,15 +9,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, profile, role, loading, signOut } = useAuth()
   const router = useRouter()
 
+  console.log('[AdminLayout] render', { user, profile, role, loading })
+
   // Redirect logic handled **after** auth finishes
   useEffect(() => {
+    console.log('[AdminLayout] useEffect', { loading, user, profile, role })
     if (loading) return
 
     if (!user || !profile) {
+      console.log('[AdminLayout] redirecting to /login')
       router.replace('/login')
       return
     }
     if (role !== 'admin') {
+      console.log('[AdminLayout] redirecting to /dashboard')
       router.replace('/dashboard')
     }
   }, [loading, user, profile, role, router])
@@ -34,6 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = async () => {
+    console.log('[AdminLayout] logging out')
     await signOut()
     router.replace('/login')
   }
