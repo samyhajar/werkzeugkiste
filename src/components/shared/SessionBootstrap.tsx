@@ -14,6 +14,7 @@ import { useEffect } from 'react'
  */
 export default function SessionBootstrap() {
   useEffect(() => {
+    console.log('[SessionBootstrap] running')
     // Supabase cookie names are "sb-<project-ref>-access-token" etc.
     const cookies = document.cookie.split('; ').map((c) => c.split('='))
 
@@ -29,9 +30,14 @@ export default function SessionBootstrap() {
 
       // If they aren't already in localStorage copy them once
       if (!localStorage.getItem(accessKey)) {
+        console.log('[SessionBootstrap] copying tokens to localStorage')
         localStorage.setItem(accessKey, access)
         localStorage.setItem(refreshKey, refresh)
+      } else {
+        console.log('[SessionBootstrap] tokens already in localStorage')
       }
+    } else {
+      console.log('[SessionBootstrap] no auth cookies found')
     }
   }, [])
 

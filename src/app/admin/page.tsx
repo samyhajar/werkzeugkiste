@@ -30,7 +30,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const supabase = getBrowserClient()
 
+  console.log('[AdminDashboard] render')
+
   useEffect(() => {
+    console.log('[AdminDashboard] fetching recent activities')
     const fetchRecentActivities = async () => {
       try {
         const activities: RecentActivity[] = []
@@ -145,10 +148,12 @@ export default function AdminDashboard() {
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         )
         setRecentActivities(activities.slice(0, 10))
+        console.log('[AdminDashboard] fetched activities', activities.length)
       } catch (err) {
-        console.error('Error fetching recent activities:', err)
+        console.error('[AdminDashboard] error fetching activities', err)
       } finally {
         setLoading(false)
+        console.log('[AdminDashboard] loading complete')
       }
     }
 
