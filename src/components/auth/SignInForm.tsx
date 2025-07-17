@@ -2,7 +2,10 @@
 
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+
 
 export default function SignInForm({
   onMessage,
@@ -10,7 +13,11 @@ export default function SignInForm({
   onMessage: (msg: string, type: 'success' | 'error') => void
 }) {
   const router = useRouter()
+
+  const { signIn } = useAuth()
+
   const supabase = getBrowserClient()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,33 +29,13 @@ export default function SignInForm({
 
     console.log('[SignInForm] submitting', { email })
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      credentials: 'include', // must keep cookies
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-
-    console.log('[SignInForm] response', res.status)
+    const { error } = await signIn(email, password)
 
     setLoading(false)
-    console.log('[SignInForm] finished', res.ok)
 
-    if (!res.ok) {
-      /* ---- Safe JSON (or text) extraction ---- */
-      let errorMsg = `Error ${res.status}`
-      try {
-        const data = await res.clone().json()
-        errorMsg = data?.error ?? errorMsg
-      } catch {
-        try {
-          errorMsg = await res.text()
-        } catch {
-          /* leave default */
-        }
-      }
-      console.error('[SignInForm] error', errorMsg)
-      onMessage(errorMsg, 'error')
+    if (error) {
+      console.error('[SignInForm] error', error.message)
+      onMessage(error.message, 'error')
       return
     }
 
@@ -65,6 +52,8 @@ export default function SignInForm({
     }
     onMessage('Logged in ✔︎', 'success')
     router.replace('/dashboard')
+    // Reload to ensure AuthProvider picks up the new session
+    window.location.reload()
   }
 
   return (
