@@ -53,7 +53,6 @@ export default function SignInForm({
     }
 
     console.log('[SignInForm] success')
-
     const { session } = await res.json()
     if (session) {
       console.log('[SignInForm] setting Supabase session')
@@ -64,7 +63,6 @@ export default function SignInForm({
       console.log('[SignInForm] session set, refreshing router')
       router.refresh()
     }
-
     onMessage('Logged in ✔︎', 'success')
     router.replace('/dashboard')
   }
