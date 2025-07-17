@@ -1,7 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { Database } from '@/types/supabase'
+import type { Database } from '@/types/supabase'
 
+/**
+ * Server‑side Supabase client with cookie support.
+ * Note: In some Next.js versions `cookies()` is asynchronous, returning a
+ * `Promise<ReadonlyRequestCookies>`.  Therefore this helper is **async** and
+ * callers must `await createClient()`.
+ */
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -19,9 +25,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
+            /* Called from a Server Component – safe to ignore. */
           }
         },
       },

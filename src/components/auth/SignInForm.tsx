@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -17,51 +17,35 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
   const [loading, setLoading] = useState(false)
 
   const router = useRouter()
-  const { signIn } = useAuth()
+  const { signIn, user, profile, loading: authLoading } = useAuth()
 
-  // Sign in using AuthContext (client-side)
+  // Redirect once user & profile are ready
+  useEffect(() => {
+    if (!authLoading && user && profile) {
+      console.log('[SignInForm] Redirecting to dashboard')
+      router.push('/dashboard')
+    }
+  }, [authLoading, user, profile, router])
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
-    const { error } = await signIn(email, password)
-
-    if (error) {
-      onMessage(error.message, 'error')
-    } else {
-      onMessage('Sign in successful!', 'success')
-      router.push('/dashboard')
-    }
-    setLoading(false)
-  }
-
-  // Alternative: Sign in using API route
-  const handleSignInAPI = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
+    console.log('[SignInForm] Submitting sign in', { email })
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await response.json() as { error?: string }
-
-      if (!response.ok) {
-        onMessage(data.error || 'Login failed', 'error')
+      const { error } = await signIn(email, password)
+      console.log('[SignInForm] signIn result', { error })
+      if (error) {
+        onMessage(error.message, 'error')
       } else {
         onMessage('Sign in successful!', 'success')
-        // The AuthContext will automatically update via the auth state change listener
-        router.push('/dashboard')
+        // wait for `useEffect` to handle redirect
       }
-    } catch (_error) {
-      onMessage('Network error occurred', 'error')
+    } catch (err) {
+      console.error('[SignInForm] signIn threw error', err)
+      onMessage('Unexpected error', 'error')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -93,18 +77,9 @@ export default function SignInForm({ onMessage }: SignInFormProps) {
         <Button
           type="submit"
           className="w-full bg-[#486681] hover:bg-[#3d5970] text-white"
-          disabled={loading}
+          disabled={loading || authLoading}
         >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </Button>
-                <Button
-          type="button"
-          variant="outline"
-          className="w-full border-[#486681] text-[#486681]"
-          disabled={loading}
-          onClick={(e) => void handleSignInAPI(e as unknown as React.FormEvent)}
-        >
-          {loading ? 'Signing in...' : 'Sign In (API)'}
+          {loading || authLoading ? 'Signing in...' : 'Sign In'}
         </Button>
       </div>
     </form>

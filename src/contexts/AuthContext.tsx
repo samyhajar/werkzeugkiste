@@ -1,12 +1,20 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useCallback,
+} from 'react'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { User, Session } from '@supabase/supabase-js'
 import { Tables } from '@/types/supabase'
 
+// ---------------------------------------------------------------------------
 type Profile = Tables<'profiles'>
-type UserRole = 'admin' | 'student' | null
+export type UserRole = 'admin' | 'student' | null
 
 interface AuthContextType {
   user: User | null
@@ -14,8 +22,15 @@ interface AuthContextType {
   profile: Profile | null
   role: UserRole
   loading: boolean
-  signUp: (email: string, password: string, metadata?: Record<string, unknown>) => Promise<{ error: Error | null }>
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: Record<string, unknown>
+  ) => Promise<{ error: Error | null }>
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -23,19 +38,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = getBrowserClient()
+
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const supabase = createClient()
+  const role: UserRole =
+    profile?.role === 'admin' || profile?.role === 'student'
+      ? profile.role
+      : null
 
-  // Derived role from profile
-  const role: UserRole = profile?.role as UserRole || null
-
-  // Fetch user profile data (memoized to avoid useEffect dependency issues)
-  const fetchProfile = useCallback(async (userId: string) => {
-    try {
+  const fetchProfile = useCallback(
+    async (userId: string) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -43,93 +59,95 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single()
 
       if (error) {
-        console.error('Error fetching profile:', error)
+        console.error('❌ Error fetching profile:', error)
         return null
       }
-
+      console.log('✅ Fetched profile:', data)
       return data
-    } catch (error) {
-      console.error('Error fetching profile:', error)
-      return null
-    }
-  }, [supabase])
+    },
+    [supabase]
+  )
 
-  // Refresh profile data
   const refreshProfile = useCallback(async () => {
     if (user) {
-      const profileData = await fetchProfile(user.id)
-      setProfile(profileData)
+      const p = await fetchProfile(user.id)
+      setProfile(p)
     }
   }, [user, fetchProfile])
 
-  // Sign up function
-  const signUp = async (email: string, password: string, metadata?: Record<string, unknown>) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata,
-        },
-      })
-      return { error }
-    } catch (error) {
-      return { error: error as Error }
-    }
+  const signUp = async (
+    email: string,
+    password: string,
+    metadata?: Record<string, unknown>
+  ) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: metadata },
+    })
+    return { error }
   }
 
-  // Sign in function
+
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      return { error }
-    } catch (error) {
-      return { error: error as Error }
+    setLoading(true) // <- Set loading to true at start
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    console.log('🔐 signIn result:', data, error)
+
+    if (!error && data.session) {
+      setSession(data.session)
+      setUser(data.session.user)
+      const fetchedProfile = await fetchProfile(data.session.user.id)
+      setProfile(fetchedProfile)
     }
+
+    setLoading(false) // <- Set loading to false at the end
+
+    return { error }
   }
 
-  // Sign out function
+
   const signOut = async () => {
     await supabase.auth.signOut()
+    setUser(null)
+    setSession(null)
+    setProfile(null)
   }
 
-  // Handle auth state changes
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    const init = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        const profileData = await fetchProfile(session.user.id)
-        setProfile(profileData)
+        const p = await fetchProfile(session.user.id)
+        setProfile(p)
       }
 
       setLoading(false)
     }
 
-    void getInitialSession()
+    void init()
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔁 Auth state change:', event, session)
+
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        // For new signups, add a small delay to allow database trigger to complete
-        if (event === 'SIGNED_IN' && !profile) {
-          await new Promise(resolve => setTimeout(resolve, 500))
-        }
-
-        // Fetch profile for the authenticated user
-        const profileData = await fetchProfile(session.user.id)
-        setProfile(profileData)
+        const p = await fetchProfile(session.user.id)
+        setProfile(p)
       } else {
         setProfile(null)
       }
@@ -138,9 +156,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => subscription.unsubscribe()
-  }, [fetchProfile, supabase.auth, profile])
+  }, [fetchProfile])
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     profile,
@@ -153,17 +171,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   )
 }
 
-// Hook to use auth context
 export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
+  const ctx = useContext(AuthContext)
+  if (ctx === undefined) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context
+  return ctx
 }

@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/browser-client'
 import { Tables } from '@/types/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
 import LessonDialog from './LessonDialog'
 import QuizDialog from './QuizDialog'
 
@@ -151,8 +152,27 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
   }
 
   return (
-    <div className="min-h-screen p-6 space-y-6 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold">Course Builder</h2>
+    <div className="p-8">
+      <div className="max-w-4xl space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button asChild variant="outline">
+              <Link href={`/admin/courses/${courseId}`}>
+                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Course
+              </Link>
+            </Button>
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Course Builder</h2>
+              <p className="text-foreground/60">
+                Add and manage lessons and quizzes
+              </p>
+            </div>
+          </div>
+        </div>
 
       {/* Lesson Blocks */}
       {lessons.map((lesson, idx) => (
@@ -178,22 +198,23 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
         </Card>
       ))}
 
-      {/* Add Lesson Button */}
-      <Button onClick={() => setLessonDialogOpen(true)}>Add Lesson</Button>
+        {/* Add Lesson Button */}
+        <Button onClick={() => setLessonDialogOpen(true)}>Add Lesson</Button>
 
-      {/* Lesson Dialog */}
-      <LessonDialog
-        open={lessonDialogOpen}
-        onOpenChange={setLessonDialogOpen}
-        onCreate={createLesson}
-      />
+        {/* Lesson Dialog */}
+        <LessonDialog
+          open={lessonDialogOpen}
+          onOpenChange={setLessonDialogOpen}
+          onCreate={createLesson}
+        />
 
-      {/* Quiz Dialog */}
-      <QuizDialog
-        open={quizDialogOpen.open}
-        onOpenChange={(open: boolean) => setQuizDialogOpen({ open, lessonId: quizDialogOpen.lessonId })}
-        onCreate={createQuiz}
-      />
+        {/* Quiz Dialog */}
+        <QuizDialog
+          open={quizDialogOpen.open}
+          onOpenChange={(open: boolean) => setQuizDialogOpen({ open, lessonId: quizDialogOpen.lessonId })}
+          onCreate={createQuiz}
+        />
+      </div>
     </div>
   )
 }
