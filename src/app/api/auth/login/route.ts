@@ -1,15 +1,21 @@
+import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
-import { NextRequest, NextResponse } from 'next/server'
 
-interface LoginRequestBody {
+interface LoginBody {
   email: string
   password: string
 }
 
-export async function POST(request: NextRequest) {
+/**
+ * POST /api/auth/login  – server‑side sign‑in
+ *
+ * 1. Verifies credentials with Supabase
+ * 2. Writes sb‑access‑token / sb‑refresh‑token cookies via `cookieStore.set`
+ * 3. Returns `{ user, profile }` as JSON
+ */
+export async function POST(req: Request) {
   try {
-    const body = (await request.json()) as LoginRequestBody
-    const { email, password } = body
+    const { email, password } = (await req.json()) as LoginBody
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,9 +24,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    /* ─── Supabase client tied to this route’s cookie store ─── */
     const supabase = await createClient()
 
-    // Sign in the user
+    /* ─── Sign in ─── */
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -30,28 +37,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
-    // Fetch user profile
-    const { data: profile, error: profileError } = await supabase
+    /* ─── Fetch lean profile while we’re here ─── */
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, role, full_name, created_at')
       .eq('id', data.user.id)
       .single()
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError)
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Login successful',
-        user: data.user,
-        profile: profile,
-      },
-      { status: 200 }
-    )
-  } catch (error) {
-    console.error('Login error:', error)
+    /* Cookies have already been written to the cookie store via
+       `createClient()`; returning any NextResponse will include them. */
+    return NextResponse.json({ user: data.user, profile }, { status: 200 })
+  } catch (err) {
+    console.error('Login route error:', err)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

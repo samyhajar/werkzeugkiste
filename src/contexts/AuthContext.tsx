@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq('id', userId)
           .single()
 
+        console.log('fetchProfile result:', { data, error })
+
         if (error) {
           console.error('❌ Error fetching profile:', error)
           console.error('❌ Error details:', error.message, error.code)
@@ -87,11 +89,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     metadata?: Record<string, unknown>
   ) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: metadata },
     })
+
+    if (!error && data.user) {
+      // Create profile row
+      await supabase.from('profiles').insert([
+        { id: data.user.id, ...metadata }
+      ])
+    }
+
     return { error }
   }
 
@@ -157,12 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Fetching profile for user:', session.user.id)
 
         try {
-          const p = await Promise.race([
-            fetchProfile(session.user.id),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
-            )
-          ])
+          const p = await fetchProfile(session.user.id)
           console.log('[AuthContext] Profile fetch result:', p)
           if (p && typeof p === 'object' && 'id' in p) {
             setProfile(p as Profile)
@@ -170,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setProfile(null)
           }
         } catch (error) {
-          console.error('[AuthContext] Profile fetch failed or timed out:', error)
+          console.error('[AuthContext] Profile fetch failed:', error)
           setProfile(null)
         }
 
