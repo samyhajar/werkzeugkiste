@@ -79,11 +79,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, status } = await request.json()
+    const { title, description, status, module_id } = await request.json()
 
     if (!title) {
       return NextResponse.json(
         { success: false, error: 'Title is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!module_id) {
+      return NextResponse.json(
+        { success: false, error: 'Module selection is required' },
         { status: 400 }
       )
     }
@@ -95,6 +102,7 @@ export async function POST(request: NextRequest) {
         description,
         status: status || 'draft',
         admin_id: user.id,
+        module_id,
       })
       .select()
       .single()

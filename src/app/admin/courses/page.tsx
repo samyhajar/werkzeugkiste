@@ -22,8 +22,17 @@ interface Course {
   updated_at: string
 }
 
+interface Module {
+  id: string
+  title: string
+  description: string | null
+  status: 'draft' | 'published'
+  created_at: string
+}
+
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -33,7 +42,8 @@ export default function CoursesPage() {
   const [newCourse, setNewCourse] = useState({
     title: '',
     description: '',
-    status: 'draft' as 'draft' | 'published'
+    status: 'draft' as 'draft' | 'published',
+    module_id: ''
   })
 
   const fetchCourses = async () => {
@@ -65,6 +75,24 @@ export default function CoursesPage() {
     }
   }
 
+  const fetchModules = async () => {
+    try {
+      const response = await fetch('/api/modules', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setModules(data.modules || [])
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching modules:', err)
+    }
+  }
+
   const createCourse = async () => {
     if (!newCourse.title.trim()) {
       return
@@ -90,7 +118,7 @@ export default function CoursesPage() {
 
       if (data.success) {
         setCourses([data.course, ...courses])
-        setNewCourse({ title: '', description: '', status: 'draft' })
+        setNewCourse({ title: '', description: '', status: 'draft', module_id: '' })
         setIsCreateDialogOpen(false)
       } else {
         throw new Error(data.error || 'Failed to create course')
@@ -112,6 +140,7 @@ export default function CoursesPage() {
 
   useEffect(() => {
     fetchCourses()
+    fetchModules()
   }, [])
 
   if (loading) {
@@ -176,6 +205,39 @@ export default function CoursesPage() {
             </DialogHeader>
 
             <div className="space-y-6">
+              {/* Module Assignment Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📚</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Module Assignment</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="module" className="text-sm font-semibold text-gray-700">Select Module *</Label>
+                  <Select
+                    value={newCourse.module_id}
+                    onValueChange={(value) => setNewCourse({ ...newCourse, module_id: value })}
+                  >
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                      <SelectValue placeholder="Choose a module for this course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules.map((module) => (
+                        <SelectItem key={module.id} value={module.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📚</span>
+                            <span>{module.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Select the module where this course will be organized</p>
+                </div>
+              </div>
+
               {/* Course Info Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
@@ -261,7 +323,7 @@ export default function CoursesPage() {
                 </Button>
                 <Button
                   onClick={createCourse}
-                  disabled={creating || !newCourse.title.trim()}
+                  disabled={creating || !newCourse.title.trim() || !newCourse.module_id}
                   className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
                 >
                   {creating ? (
