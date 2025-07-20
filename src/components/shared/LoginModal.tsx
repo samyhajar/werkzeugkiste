@@ -175,9 +175,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               setSuccess('')
             }}
           >
-            <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="signin" className="text-sm">Einloggen</TabsTrigger>
-              <TabsTrigger value="signup" className="text-sm">Registrieren</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-50 rounded-lg p-1 h-12">
+              <TabsTrigger
+                value="signin"
+                className="text-sm font-medium rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 transition-all duration-200"
+              >
+                Einloggen
+              </TabsTrigger>
+              <TabsTrigger
+                value="signup"
+                className="text-sm font-medium rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 transition-all duration-200"
+              >
+                Registrieren
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="space-y-6 mt-0">
@@ -268,7 +278,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     required
                     disabled={loading}
                     className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
-                    placeholder="ihre.email@beispiel.de"
                   />
                 </div>
 
@@ -286,7 +295,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     minLength={6}
                     autoComplete="new-password"
                     className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
-                    placeholder="Mindestens 6 Zeichen"
                   />
                 </div>
 
@@ -303,7 +311,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     disabled={loading}
                     autoComplete="new-password"
                     className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
-                    placeholder="Passwort wiederholen"
                   />
                 </div>
 

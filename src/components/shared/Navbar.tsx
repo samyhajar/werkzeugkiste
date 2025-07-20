@@ -309,7 +309,7 @@ export default function Navbar() {
                     e.currentTarget.style.backgroundColor = '#de0449'
                   }}
                 >
-                  Einloggen
+                  Anmelden / Registrieren
                 </button>
               )}
             </div>
@@ -419,7 +419,7 @@ export default function Navbar() {
                       e.currentTarget.style.backgroundColor = '#de0449'
                     }}
                   >
-                    Einloggen
+                    Anmelden / Registrieren
                   </button>
                 )}
               </div>
