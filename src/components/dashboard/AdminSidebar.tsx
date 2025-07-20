@@ -31,14 +31,14 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
       className={cn(
         "w-full justify-start h-12 px-4 text-left font-normal",
         isActive
-          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700 hover:bg-blue-50"
+          ? "bg-[#486682]/10 text-[#486682] border-r-2 border-[#486682] hover:bg-[#486682]/10"
           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
       )}
     >
       <Link href={href} className="flex items-center gap-3">
         <div className={cn(
           "flex-shrink-0",
-          isActive ? "text-blue-700" : "text-gray-500"
+          isActive ? "text-[#486682]" : "text-gray-500"
         )}>
           {icon}
         </div>
@@ -62,6 +62,16 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
       ),
       label: "Dashboard",
       isActive: pathname === "/admin"
+    },
+    {
+      href: "/admin/modules",
+      icon: (
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+      label: "Modules",
+      isActive: pathname.startsWith("/admin/modules")
     },
     {
       href: "/admin/courses",
@@ -141,7 +151,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
       {/* Header */}
       <div className="px-6 py-6 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">D+</span>
           </div>
           <div>
