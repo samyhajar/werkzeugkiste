@@ -142,7 +142,7 @@ export default function ModuleDetailPage() {
       ></div>
 
       {/* Modal Container */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden my-4">
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col my-4">
         {/* Close Button */}
         <button
           onClick={handleCloseModal}
@@ -152,7 +152,7 @@ export default function ModuleDetailPage() {
         </button>
 
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white py-12 relative overflow-hidden">
+        <div className="flex-shrink-0 bg-gradient-to-r from-gray-700 to-gray-900 text-white py-12 relative overflow-hidden">
           <div className="max-w-6xl mx-auto px-8 relative z-10">
             <div className="flex items-center justify-between">
               {/* Left side - Module Image */}
@@ -217,9 +217,9 @@ export default function ModuleDetailPage() {
         </div>
 
         {/* Modal Content Area */}
-        <div className="max-h-[70vh] overflow-y-auto">
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {/* Tabs */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+          <div className="flex-shrink-0 bg-white border-b border-gray-200">
             <div className="flex px-8">
               <button
                 onClick={() => setActiveTab('modul')}
@@ -245,7 +245,7 @@ export default function ModuleDetailPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="p-8">
+          <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
             {activeTab === 'modul' ? (
               <div className="space-y-8">
                 {/* Course Overview */}
