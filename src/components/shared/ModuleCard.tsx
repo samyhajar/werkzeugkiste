@@ -57,7 +57,7 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
           <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
           <Link
             href={`/modules/${course.id}`}
-            className="block w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-center py-3.5 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl border-0"
+            className="block w-full border-2 border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:text-gray-800 text-center py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50"
           >
             Modul starten
           </Link>
