@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 const links = [
-  { href: '/suche', label: 'Suche' },
   { href: '/digi-sammlung', label: 'Digi-Sammlung' },
   { href: '/fragen', label: 'Fragen' },
   { href: '/ueber-uns', label: 'Über Uns' },
