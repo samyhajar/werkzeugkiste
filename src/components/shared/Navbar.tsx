@@ -179,13 +179,12 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
-                src="/file.svg"
-                alt="Logo"
-                width={32}
-                height={32}
-                className="mr-2"
+                src="/Logo-digi-CMYK.png"
+                alt="Digi+ Logo"
+                width={48}
+                height={48}
+                className="rounded-full"
               />
-              <span className="text-xl font-bold text-white">Werkzeugkiste</span>
             </Link>
 
             {/* Desktop Navigation */}
