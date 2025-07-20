@@ -105,7 +105,7 @@ export default function LessonDetailPage() {
 
               setCourse({
                 ...foundCourse,
-                lessons: courseLessons.sort((a, b) => a.sort_order - b.sort_order),
+                lessons: courseLessons.sort((a: any, b: any) => a.sort_order - b.sort_order),
                 quizzes
               })
             }
@@ -173,7 +173,7 @@ export default function LessonDetailPage() {
   const totalLessons = course.lessons.length
 
   // Create a combined list of lessons and quizzes in order
-  const courseContent = []
+  const courseContent: any[] = []
   course.lessons.forEach((courseLesson, index) => {
     courseContent.push({
       type: 'lesson',

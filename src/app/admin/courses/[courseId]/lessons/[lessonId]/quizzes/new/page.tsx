@@ -42,7 +42,7 @@ export default function NewQuizPage() {
           lesson_id: lessonId,
           title: formData.title.trim(),
           pass_pct: formData.pass_pct
-        })
+        } as any)
         .select()
         .single()
 

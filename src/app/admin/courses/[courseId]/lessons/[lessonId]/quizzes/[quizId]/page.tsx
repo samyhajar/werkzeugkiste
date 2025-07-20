@@ -78,12 +78,12 @@ export default function QuizDetailsPage() {
             ...q,
             options: q.options.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
           })).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-        } as QuizWithDetails
+        } as any
 
         setQuiz(transformedQuiz)
         setFormData({
           title: quizData.title || '',
-          pass_pct: quizData.pass_pct || 80
+          pass_pct: quizData.pass_percentage || 80
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch quiz')
@@ -304,7 +304,7 @@ export default function QuizDetailsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-foreground/60">Pass Percentage</Label>
-                    <p className="text-foreground">{quiz.pass_pct}%</p>
+                    <p className="text-foreground">{quiz.pass_percentage}%</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-foreground/60">Questions</Label>

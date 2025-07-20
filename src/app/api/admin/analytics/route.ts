@@ -93,22 +93,29 @@ export async function GET(request: NextRequest) {
         totalStudents: students.length,
       },
       recent: {
-        coursesThisWeek: courses.filter(c => new Date(c.created_at) > weekAgo)
-          .length,
-        lessonsThisWeek: lessons.filter(l => new Date(l.created_at) > weekAgo)
-          .length,
-        quizzesThisWeek: quizzes.filter(q => new Date(q.created_at) > weekAgo)
-          .length,
-        studentsThisWeek: students.filter(s => new Date(s.created_at) > weekAgo)
-          .length,
-        coursesThisMonth: courses.filter(c => new Date(c.created_at) > monthAgo)
-          .length,
-        lessonsThisMonth: lessons.filter(l => new Date(l.created_at) > monthAgo)
-          .length,
-        quizzesThisMonth: quizzes.filter(q => new Date(q.created_at) > monthAgo)
-          .length,
+        coursesThisWeek: courses.filter(
+          c => c.created_at && new Date(c.created_at) > weekAgo
+        ).length,
+        lessonsThisWeek: lessons.filter(
+          l => l.created_at && new Date(l.created_at) > weekAgo
+        ).length,
+        quizzesThisWeek: quizzes.filter(
+          q => q.created_at && new Date(q.created_at) > weekAgo
+        ).length,
+        studentsThisWeek: students.filter(
+          s => s.created_at && new Date(s.created_at) > weekAgo
+        ).length,
+        coursesThisMonth: courses.filter(
+          c => c.created_at && new Date(c.created_at) > monthAgo
+        ).length,
+        lessonsThisMonth: lessons.filter(
+          l => l.created_at && new Date(l.created_at) > monthAgo
+        ).length,
+        quizzesThisMonth: quizzes.filter(
+          q => q.created_at && new Date(q.created_at) > monthAgo
+        ).length,
         studentsThisMonth: students.filter(
-          s => new Date(s.created_at) > monthAgo
+          s => s.created_at && new Date(s.created_at) > monthAgo
         ).length,
       },
       trends: {

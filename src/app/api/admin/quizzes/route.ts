@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         title,
         lesson_id,
         pass_pct: pass_percentage || 80,
-      })
+      } as any)
       .select(
         `
         *,

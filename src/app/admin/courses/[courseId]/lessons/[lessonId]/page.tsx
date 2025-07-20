@@ -106,24 +106,7 @@ export default function LessonDetailsPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) {
-      return
-    }
 
-    try {
-      const { error } = await supabase
-        .from('lessons')
-        .delete()
-        .eq('id', lessonId)
-
-      if (error) throw error
-
-      router.push(`/admin/courses/${courseId}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete lesson')
-    }
-  }
 
   const handleDeleteQuiz = async (quizId: string) => {
     if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {

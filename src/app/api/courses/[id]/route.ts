@@ -52,7 +52,7 @@ export async function GET(
 
     // Fetch lesson-specific quizzes (associated with lessons in this course)
     const lessonIds = lessons?.map(l => l.id) || []
-    let lessonQuizzes = []
+    let lessonQuizzes: any[] = []
     if (lessonIds.length > 0) {
       const { data: lessonQuizzesData, error: lessonQuizzesError } =
         await supabase.from('quizzes').select('*').in('lesson_id', lessonIds)
