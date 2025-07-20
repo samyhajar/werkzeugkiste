@@ -24,13 +24,13 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   // This ensures consistent HTML structure
   if (!isHydrated || !isAdminPage) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col w-full">
         <Navbar />
-        <main className="flex-1 w-full">
+        <main className="flex-1 w-full overflow-x-hidden">
           {children}
         </main>
         <Footer />
-      </>
+      </div>
     )
   }
 

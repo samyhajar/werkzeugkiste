@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   description: "Digital learning platform for essential digital skills",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

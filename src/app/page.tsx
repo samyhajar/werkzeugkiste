@@ -6,7 +6,7 @@ import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
 import { cookies } from 'next/headers'
-import NewHereButton from '@/components/shared/NewHereButton'
+
 
 type Module = Tables<'modules'>
 type Course = Tables<'courses'>
@@ -108,45 +108,47 @@ export default async function Home({
   return (
     <>
       {/* Hero Banner */}
-      <section className="w-full relative -mt-1 z-10">
+      <section className="w-full relative">
         <Image
           src="/header-full-computer-final.jpg"
           alt="Banner"
           width={1920}
           height={354}
           priority
-          className="w-full h-auto object-cover"
+          className="w-full h-auto object-cover max-h-[50vh] sm:max-h-[60vh]"
         />
       </section>
 
       {/* Modules */}
-      <section id="modules" className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold mb-8 text-center md:text-left text-gray-800">
-          Lernmodule
-        </h2>
-        {modules.length > 0 ? (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {modules.map((module: Module) => (
-              <ModuleCard
-                key={module.id}
-                course={module}
-                progress={userProgress[module.id] || 0}
-                isLoggedIn={!!user}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-gray-600 mb-4">Derzeit sind keine Module verfügbar.</p>
-            <p className="text-gray-400 text-sm">Schauen Sie später wieder vorbei.</p>
-          </div>
-        )}
+      <section id="modules" className="w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center md:text-left text-gray-800">
+            Lernmodule
+          </h2>
+          {modules.length > 0 ? (
+            <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {modules.map((module: Module) => (
+                <ModuleCard
+                  key={module.id}
+                  course={module}
+                  progress={userProgress[module.id] || 0}
+                  isLoggedIn={!!user}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 sm:py-16">
+              <p className="text-gray-600 mb-4">Derzeit sind keine Module verfügbar.</p>
+              <p className="text-gray-400 text-sm">Schauen Sie später wieder vorbei.</p>
+            </div>
+          )}
+        </div>
       </section>
 
       <PartnerSection />
 
       {/* Floating "Neu hier?" Button */}
-      <NewHereButton />
+
     </>
   )
 }
