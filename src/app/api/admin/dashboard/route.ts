@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     ])
 
     // Build recent activities
-    const activities = []
+    const activities: any[] = []
 
     // Recent registrations
     if (profilesResult.data) {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     if (lessonProgressResult.data) {
       lessonProgressResult.data.forEach((progress: any) => {
         activities.push({
-          id: `completion-${progress.completed_at}`,
+          id: `completion-${progress.lesson_id}-${progress.student_id}-${progress.completed_at}`,
           type: 'lesson_completion',
           title: 'Lesson completed',
           description: `${progress.profiles?.full_name || 'Student'} completed "${progress.lessons?.title || 'Unknown lesson'}"`,
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     if (quizAttemptsResult.data) {
       quizAttemptsResult.data.forEach((attempt: any) => {
         activities.push({
-          id: `quiz-${attempt.completed_at}`,
+          id: `quiz-${attempt.quiz_id}-${attempt.student_id}-${attempt.completed_at}`,
           type: 'quiz_attempt',
           title: attempt.passed ? 'Quiz passed' : 'Quiz attempted',
           description: `${attempt.profiles?.full_name || 'Student'} ${attempt.passed ? 'passed' : 'attempted'} "${attempt.quizzes?.title || 'Unknown quiz'}" (${attempt.score_percentage}%)`,
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     if (coursesResult.data) {
       coursesResult.data.forEach((course: any) => {
         activities.push({
-          id: `course-${course.created_at}`,
+          id: `course-${course.id}-${course.created_at}`,
           type: 'content_created',
           title: 'New course created',
           description: `Course "${course.title}" was created`,
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     if (lessonsResult.data) {
       lessonsResult.data.forEach((lesson: any) => {
         activities.push({
-          id: `lesson-${lesson.created_at}`,
+          id: `lesson-${lesson.id}-${lesson.created_at}`,
           type: 'content_created',
           title: 'New lesson created',
           description: `Lesson "${lesson.title}" was created`,
