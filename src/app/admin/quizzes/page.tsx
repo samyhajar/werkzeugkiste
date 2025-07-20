@@ -211,7 +211,7 @@ export default function QuizzesPage() {
 
             <div className="space-y-6">
               {/* Lesson Selection Card */}
-              <div className="bg-gradient-to-r from-white to-orange-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📖</span>
@@ -247,7 +247,7 @@ export default function QuizzesPage() {
               </div>
 
               {/* Quiz Info Card */}
-              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📝</span>
@@ -282,7 +282,7 @@ export default function QuizzesPage() {
               </div>
 
               {/* Quiz Settings Info */}
-              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">⚙️</span>
@@ -290,9 +290,9 @@ export default function QuizzesPage() {
                   <h3 className="font-semibold text-gray-900">What's Next?</h3>
                 </div>
 
-                <div className="bg-white rounded-lg p-4 border border-purple-100">
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-purple-600">🎯</span>
+                    <span className="text-[#486682]">🎯</span>
                     <span className="font-medium text-gray-900">After creating the quiz</span>
                   </div>
                   <ul className="text-sm text-gray-600 space-y-1 ml-6">

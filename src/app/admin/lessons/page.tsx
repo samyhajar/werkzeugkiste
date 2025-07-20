@@ -205,7 +205,7 @@ export default function LessonsPage() {
 
             <div className="space-y-6">
               {/* Course Selection Card */}
-              <div className="bg-gradient-to-r from-white to-orange-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📚</span>
@@ -237,7 +237,7 @@ export default function LessonsPage() {
               </div>
 
               {/* Lesson Info Card */}
-              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📝</span>
@@ -272,7 +272,7 @@ export default function LessonsPage() {
               </div>
 
               {/* Organization Card */}
-              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📋</span>

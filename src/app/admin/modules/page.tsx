@@ -178,7 +178,7 @@ export default function ModulesPage() {
 
             <div className="space-y-6">
               {/* Module Info Card */}
-              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">📝</span>
@@ -212,7 +212,7 @@ export default function ModulesPage() {
               </div>
 
               {/* Visual Design Card */}
-              <div className="bg-gradient-to-r from-white to-green-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">🎨</span>
@@ -234,7 +234,7 @@ export default function ModulesPage() {
               </div>
 
               {/* Settings Card */}
-              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
                     <span className="text-white text-sm">⚙️</span>
