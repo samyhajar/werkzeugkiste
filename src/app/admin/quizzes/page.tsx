@@ -198,7 +198,7 @@ export default function QuizzesPage() {
               Create New Quiz
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
               <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">❓</span>
