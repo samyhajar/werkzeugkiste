@@ -38,12 +38,17 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
 
         {/* Progress bar for logged-in users */}
         {isLoggedIn && (
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-xs text-gray-600">
+          <div className="space-y-3 mb-4">
+            <div className="flex justify-between text-sm font-medium text-gray-700">
               <span>Fortschritt</span>
-              <span>{progress}%</span>
+              <span className="text-green-600">{progress}%</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress
+              value={progress}
+              variant="success"
+              size="default"
+              className="h-3 shadow-sm"
+            />
           </div>
         )}
 
@@ -52,7 +57,7 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
           <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
           <Link
             href={`/modules/${course.id}`}
-            className="block w-full bg-brand-secondary hover:bg-brand-secondary-hover text-white text-center py-3 rounded-lg font-medium transition-colors"
+            className="block w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-center py-3.5 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl border-0"
           >
             Modul starten
           </Link>
