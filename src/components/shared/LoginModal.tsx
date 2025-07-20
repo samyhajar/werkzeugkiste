@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { Checkbox } from '@/components/ui/checkbox'
 import { X } from 'lucide-react'
 
@@ -24,7 +24,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [signUpEmail, setSignUpEmail] = useState('')
   const [signUpPassword, setSignUpPassword] = useState('')
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('')
-  const [signUpRole, setSignUpRole] = useState('student')
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -40,7 +40,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setSignUpEmail('')
       setSignUpPassword('')
       setSignUpConfirmPassword('')
-      setSignUpRole('student')
       setError('')
       setSuccess('')
       setLoading(false)
@@ -125,7 +124,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         body: JSON.stringify({
           email: signUpEmail,
           password: signUpPassword,
-          role: signUpRole
+          role: 'student'
         }),
       })
 
@@ -136,7 +135,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         setSignUpEmail('')
         setSignUpPassword('')
         setSignUpConfirmPassword('')
-        setSignUpRole('student')
       } else {
         setError(data.error || 'Registrierung fehlgeschlagen')
       }
@@ -314,20 +312,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="signup-role" className="text-gray-600 font-normal">
-                    Ich bin
-                  </Label>
-                  <Select value={signUpRole} onValueChange={setSignUpRole} disabled={loading}>
-                    <SelectTrigger className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent">
-                      <SelectValue placeholder="Rolle auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student/Kursteilnehmer</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
 
                 {error && (
                   <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
