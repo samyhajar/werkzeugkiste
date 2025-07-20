@@ -98,13 +98,21 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError('')
     setSuccess('')
 
-    if (signUpPassword !== signUpConfirmPassword) {
-      setError('Passwörter stimmen nicht überein')
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(signUpEmail)) {
+      setError('Bitte geben Sie eine gültige E-Mail-Adresse ein')
       return
     }
 
+    // Password validation
     if (signUpPassword.length < 6) {
       setError('Passwort muss mindestens 6 Zeichen lang sein')
+      return
+    }
+
+    if (signUpPassword !== signUpConfirmPassword) {
+      setError('Passwörter stimmen nicht überein')
       return
     }
 
@@ -145,7 +153,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         <div className="p-8">
           <DialogHeader className="mb-8">
             <DialogTitle className="text-3xl font-normal text-gray-700 text-left">
-              Einloggen
+              Willkommen
             </DialogTitle>
             <DialogDescription className="text-gray-500 text-left">
               Melden Sie sich an oder erstellen Sie ein neues Konto
@@ -158,7 +166,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </button>
           </DialogHeader>
 
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs
+            defaultValue="signin"
+            className="w-full"
+            onValueChange={() => {
+              // Clear messages when switching tabs
+              setError('')
+              setSuccess('')
+            }}
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger value="signin" className="text-sm">Einloggen</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm">Registrieren</TabsTrigger>
+            </TabsList>
+
             <TabsContent value="signin" className="space-y-6 mt-0">
               <form onSubmit={handleSignIn} className="space-y-6">
                 <div className="space-y-2">
@@ -229,25 +250,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   {loading ? 'Wird angemeldet...' : 'Einloggen'}
                 </Button>
 
-                <div className="text-center mt-6">
-                  <span className="text-gray-600">Noch nicht Mitglied? </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Switch to signup tab - we'll implement this if needed
-                    }}
-                    className="text-gray-600 underline hover:text-gray-800"
-                  >
-                    Jetzt Registrieren
-                  </button>
-                </div>
+
               </form>
             </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4 mt-4">
-              <form onSubmit={handleSignUp} className="space-y-4">
+            <TabsContent value="signup" className="space-y-6 mt-0">
+              <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">E-Mail</Label>
+                  <Label htmlFor="signup-email" className="text-gray-600 font-normal">
+                    E-Mail-Adresse
+                  </Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -255,10 +267,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     onChange={(e) => setSignUpEmail(e.target.value)}
                     required
                     disabled={loading}
+                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    placeholder="ihre.email@beispiel.de"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Passwort</Label>
+                  <Label htmlFor="signup-password" className="text-gray-600 font-normal">
+                    Passwort
+                  </Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -268,10 +285,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     disabled={loading}
                     minLength={6}
                     autoComplete="new-password"
+                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    placeholder="Mindestens 6 Zeichen"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Passwort bestätigen</Label>
+                  <Label htmlFor="signup-confirm-password" className="text-gray-600 font-normal">
+                    Passwort bestätigen
+                  </Label>
                   <Input
                     id="signup-confirm-password"
                     type="password"
@@ -280,33 +302,53 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     required
                     disabled={loading}
                     autoComplete="new-password"
+                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    placeholder="Passwort wiederholen"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="signup-role">Rolle</Label>
+                  <Label htmlFor="signup-role" className="text-gray-600 font-normal">
+                    Ich bin
+                  </Label>
                   <Select value={signUpRole} onValueChange={setSignUpRole} disabled={loading}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent">
                       <SelectValue placeholder="Rolle auswählen" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="student">Student/Kursteilnehmer</SelectItem>
                       <SelectItem value="admin">Administrator</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
                 {error && (
-                  <div className="text-red-600 text-sm">{error}</div>
+                  <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
                 )}
+
                 {success && (
-                  <div className="text-green-600 text-sm">{success}</div>
+                  <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md font-medium">{success}</div>
                 )}
+
                 <Button
                   type="submit"
-                  className="w-full bg-brand-secondary hover:bg-brand-secondary-hover text-white"
+                  className="w-full bg-[#de0449] hover:bg-[#c5043e] text-white py-3 rounded-md font-normal text-lg"
                   disabled={loading}
                 >
-                  {loading ? 'Wird registriert...' : 'Registrieren'}
+                  {loading ? 'Wird registriert...' : 'Konto erstellen'}
                 </Button>
+
+                <div className="text-center text-sm text-gray-500">
+                  Mit der Registrierung stimmen Sie unseren{' '}
+                  <button type="button" className="text-gray-600 underline hover:text-gray-800">
+                    Nutzungsbedingungen
+                  </button>{' '}
+                  und{' '}
+                  <button type="button" className="text-gray-600 underline hover:text-gray-800">
+                    Datenschutzbestimmungen
+                  </button>{' '}
+                  zu.
+                </div>
               </form>
             </TabsContent>
           </Tabs>
