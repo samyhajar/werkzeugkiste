@@ -26,33 +26,36 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
       </div>
 
       <CardContent className="flex-1 flex flex-col p-6">
-        {/* Title */}
-        <CardTitle className="text-xl font-bold text-[#c53030] mb-4 min-h-[3rem] leading-tight">
-          {course.title}
-        </CardTitle>
+        {/* Content that can grow */}
+        <div className="flex-1 flex flex-col">
+          {/* Title */}
+          <CardTitle className="text-xl font-bold text-[#c53030] mb-4 min-h-[3rem] leading-tight">
+            {course.title}
+          </CardTitle>
 
-        {/* Description */}
-        <p className="text-gray-700 text-sm line-clamp-3 mb-6 flex-1 leading-relaxed">
-          {course.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
-        </p>
+          {/* Description */}
+          <p className="text-gray-700 text-sm line-clamp-3 mb-6 leading-relaxed">
+            {course.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
+          </p>
 
-        {/* Progress bar for logged-in users */}
-        {isLoggedIn && (
-          <div className="space-y-3 mb-4">
-            <div className="flex justify-between text-sm font-medium text-gray-700">
-              <span>Fortschritt</span>
-              <span className="text-green-600">{progress}%</span>
+          {/* Progress bar for logged-in users */}
+          {isLoggedIn && (
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-sm font-medium text-gray-700">
+                <span>Fortschritt</span>
+                <span className="text-green-600">{progress}%</span>
+              </div>
+              <Progress
+                value={progress}
+                variant="success"
+                size="default"
+                className="h-3 shadow-sm"
+              />
             </div>
-            <Progress
-              value={progress}
-              variant="success"
-              size="default"
-              className="h-3 shadow-sm"
-            />
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Price and Button */}
+        {/* Price and Button - Always at bottom */}
         <div className="mt-auto">
           <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
           <Link
