@@ -58,22 +58,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const isAuthPage =
-    request.nextUrl.pathname.startsWith('/login') ||
-    request.nextUrl.pathname.startsWith('/auth')
+  const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
   const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
   const isHomePage = request.nextUrl.pathname === '/'
-  const isPublicPage = ['/digi-sammlung', '/ueber-uns', '/fragen'].some(p =>
-    request.nextUrl.pathname.startsWith(p)
-  )
+  const isPublicPage = [
+    '/digi-sammlung',
+    '/ueber-uns',
+    '/fragen',
+    '/suche',
+  ].some(p => request.nextUrl.pathname.startsWith(p))
 
   // If user is not authenticated
   if (!user) {
     if (!isAuthPage && !isHomePage && !isPublicPage) {
-      // Redirect to login page
+      // Redirect to home page (where login modal can be opened)
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
+      url.pathname = '/'
       return NextResponse.redirect(url)
     }
     return supabaseResponse
@@ -85,7 +86,7 @@ export async function middleware(request: NextRequest) {
     if (userRole === 'admin') {
       url.pathname = '/admin'
     } else {
-      url.pathname = '/dashboard'
+      url.pathname = '/'
     }
     return NextResponse.redirect(url)
   }
@@ -102,18 +103,14 @@ export async function middleware(request: NextRequest) {
     // Student trying to access admin pages
     if (userRole === 'student' && isAdminPage) {
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
+      url.pathname = '/'
       return NextResponse.redirect(url)
     }
 
-    // Redirect from home page based on role
-    if (isHomePage) {
+    // Admin visiting home page should go to admin dashboard
+    if (isHomePage && userRole === 'admin') {
       const url = request.nextUrl.clone()
-      if (userRole === 'admin') {
-        url.pathname = '/admin'
-      } else {
-        url.pathname = '/dashboard'
-      }
+      url.pathname = '/admin'
       return NextResponse.redirect(url)
     }
   }

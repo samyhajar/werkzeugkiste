@@ -5,21 +5,28 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is authenticated and is admin
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-    if (sessionError || !session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
     }
 
-    const userRole = session.user.user_metadata?.role
+    // Check if user is admin
+    const userRole = user.user_metadata?.role
     if (userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      )
     }
 
-    // Fetch courses data
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
@@ -27,7 +34,10 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching courses:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch courses' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
@@ -35,9 +45,9 @@ export async function GET(request: NextRequest) {
       courses: courses || [],
     })
   } catch (error) {
-    console.error('Courses API error:', error)
+    console.error('Admin courses API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -47,53 +57,85 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is authenticated and is admin
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-    if (sessionError || !session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
     }
 
-    const userRole = session.user.user_metadata?.role
+    // Check if user is admin
+    const userRole = user.user_metadata?.role
     if (userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      )
     }
 
     const { title, description, status } = await request.json()
 
     if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Title is required' },
+        { status: 400 }
+      )
     }
 
-    // Create new course
-    const { data: newCourse, error } = await supabase
+    const { data: course, error } = await supabase
       .from('courses')
-      .insert([
-        {
-          title,
-          description: description || null,
-          status: status || 'draft',
-          admin_id: session.user.id,
-        },
-      ])
+      .insert({
+        title,
+        description,
+        status: status || 'draft',
+        admin_id: user.id,
+      })
       .select()
       .single()
 
     if (error) {
       console.error('Error creating course:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { success: false, error: 'Failed to create course' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
       success: true,
-      course: newCourse,
+      course,
     })
   } catch (error) {
-    console.error('Create course API error:', error)
+    console.error('Admin create course API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+    if (error) {
+      console.error('Error creating course:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to create course' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      course,
+    })
+  } catch (error) {
+    console.error('Admin create course API error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

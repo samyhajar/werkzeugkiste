@@ -6,9 +6,9 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
 
-  // If no code param, redirect to login
+  // If no code param, redirect to home page
   if (!code) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   // Prepare response that we will attach cookies to
@@ -35,9 +35,7 @@ export async function GET(request: NextRequest) {
   // Exchange the auth code for a session and set cookies
   const { error } = await supabase.auth.exchangeCodeForSession(code)
   if (error) {
-    return NextResponse.redirect(
-      new URL('/login?error=auth_callback', request.url)
-    )
+    return NextResponse.redirect(new URL('/?error=auth_callback', request.url))
   }
 
   // Retrieve user profile to decide where to route next
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  let redirectPath = '/dashboard'
+  let redirectPath = '/'
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')

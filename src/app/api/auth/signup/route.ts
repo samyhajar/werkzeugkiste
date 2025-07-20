@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerClient } from '@/lib/supabase/server-client'
+import { createClient } from '@/lib/supabase/server-client'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, role = 'student' } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json(
@@ -12,14 +12,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = getServerClient()
+    // Validate role
+    if (role !== 'student' && role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Invalid role. Must be student or admin.' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          role: 'student', // Default role for new users
+          full_name: email.split('@')[0], // Use email prefix as default name
+          role: role, // Set role in user metadata
         },
       },
     })
@@ -29,16 +38,67 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
+    if (data.user) {
+      // Also create/update profile record with role
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        full_name: email.split('@')[0],
+        role: role,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        // Don't fail the signup if profile creation fails
+      }
+    }
+
     return NextResponse.json({
-      message:
-        'Account created successfully! Please check your email to verify your account.',
+      success: true,
+      message: 'User created successfully',
       user: data.user,
     })
   } catch (error) {
-    console.error('Signup API error:', error)
+    console.error('Signup error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
+}
+
+        full_name: email.split('@')[0],
+        role: role,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        // Don't fail the signup if profile creation fails
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'User created successfully',
+      user: data.user,
+    })
+  } catch (error) {
+    console.error('Signup error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET() {
+  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }

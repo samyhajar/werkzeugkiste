@@ -31,12 +31,12 @@ export default function AdminLayout({
       })
 
       if (response.ok) {
-        router.replace('/login')
+        router.replace('/')
       }
     } catch (error) {
       console.error('Logout error:', error)
       // Force redirect even if logout API fails
-      router.replace('/login')
+      router.replace('/')
     }
   }
 
@@ -46,9 +46,9 @@ export default function AdminLayout({
 
       // Add timeout to prevent infinite hanging
       const timeoutId = setTimeout(() => {
-        console.log('[AdminLayout] TIMEOUT - Auth check took too long, redirecting to login')
+        console.log('[AdminLayout] TIMEOUT - Auth check took too long, redirecting to home')
         setLoading(false)
-        router.replace('/login')
+        router.replace('/')
       }, 10000) // 10 second timeout
 
       try {
@@ -61,12 +61,12 @@ export default function AdminLayout({
         console.log('[AdminLayout] API response status:', response.status)
 
         if (!response.ok) {
-          console.log('[AdminLayout] API returned error status, redirecting to login')
+          console.log('[AdminLayout] API returned error status, redirecting to home')
           clearTimeout(timeoutId)
           setIsAuthenticated(false)
           setIsAdmin(false)
           setUser(null)
-          router.replace('/login')
+          router.replace('/')
           return
         }
 
@@ -85,18 +85,18 @@ export default function AdminLayout({
           setUser(data.user)
 
           if (!data.isAdmin) {
-            console.log('[AdminLayout] User not admin, redirecting to dashboard')
-            router.replace('/dashboard')
+            console.log('[AdminLayout] User not admin, redirecting to home page')
+            router.replace('/')
             return
           }
 
           console.log('[AdminLayout] Admin user authenticated successfully!')
         } else {
-          console.log('[AdminLayout] User not authenticated, redirecting to login')
+          console.log('[AdminLayout] User not authenticated, redirecting to home')
           setIsAuthenticated(false)
           setIsAdmin(false)
           setUser(null)
-          router.replace('/login')
+          router.replace('/')
           return
         }
 
@@ -107,7 +107,7 @@ export default function AdminLayout({
         setIsAuthenticated(false)
         setIsAdmin(false)
         setUser(null)
-        router.replace('/login')
+        router.replace('/')
         return
       } finally {
         console.log('[AdminLayout] Setting loading to false')

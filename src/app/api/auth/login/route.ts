@@ -30,9 +30,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
 
+    // Fetch user profile to get role
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single()
+
     return NextResponse.json({
+      success: true,
       message: 'Signed in successfully',
-      user: data.user,
+      user: {
+        ...data.user,
+        role: profile?.role || 'student',
+      },
     })
   } catch (error) {
     console.error('Login error:', error)

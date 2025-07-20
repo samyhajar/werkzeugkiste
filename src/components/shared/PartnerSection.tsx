@@ -26,6 +26,7 @@ export default function PartnerSection() {
             width={220}
             height={100}
             className="object-contain h-20 md:h-24 w-auto max-w-[160px] md:max-w-[220px]"
+            style={{ height: 'auto' }}
           />
         ))}
       </div>
@@ -50,6 +51,7 @@ export default function PartnerSection() {
             width={260}
             height={100}
             className="object-contain h-24 w-auto max-w-[200px] md:max-w-[260px]"
+            style={{ height: 'auto' }}
           />
         ))}
       </div>

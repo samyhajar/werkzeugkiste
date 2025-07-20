@@ -14,26 +14,32 @@ interface ModuleCardProps {
 
 export default function ModuleCard({ course, progress = 0, isLoggedIn = false }: ModuleCardProps) {
   return (
-    <Card className="w-full flex flex-col">
-      <Image
-        src={course.hero_image || '/placeholder.png'}
-        alt={course.title}
-        width={400}
-        height={220}
-        className="w-full h-40 object-cover"
-      />
-      <CardHeader>
-        <CardTitle className="text-brand-secondary min-h-[3rem]">
+    <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg">
+      {/* Hero Image */}
+      <div className="relative w-full h-48 bg-brand-primary">
+        <Image
+          src={course.hero_image || '/header-full-computer-final.jpg'}
+          alt={course.title}
+          fill
+          className="object-cover"
+        />
+      </div>
+
+      <CardContent className="flex-1 flex flex-col p-6">
+        {/* Title */}
+        <CardTitle className="text-xl font-bold text-[#c53030] mb-4 min-h-[3rem] leading-tight">
           {course.title}
         </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-between gap-4">
-        <p className="text-sm line-clamp-3 text-foreground/80 min-h-[4.5rem]">{course.description}</p>
+
+        {/* Description */}
+        <p className="text-gray-700 text-sm line-clamp-3 mb-6 flex-1 leading-relaxed">
+          {course.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
+        </p>
 
         {/* Progress bar for logged-in users */}
         {isLoggedIn && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-foreground/60">
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-xs text-gray-600">
               <span>Fortschritt</span>
               <span>{progress}%</span>
             </div>
@@ -41,11 +47,12 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
           </div>
         )}
 
-        <div>
-          <p className="text-sm font-medium mb-2">Kostenlos</p>
+        {/* Price and Button */}
+        <div className="mt-auto">
+          <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
           <Link
-            href={`/course/${course.id}`}
-            className="block text-center border rounded py-1 text-sm hover:bg-accent"
+            href={`/modules/${course.id}`}
+            className="block w-full bg-brand-secondary hover:bg-brand-secondary-hover text-white text-center py-3 rounded-lg font-medium transition-colors"
           >
             Modul starten
           </Link>

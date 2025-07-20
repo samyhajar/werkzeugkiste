@@ -6,6 +6,8 @@ import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
 import { cookies } from 'next/headers'
+import NewHereButton from '@/components/shared/NewHereButton'
+import ProgressTester from '@/components/shared/ProgressTester'
 
 type Course = Tables<'courses'>
 type LessonProgress = Tables<'lesson_progress'>
@@ -28,54 +30,61 @@ export default async function Home({
   const cookieStore = await cookies()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch published courses
+  // Fetch all published courses
   const { data: fetchedCourses } = await supabase
     .from('courses')
     .select('*')
     .eq('status', 'published')
-    .limit(4)
+    .order('created_at', { ascending: false })
 
   const courses = fetchedCourses ?? []
 
   // Fetch user progress if logged in
   let userProgress: Record<string, number> = {}
   if (user) {
-    const { data: progressData } = await supabase
+    // Get user's completed lessons with course info in a single query
+    const { data: progressData, error: progressError } = await supabase
       .from('lesson_progress')
       .select(`
         lesson_id,
-        lessons!inner(course_id)
+        completed_at,
+        lessons!inner(
+          id,
+          course_id,
+          title
+        )
       `)
       .eq('student_id', user.id)
 
-    if (progressData) {
-      // Group progress by course_id and calculate completion percentage
-      const progressByCourse: Record<string, { completed: number; total: number }> = {}
+    if (progressData && !progressError) {
+      // Get total lesson counts per course in a single query
+      const { data: lessonCounts, error: countError } = await supabase
+        .from('lessons')
+        .select('course_id')
+        .in('course_id', courses.map(c => c.id))
 
-      // Get total lessons per course
-      for (const course of courses) {
-        const { count: totalLessons } = await supabase
-          .from('lessons')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', course.id)
+      if (lessonCounts && !countError) {
+        // Count lessons per course
+        const lessonCountByCourse: Record<string, number> = {}
+        lessonCounts.forEach(lesson => {
+          lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
+        })
 
-        progressByCourse[course.id] = {
-          completed: 0,
-          total: totalLessons || 0
+        // Count completed lessons per course
+        const completedByCourse: Record<string, number> = {}
+        progressData.forEach(progress => {
+          const courseId = (progress.lessons as any)?.course_id
+          if (courseId) {
+            completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1
+          }
+        })
+
+        // Calculate percentages
+        for (const courseId of courses.map(c => c.id)) {
+          const totalLessons = lessonCountByCourse[courseId] || 0
+          const completedLessons = completedByCourse[courseId] || 0
+          userProgress[courseId] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
         }
-      }
-
-      // Count completed lessons per course
-      for (const progress of progressData) {
-        const courseId = (progress.lessons as any)?.course_id
-        if (courseId && progressByCourse[courseId]) {
-          progressByCourse[courseId].completed++
-        }
-      }
-
-      // Calculate percentages
-      for (const [courseId, { completed, total }] of Object.entries(progressByCourse)) {
-        userProgress[courseId] = total > 0 ? Math.round((completed / total) * 100) : 0
       }
     }
   }
@@ -95,27 +104,36 @@ export default async function Home({
       </section>
 
       {/* Modules */}
-      <section id="modules" className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6 text-center md:text-left">
+      <section id="modules" className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold mb-8 text-center md:text-left text-gray-800">
           Lernmodule
         </h2>
-        <div className="grid gap-6 md:grid-cols-4">
-          {courses.map((course: Course) => (
-            <ModuleCard
-              key={course.id}
-              course={course}
-              progress={userProgress[course.id] || 0}
-              isLoggedIn={!!user}
-            />
-          ))}
-          {/* Add placeholders to always show 4 cards */}
-          {Array.from({ length: Math.max(0, 4 - courses.length) }).map((_, i) => (
-            <DummyModuleCard key={`dummy-${i}`} />
-          ))}
-        </div>
+        {courses.length > 0 ? (
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {courses.map((course: Course) => (
+              <ModuleCard
+                key={course.id}
+                course={course}
+                progress={userProgress[course.id] || 0}
+                isLoggedIn={!!user}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-gray-600 mb-4">Derzeit sind keine Module verfügbar.</p>
+            <p className="text-gray-400 text-sm">Schauen Sie später wieder vorbei.</p>
+          </div>
+        )}
       </section>
 
+      {/* Progress Tester for Development */}
+      <ProgressTester />
+
       <PartnerSection />
+
+      {/* Floating "Neu hier?" Button */}
+      <NewHereButton />
     </>
   )
 }
