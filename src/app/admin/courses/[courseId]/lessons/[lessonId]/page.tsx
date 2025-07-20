@@ -60,10 +60,10 @@ export default function LessonDetailsPage() {
 
         if (lessonError) throw lessonError
 
-        setLesson(lessonData as LessonWithQuizzes)
+        setLesson(lessonData as any)
         setFormData({
           title: lessonData.title || '',
-          markdown: lessonData.markdown || '',
+          markdown: lessonData.markdown || lessonData.content || '',
           video_url: lessonData.video_url || '',
           sort_order: lessonData.sort_order || 0
         })
@@ -372,7 +372,7 @@ export default function LessonDetailsPage() {
                     <div>
                       <h4 className="font-medium text-foreground">{quiz.title}</h4>
                       <p className="text-sm text-foreground/60">
-                        Pass percentage: {quiz.pass_pct}%
+                        Pass percentage: {quiz.pass_percentage}%
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
