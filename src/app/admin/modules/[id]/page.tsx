@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
@@ -40,6 +41,8 @@ export default function ModuleManagePage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [editForm, setEditForm] = useState({
@@ -117,6 +120,34 @@ export default function ModuleManagePage() {
       setError(err instanceof Error ? err.message : 'Failed to update module')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const deleteModule = async () => {
+    setDeleting(true)
+
+    try {
+      const response = await fetch(`/api/admin/modules/${moduleId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Redirect to modules list
+        router.push('/admin/modules')
+      } else {
+        throw new Error(data.error || 'Failed to delete module')
+      }
+    } catch (err) {
+      console.error('Error deleting module:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete module')
+      setDeleting(false)
     }
   }
 
@@ -277,7 +308,51 @@ export default function ModuleManagePage() {
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-between items-center">
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={saving || deleting}
+                >
+                  Delete Module
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Delete Module</DialogTitle>
+                  <DialogDescription className="space-y-2">
+                    <p>Are you sure you want to delete this module?</p>
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        <strong>⚠️ Important:</strong> This will delete the module but will NOT delete its associated courses. Those courses will remain in the system but will no longer be grouped under this module.
+                      </p>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex gap-2 justify-end mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setShowDeleteDialog(false)
+                      deleteModule()
+                    }}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete Module'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <Button
               onClick={updateModule}
               disabled={saving || !editForm.title.trim()}

@@ -6,6 +6,7 @@ import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
 import { Tables } from '@/types/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,6 +33,8 @@ export default function LessonDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [editing, setEditing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     markdown: '',
@@ -146,6 +149,34 @@ export default function LessonDetailsPage() {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Redirect back to course
+        router.push(`/admin/courses/${courseId}`)
+      } else {
+        throw new Error(data.error || 'Failed to delete lesson')
+      }
+    } catch (err) {
+      console.error('Error deleting lesson:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete lesson')
+      setDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="p-8">
@@ -208,12 +239,48 @@ export default function LessonDetailsPage() {
               </p>
             </div>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-          >
-            Delete Lesson
-          </Button>
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="destructive"
+                disabled={saving || deleting}
+              >
+                Delete Lesson
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Lesson</DialogTitle>
+                <DialogDescription className="space-y-2">
+                  <p>Are you sure you want to delete this lesson?</p>
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-sm text-yellow-800">
+                      <strong>⚠️ Important:</strong> This will delete the lesson but will NOT delete its quizzes. Those will remain in the system but will no longer be associated with this lesson.
+                    </p>
+                  </div>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex gap-2 justify-end mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setShowDeleteDialog(false)
+                    handleDelete()
+                  }}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete Lesson'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Lesson Information */}

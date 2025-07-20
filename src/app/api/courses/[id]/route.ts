@@ -94,3 +94,61 @@ export async function GET(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const supabase = await createClient()
+
+    // Check authentication and admin role
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      )
+    }
+
+    // Delete course (lessons will remain due to warning given to user)
+    const { error } = await supabase.from('courses').delete().eq('id', id)
+
+    if (error) {
+      console.error('Error deleting course:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete course' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Course deleted successfully',
+    })
+  } catch (error) {
+    console.error('Delete course API error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
