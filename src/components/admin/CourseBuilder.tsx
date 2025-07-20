@@ -45,7 +45,9 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
       if (error) {
         setError(error.message)
       } else {
-        setLessons(data as LessonWithQuizzes[])
+        // Filter out any lessons with quiz query errors and cast safely
+        const validLessons = data?.filter(lesson => Array.isArray(lesson.quizzes)) || []
+        setLessons(validLessons as unknown as LessonWithQuizzes[])
       }
       setLoading(false)
     }
@@ -64,7 +66,9 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
     if (error) {
       setError(error.message)
     } else {
-      setLessons(data as LessonWithQuizzes[])
+      // Filter out any lessons with quiz query errors and cast safely
+      const validLessons = data?.filter(lesson => Array.isArray(lesson.quizzes)) || []
+      setLessons(validLessons as unknown as LessonWithQuizzes[])
     }
   }
 
@@ -92,9 +96,10 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
     if (!quizDialogOpen.lessonId) return
 
     const { error } = await supabase.from('quizzes').insert({
-      lesson_id: quizDialogOpen.lessonId,
+      quizable_id: quizDialogOpen.lessonId,
+      quizable_type: 'lesson',
       title: payload.title,
-      pass_pct: payload.pass_pct,
+      pass_percentage: payload.pass_pct,
     })
 
     if (error) {
@@ -190,7 +195,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
               {lesson.quizzes.map((quiz) => (
                 <div key={quiz.id} className="border rounded p-4 my-2 bg-background">
                   <p className="font-medium">Quiz: {quiz.title}</p>
-                  <p className="text-sm text-foreground/60">Pass %: {quiz.pass_pct}</p>
+                  <p className="text-sm text-foreground/60">Pass %: {quiz.pass_percentage}</p>
                 </div>
               ))}
             </CardContent>

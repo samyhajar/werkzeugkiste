@@ -75,7 +75,9 @@ export default async function Home({
           // Count lessons per course
           const lessonCountByCourse: Record<string, number> = {}
           lessonCounts.forEach(lesson => {
-            lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
+            if (lesson.course_id) {
+              lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
+            }
           })
 
           // Count completed lessons per course
@@ -130,7 +132,7 @@ export default async function Home({
               {modules.map((module: Module) => (
                 <ModuleCard
                   key={module.id}
-                  course={module}
+                  module={module}
                   progress={userProgress[module.id] || 0}
                   isLoggedIn={!!user}
                 />

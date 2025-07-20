@@ -4,22 +4,22 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Tables } from '@/types/supabase'
 
-type Course = Tables<'courses'>
+type Module = Tables<'modules'>
 
 interface ModuleCardProps {
-  course: Course
+  module: Module
   progress?: number
   isLoggedIn?: boolean
 }
 
-export default function ModuleCard({ course, progress = 0, isLoggedIn = false }: ModuleCardProps) {
+export default function ModuleCard({ module, progress = 0, isLoggedIn = false }: ModuleCardProps) {
   return (
     <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg">
       {/* Hero Image */}
       <div className="relative w-full h-48 bg-brand-primary">
         <Image
-          src={course.hero_image || '/header-full-computer-final.jpg'}
-          alt={course.title}
+          src="/header-full-computer-final.jpg"
+          alt={module.title}
           fill
           className="object-cover"
         />
@@ -30,12 +30,12 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
         <div className="flex-1 flex flex-col">
           {/* Title */}
           <CardTitle className="text-xl font-bold text-[#c53030] mb-4 min-h-[3rem] leading-tight">
-            {course.title}
+            {module.title}
           </CardTitle>
 
           {/* Description */}
           <p className="text-gray-700 text-sm line-clamp-3 mb-6 leading-relaxed">
-            {course.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
+            {module.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
           </p>
 
           {/* Progress bar for logged-in users */}
@@ -59,7 +59,7 @@ export default function ModuleCard({ course, progress = 0, isLoggedIn = false }:
         <div className="mt-auto">
           <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
           <Link
-            href={`/modules/${course.id}`}
+            href={`/modules/${module.id}`}
             className="block w-full border-2 border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:text-gray-800 text-center py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50"
           >
             Modul starten

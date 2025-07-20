@@ -2,54 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import Link from 'next/link'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatDistanceToNow } from 'date-fns'
-
-interface Course {
-  id: string
-  title: string
-  description: string | null
-  status: 'draft' | 'published'
-  admin_id: string | null
-  created_at: string
-  updated_at: string
-}
-
-interface Module {
-  id: string
-  title: string
-  description: string | null
-  status: 'draft' | 'published'
-  created_at: string
-}
+import type {
+  CoursesResponse,
+  CourseResponse,
+  ModulesResponse,
+  CourseData,
+  ModuleData
+} from '@/types/api'
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [modules, setModules] = useState<Module[]>([])
+  const [courses, setCourses] = useState<CourseData[]>([])
+  const [modules, setModules] = useState<ModuleData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [newCourse, setNewCourse] = useState({
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'draft' as 'draft' | 'published',
-    module_id: ''
+    module_id: '',
+    hero_image: '',
   })
 
   const fetchCourses = async () => {
-    setLoading(true)
-    setError(null)
-
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'GET',
@@ -57,49 +39,52 @@ export default function CoursesPage() {
       })
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+        throw new Error(`Failed to fetch courses: ${response.status}`)
       }
 
-      const data = await response.json()
+      const result = await response.json() as CoursesResponse
 
-      if (data.success) {
-        setCourses(data.courses || [])
-      } else {
-        throw new Error(data.error || 'Failed to fetch courses')
+      if (!result.success || !result.courses) {
+        throw new Error(result.error || 'Failed to fetch courses')
       }
+
+      setCourses(result.courses)
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch courses'
       console.error('Error fetching courses:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load courses')
-    } finally {
-      setLoading(false)
+      setError(errorMessage)
     }
   }
 
   const fetchModules = async () => {
     try {
-      const response = await fetch('/api/modules', {
+      const response = await fetch('/api/admin/modules', {
         method: 'GET',
         credentials: 'include',
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setModules(data.modules || [])
-        }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch modules: ${response.status}`)
       }
+
+      const result = await response.json() as ModulesResponse
+
+      if (!result.success || !result.modules) {
+        throw new Error(result.error || 'Failed to fetch modules')
+      }
+
+      setModules(result.modules)
     } catch (err) {
       console.error('Error fetching modules:', err)
     }
   }
 
-  const createCourse = async () => {
-    if (!newCourse.title.trim()) {
-      return
-    }
-
-    setCreating(true)
-
+  const createCourse = async (courseData: {
+    title: string
+    description: string
+    module_id: string
+    hero_image: string
+  }) => {
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'POST',
@@ -107,70 +92,50 @@ export default function CoursesPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(newCourse),
+        body: JSON.stringify(courseData),
       })
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+        throw new Error(`Failed to create course: ${response.status}`)
       }
 
-      const data = await response.json()
+      const result = await response.json() as CourseResponse
 
-      if (data.success) {
-        setCourses([data.course, ...courses])
-        setNewCourse({ title: '', description: '', status: 'draft', module_id: '' })
-        setIsCreateDialogOpen(false)
-      } else {
-        throw new Error(data.error || 'Failed to create course')
+      if (!result.success || !result.course) {
+        throw new Error(result.error || 'Failed to create course')
       }
+
+      setCreateModalOpen(false)
+      setFormData({ title: '', description: '', module_id: '', hero_image: '' })
+      await Promise.all([fetchCourses(), fetchModules()])
     } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create course'
       console.error('Error creating course:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create course')
-    } finally {
-      setCreating(false)
+      setError(errorMessage)
     }
   }
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || course.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
   useEffect(() => {
-    fetchCourses()
-    fetchModules()
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([fetchCourses(), fetchModules()])
+      setLoading(false)
+    }
+
+    void loadData()
   }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await createCourse(formData)
+  }
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
-            <span className="text-gray-600">Loading courses...</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-2">Failed to load courses</div>
-            <div className="text-gray-500 text-sm">{error}</div>
-            <Button
-              onClick={() => fetchCourses()}
-              className="mt-4"
-              variant="outline"
-            >
-              Retry
-            </Button>
-          </div>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486682] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading courses...</p>
         </div>
       </div>
     )
@@ -182,242 +147,151 @@ export default function CoursesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your learning courses and content
-          </p>
+          <p className="text-gray-600 mt-2">Manage your learning courses</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
-              <span className="mr-2">📚</span>
-              Create New Course
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
-            <DialogHeader className="text-center pb-4 flex-shrink-0">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
-                <span className="text-white text-lg">📚</span>
-              </div>
-              <DialogTitle className="text-xl font-bold text-gray-900">Create New Course</DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
-                Add a new learning course to your platform and start building educational content
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
-              {/* Module Assignment Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📚</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Module Assignment</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="module" className="text-xs font-semibold text-gray-700">Select Module *</Label>
-                  <Select
-                    value={newCourse.module_id}
-                    onValueChange={(value) => setNewCourse({ ...newCourse, module_id: value })}
-                  >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
-                      <SelectValue placeholder="Choose a module for this course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          <div className="flex items-center gap-2">
-                            <span>📚</span>
-                            <span>{module.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Select the module where this course will be organized</p>
-                </div>
-              </div>
-
-              {/* Course Info Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📝</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Information</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Course Title *</Label>
-                    <Input
-                      id="title"
-                      value={newCourse.title}
-                      onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                      placeholder="e.g., Introduction to Digital Marketing"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newCourse.description}
-                      onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                      placeholder="Describe what students will learn in this course..."
-                      rows={2}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">⚙️</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Settings</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="status" className="text-xs font-semibold text-gray-700">Publication Status</Label>
-                  <Select
-                    value={newCourse.status}
-                    onValueChange={(value: 'draft' | 'published') =>
-                      setNewCourse({ ...newCourse, status: value })
-                    }
-                  >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <span>📝</span>
-                          <span>Draft - Not visible to students</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="published">
-                        <div className="flex items-center gap-2">
-                          <span>🌟</span>
-                          <span>Published - Available to students</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons - Fixed Footer */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={creating}
-                className="sm:w-auto w-full h-9 text-sm"
-              >
-                <span className="mr-2">❌</span>
-                Cancel
-              </Button>
-              <Button
-                onClick={createCourse}
-                disabled={creating || !newCourse.title.trim() || !newCourse.module_id}
-                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
-              >
-                {creating ? (
-                  <>
-                    <span className="mr-2 animate-spin">⏳</span>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-2">✨</span>
-                    Create Course
-                  </>
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search courses..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
+        <Button
+          onClick={() => setCreateModalOpen(true)}
+          className="bg-[#486682] hover:bg-[#3e5570] text-white"
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
+          Create Course
+        </Button>
       </div>
 
-      {/* Courses Grid */}
-      {filteredCourses.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
-            {courses.length === 0 ? 'No courses created yet' : 'No courses match your search'}
-          </div>
-          {courses.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
-              Create Your First Course
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => (
-            <Card key={course.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{course.title}</CardTitle>
-                  <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                    {course.status}
-                  </Badge>
-                </div>
-                {course.description && (
-                  <CardDescription className="line-clamp-2">
-                    {course.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
-                    <Link href={`/admin/courses/${course.id}`}>
-                      Manage
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
-                    <Link href={`/admin/courses/${course.id}/lessons`}>
-                      Lessons
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
         </div>
       )}
+
+      {/* Courses Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {courses.map((course) => (
+          <Card key={course.id} className="shadow-sm hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{course.title}</CardTitle>
+                <Badge
+                  className={
+                    course.status === 'published'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }
+                >
+                  {course.status || 'draft'}
+                </Badge>
+              </div>
+              {course.modules && (
+                <CardDescription>Module: {course.modules.title}</CardDescription>
+              )}
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                {course.description || 'No description available'}
+              </p>
+              <div className="text-xs text-gray-500">
+                Created {course.created_at ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true }) : 'unknown'}
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  size="sm"
+                  className="bg-[#486682] hover:bg-[#3e5570] text-white flex-1"
+                  onClick={() => window.location.href = `/admin/courses/${course.id}`}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[#486682] text-[#486682] hover:bg-[#486682]/10 flex-1"
+                  onClick={() => window.location.href = `/admin/courses/${course.id}/builder`}
+                >
+                  Builder
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {courses.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <div className="text-gray-400 text-4xl mb-4">📚</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No courses yet</h3>
+          <p className="text-gray-600 mb-4">Create your first course to get started.</p>
+          <Button
+            onClick={() => setCreateModalOpen(true)}
+            className="bg-[#486682] hover:bg-[#3e5570] text-white"
+          >
+            Create Course
+          </Button>
+        </div>
+      )}
+
+      {/* Create Course Modal */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Course</DialogTitle>
+            <DialogDescription>
+              Add a new course to your learning platform.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Enter course title"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter course description"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="module_id">Module</Label>
+              <Select value={formData.module_id} onValueChange={(value) => setFormData({ ...formData, module_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a module" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modules.map((module) => (
+                    <SelectItem key={module.id} value={module.id}>
+                      {module.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="hero_image">Hero Image URL</Label>
+              <Input
+                id="hero_image"
+                value={formData.hero_image}
+                onChange={(e) => setFormData({ ...formData, hero_image: e.target.value })}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-[#486682] hover:bg-[#3e5570] text-white">
+                Create Course
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
 /**
@@ -8,47 +8,51 @@ import { createClient } from '@/lib/supabase/server-client'
  *    store (handled inside createClient)
  * ③ Returns { user, profile }  — no session is needed on the client
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const supabase = await createClient()
 
-    if (!email || !password) {
+    const body = (await request.json()) as {
+      email: string
+      password: string
+    }
+
+    const { data: authData, error: signInError } =
+      await supabase.auth.signInWithPassword({
+        email: body.email,
+        password: body.password,
+      })
+
+    if (signInError || !authData.user) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
+        { success: false, error: 'Invalid credentials' },
+        { status: 401 }
       )
     }
 
-    const supabase = await createClient()
+    const userId = authData.user.id
+    const userEmail = authData.user.email
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
-    }
-
-    // Fetch user profile to get role
-    const { data: profile, error: profileError } = await supabase
+    // Fetch the user profile
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
+      .select('id, full_name, role')
+      .eq('id', userId)
       .single()
 
     return NextResponse.json({
       success: true,
-      message: 'Signed in successfully',
       user: {
-        ...data.user,
+        id: userId,
+        email: userEmail,
         role: profile?.role || 'student',
+        full_name: profile?.full_name || '',
       },
     })
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Login failed' },
       { status: 500 }
     )
   }
