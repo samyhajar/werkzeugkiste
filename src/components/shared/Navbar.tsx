@@ -173,16 +173,16 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-brand-primary shadow-sm">
+      <nav className="bg-brand-primary">
         <div className="w-full px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className="flex justify-between items-center h-24">
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
                 src="/Logo-digi-CMYK.png"
                 alt="Digi+ Logo"
-                width={48}
-                height={48}
+                width={80}
+                height={80}
                 className="rounded-full"
               />
             </Link>
