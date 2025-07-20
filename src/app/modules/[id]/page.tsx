@@ -198,9 +198,12 @@ export default function ModuleDetailPage() {
                     </button>
                     {/* Dynamic button based on completion status */}
                     {module.lessons.length > 0 ? (
-                      <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium tracking-wide shadow-lg">
+                      <Link
+                        href={`/lessons/${module.lessons.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0]?.id}`}
+                        className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium tracking-wide shadow-lg inline-block text-center"
+                      >
                         MODUL STARTEN
-                      </button>
+                      </Link>
                     ) : (
                       <button className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium tracking-wide shadow-lg">
                         ZERTIFIKAT HERUNTERLADEN
@@ -319,25 +322,32 @@ export default function ModuleDetailPage() {
                                 .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
                                 .map((lesson) => (
                                   <div key={lesson.id}>
-                                    <div className="flex items-center justify-between py-2">
+                                    <Link
+                                      href={`/lessons/${lesson.id}`}
+                                      className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2 cursor-pointer transition-colors"
+                                    >
                                       <div className="flex items-center gap-3">
                                         <FileText className="h-4 w-4 text-[#de0449]" />
-                                        <span className="text-[#de0449] font-medium">{lesson.title}</span>
+                                        <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{lesson.title}</span>
                                       </div>
                                       <Check className="h-5 w-5 text-[#de0449]" />
-                                    </div>
+                                    </Link>
 
                                     {/* Quizzes for this lesson */}
                                     {module.quizzes
                                       .filter(quiz => quiz.lesson_id === lesson.id)
                                       .map((quiz) => (
-                                        <div key={quiz.id} className="flex items-center justify-between py-2 ml-7">
+                                        <Link
+                                          key={quiz.id}
+                                          href={`/quizzes/${quiz.id}`}
+                                          className="flex items-center justify-between py-2 ml-7 hover:bg-gray-50 rounded px-2 -mx-2 cursor-pointer transition-colors"
+                                        >
                                           <div className="flex items-center gap-3">
                                             <HelpCircle className="h-4 w-4 text-[#de0449]" />
-                                            <span className="text-[#de0449] font-medium">{quiz.title}</span>
+                                            <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{quiz.title}</span>
                                           </div>
                                           <Check className="h-5 w-5 text-[#de0449]" />
-                                        </div>
+                                        </Link>
                                       ))}
                                   </div>
                                 ))}
@@ -346,13 +356,17 @@ export default function ModuleDetailPage() {
                               {module.quizzes
                                 .filter(quiz => !quiz.lesson_id)
                                 .map((quiz) => (
-                                  <div key={quiz.id} className="flex items-center justify-between py-2">
+                                  <Link
+                                    key={quiz.id}
+                                    href={`/quizzes/${quiz.id}`}
+                                    className="flex items-center justify-between py-2 hover:bg-gray-50 rounded px-2 -mx-2 cursor-pointer transition-colors"
+                                  >
                                     <div className="flex items-center gap-3">
                                       <HelpCircle className="h-4 w-4 text-[#de0449]" />
-                                      <span className="text-[#de0449] font-medium">{quiz.title}</span>
+                                      <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{quiz.title}</span>
                                     </div>
                                     <Check className="h-5 w-5 text-[#de0449]" />
-                                  </div>
+                                  </Link>
                                 ))}
                             </div>
                           </div>

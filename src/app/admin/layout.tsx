@@ -38,7 +38,7 @@ export default function AdminLayout({
 
       // Always redirect, regardless of API response
       console.log('[AdminLayout] Redirecting to home...')
-      router.replace('/')
+        router.replace('/')
 
     } catch (error) {
       console.error('[AdminLayout] Logout error:', error)

@@ -20,9 +20,9 @@ export default function LogoutButton() {
     } catch (error) {
       console.error('[LogoutButton] Logout error:', error)
       // Force redirect even if logout fails
-      router.push('/')
+    router.push('/')
     } finally {
-      setLoading(false)
+    setLoading(false)
     }
   }
 
