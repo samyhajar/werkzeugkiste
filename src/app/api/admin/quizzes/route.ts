@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, description, lesson_id, questions } = await request.json()
+    const { title, description, lesson_id, questions, pass_percentage } =
+      await request.json()
 
     if (!title || !lesson_id) {
       return NextResponse.json(
@@ -82,18 +83,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create new quiz
+    // Create new quiz (simplified for now - just like CourseBuilder)
     const { data: newQuiz, error } = await supabase
       .from('quizzes')
-      .insert([
-        {
-          title,
-          description: description || null,
-          lesson_id,
-          questions: questions || [],
-          admin_id: session.user.id,
-        },
-      ])
+      .insert({
+        title,
+        lesson_id,
+        pass_pct: pass_percentage || 80,
+      })
       .select(
         `
         *,

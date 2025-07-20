@@ -23,12 +23,24 @@ interface Lesson {
   course: Course
 }
 
+interface QuizQuestion {
+  id?: number
+  type: 'multiple_choice' | 'true_false' | 'short_answer'
+  question_text: string
+  explanation: string
+  sort_order: number
+  options: {
+    text: string
+    is_correct: boolean
+  }[]
+}
+
 interface Quiz {
   id: string
   title: string
   description: string | null
   lesson_id: string
-  questions: any[]
+  questions: QuizQuestion[]
   admin_id: string | null
   created_at: string
   updated_at: string
@@ -44,11 +56,30 @@ export default function QuizzesPage() {
   const [lessonFilter, setLessonFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [newQuiz, setNewQuiz] = useState({
+  const [newQuiz, setNewQuiz] = useState<{
+    title: string
+    description: string
+    lesson_id: string
+    pass_percentage: number
+    questions: QuizQuestion[]
+  }>({
     title: '',
     description: '',
     lesson_id: '',
+    pass_percentage: 80,
     questions: []
+  })
+
+  const [currentQuestion, setCurrentQuestion] = useState({
+    type: 'multiple_choice' as 'multiple_choice' | 'true_false' | 'short_answer',
+    question_text: '',
+    explanation: '',
+    options: [
+      { text: '', is_correct: false },
+      { text: '', is_correct: false },
+      { text: '', is_correct: false },
+      { text: '', is_correct: false }
+    ]
   })
 
   const fetchQuizzes = async () => {
@@ -98,6 +129,115 @@ export default function QuizzesPage() {
     }
   }
 
+  const addQuestion = () => {
+    const newQuestionData = {
+      ...currentQuestion,
+      id: Date.now(), // temporary ID for display
+      sort_order: newQuiz.questions.length
+    }
+
+    setNewQuiz({
+      ...newQuiz,
+      questions: [...newQuiz.questions, newQuestionData]
+    })
+
+    // Reset current question form
+    setCurrentQuestion({
+      type: 'multiple_choice',
+      question_text: '',
+      explanation: '',
+      options: [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false },
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
+      ]
+    })
+  }
+
+  const removeQuestion = (index: number) => {
+    const updatedQuestions = newQuiz.questions.filter((_, i) => i !== index)
+    setNewQuiz({
+      ...newQuiz,
+      questions: updatedQuestions
+    })
+  }
+
+  const updateQuestionType = (type: 'multiple_choice' | 'true_false' | 'short_answer') => {
+    let newOptions = currentQuestion.options
+
+    if (type === 'true_false') {
+      newOptions = [
+        { text: 'True', is_correct: false },
+        { text: 'False', is_correct: false }
+      ]
+    } else if (type === 'short_answer') {
+      newOptions = []
+    } else if (type === 'multiple_choice' && currentQuestion.type !== 'multiple_choice') {
+      newOptions = [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false },
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
+      ]
+    }
+
+    setCurrentQuestion({
+      ...currentQuestion,
+      type,
+      options: newOptions
+    })
+  }
+
+  const updateOption = (index: number, text: string) => {
+    const newOptions = [...currentQuestion.options]
+    newOptions[index] = { ...newOptions[index], text }
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: newOptions
+    })
+  }
+
+  const toggleCorrectAnswer = (index: number) => {
+    const newOptions = [...currentQuestion.options]
+
+    if (currentQuestion.type === 'multiple_choice') {
+      // For multiple choice, only one answer can be correct
+      newOptions.forEach((option, i) => {
+        option.is_correct = i === index
+      })
+    } else if (currentQuestion.type === 'true_false') {
+      // For true/false, only one answer can be correct
+      newOptions.forEach((option, i) => {
+        option.is_correct = i === index
+      })
+    }
+
+    setCurrentQuestion({
+      ...currentQuestion,
+      options: newOptions
+    })
+  }
+
+  const addOption = () => {
+    if (currentQuestion.options.length < 6) {
+      setCurrentQuestion({
+        ...currentQuestion,
+        options: [...currentQuestion.options, { text: '', is_correct: false }]
+      })
+    }
+  }
+
+  const removeOption = (index: number) => {
+    if (currentQuestion.options.length > 2) {
+      const newOptions = currentQuestion.options.filter((_, i) => i !== index)
+      setCurrentQuestion({
+        ...currentQuestion,
+        options: newOptions
+      })
+    }
+  }
+
   const createQuiz = async () => {
     if (!newQuiz.title.trim() || !newQuiz.lesson_id) {
       return
@@ -106,13 +246,18 @@ export default function QuizzesPage() {
     setCreating(true)
 
     try {
+      const quizData = {
+        ...newQuiz,
+        pass_percentage: newQuiz.pass_percentage
+      }
+
       const response = await fetch('/api/admin/quizzes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(newQuiz),
+        body: JSON.stringify(quizData),
       })
 
       if (!response.ok) {
@@ -123,7 +268,18 @@ export default function QuizzesPage() {
 
       if (data.success) {
         setQuizzes([data.quiz, ...quizzes])
-        setNewQuiz({ title: '', description: '', lesson_id: '', questions: [] })
+        setNewQuiz({ title: '', description: '', lesson_id: '', pass_percentage: 80, questions: [] })
+        setCurrentQuestion({
+          type: 'multiple_choice',
+          question_text: '',
+          explanation: '',
+          options: [
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false },
+            { text: '', is_correct: false }
+          ]
+        })
         setIsCreateDialogOpen(false)
       } else {
         throw new Error(data.error || 'Failed to create quiz')
@@ -278,6 +434,157 @@ export default function QuizzesPage() {
                     />
                     <p className="text-xs text-gray-500">This description helps students understand what the quiz covers</p>
                   </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="pass_percentage" className="text-xs font-semibold text-gray-700">Pass Percentage</Label>
+                    <Input
+                      id="pass_percentage"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={newQuiz.pass_percentage}
+                      onChange={(e) => setNewQuiz({ ...newQuiz, pass_percentage: parseInt(e.target.value) || 80 })}
+                      placeholder="80"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                    />
+                    <p className="text-xs text-gray-500">Percentage needed to pass this quiz</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Question Creation Card */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">❓</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Add Questions</h3>
+                </div>
+
+                {/* Current Questions List */}
+                {newQuiz.questions.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <p className="text-xs font-semibold text-gray-700">Current Questions ({newQuiz.questions.length})</p>
+                    {newQuiz.questions.map((question, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium truncate">{question.question_text || 'Untitled Question'}</p>
+                          <p className="text-xs text-gray-500 capitalize">{question.type.replace('_', ' ')}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeQuestion(index)}
+                          className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Question Type Selection */}
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-gray-700">Question Type</Label>
+                    <Select value={currentQuestion.type} onValueChange={updateQuestionType}>
+                      <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                        <SelectItem value="true_false">True/False</SelectItem>
+                        <SelectItem value="short_answer">Short Answer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Question Text */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-gray-700">Question Text</Label>
+                    <Textarea
+                      value={currentQuestion.question_text}
+                      onChange={(e) => setCurrentQuestion({ ...currentQuestion, question_text: e.target.value })}
+                      placeholder="Enter your question here..."
+                      rows={2}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                    />
+                  </div>
+
+                  {/* Answer Options */}
+                  {currentQuestion.type !== 'short_answer' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold text-gray-700">Answer Options</Label>
+                        {currentQuestion.type === 'multiple_choice' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={addOption}
+                            disabled={currentQuestion.options.length >= 6}
+                            className="h-6 text-xs"
+                          >
+                            + Add Option
+                          </Button>
+                        )}
+                      </div>
+                      {currentQuestion.options.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Button
+                            variant={option.is_correct ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleCorrectAnswer(index)}
+                            className={`h-6 w-6 p-0 ${option.is_correct ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-green-50'}`}
+                          >
+                            {option.is_correct ? '✓' : '○'}
+                          </Button>
+                          <Input
+                            value={option.text}
+                            onChange={(e) => updateOption(index, e.target.value)}
+                            placeholder={`Option ${index + 1}`}
+                            className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-8"
+                          />
+                          {currentQuestion.type === 'multiple_choice' && currentQuestion.options.length > 2 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeOption(index)}
+                              className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                            >
+                              ×
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      <p className="text-xs text-gray-500">
+                        Click the circle (○) to mark the correct answer
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Question Explanation */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-gray-700">Explanation (Optional)</Label>
+                    <Textarea
+                      value={currentQuestion.explanation}
+                      onChange={(e) => setCurrentQuestion({ ...currentQuestion, explanation: e.target.value })}
+                      placeholder="Explain why this is the correct answer..."
+                      rows={2}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                    />
+                  </div>
+
+                  {/* Add Question Button */}
+                  <Button
+                    onClick={addQuestion}
+                    disabled={!currentQuestion.question_text.trim() ||
+                      (currentQuestion.type !== 'short_answer' && !currentQuestion.options.some(opt => opt.is_correct))}
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-8 text-sm border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    + Add This Question
+                  </Button>
                 </div>
               </div>
 
@@ -296,10 +603,10 @@ export default function QuizzesPage() {
                     <span className="font-medium text-gray-900 text-xs">After creating the quiz</span>
                   </div>
                   <ul className="text-xs text-gray-600 space-y-1 ml-6">
-                    <li>• Add questions to make the quiz interactive</li>
-                    <li>• Configure scoring and passing requirements</li>
-                    <li>• Set time limits and attempt restrictions</li>
-                    <li>• Preview the quiz before publishing</li>
+                    <li>• Questions will be saved with the quiz</li>
+                    <li>• Students can take the quiz and get instant results</li>
+                    <li>• You can edit questions after creating the quiz</li>
+                    <li>• Track student performance and analytics</li>
                   </ul>
                 </div>
               </div>
@@ -318,7 +625,7 @@ export default function QuizzesPage() {
               </Button>
               <Button
                 onClick={createQuiz}
-                disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
+                disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id || newQuiz.questions.length === 0}
                 className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
