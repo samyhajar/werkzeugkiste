@@ -6,18 +6,22 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
 export default function AdminSettingsPage() {
-  // Placeholder state for branding/contact info
+  // Platform branding state
   const [branding, setBranding] = useState({
-    platformName: 'Digi+ Learning Platform',
-    contactEmail: 'admin@example.com',
+    platformName: 'Werkzeugkiste Learning Platform',
+    contactEmail: '',
     logoUrl: ''
   })
 
-  // Placeholder state for admin users
-  const [admins] = useState([
-    { id: '1', name: 'Alice Admin', email: 'alice@example.com' },
-    { id: '2', name: 'Bob Boss', email: 'bob@example.com' }
-  ])
+  // Note: Admin users will be loaded from backend when user management is implemented
+  const [admins] = useState<Array<{id: string, name: string, email: string}>>([])
+
+  // Current admin user (you)
+  const currentAdmin = {
+    name: 'Admin User',
+    email: 'admin@werkzeugkiste.com',
+    role: 'Super Administrator'
+  }
 
   return (
     <div className="space-y-6">
@@ -29,10 +33,10 @@ export default function AdminSettingsPage() {
             Manage platform settings, branding, and admin users
           </p>
         </div>
-        <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
-          <span className="mr-2">💾</span>
-          Save All Changes
-        </Button>
+                 <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+           <span className="mr-2">⚙️</span>
+           Platform Settings
+         </Button>
       </div>
 
       <div className="max-w-4xl space-y-6">
@@ -51,31 +55,31 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-purple-50/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-700">Admin Users</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center">
-                <span className="text-white text-sm">👥</span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{admins.length}</div>
-              <p className="text-xs text-gray-500 mt-1">Active administrators</p>
-            </CardContent>
-          </Card>
+                     <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-purple-50/30">
+             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+               <CardTitle className="text-sm font-medium text-purple-700">Admin Users</CardTitle>
+               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center">
+                 <span className="text-white text-sm">👥</span>
+               </div>
+             </CardHeader>
+             <CardContent>
+               <div className="text-2xl font-bold text-gray-900">1</div>
+               <p className="text-xs text-gray-500 mt-1">Current administrator</p>
+             </CardContent>
+           </Card>
 
-          <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-amber-50/30">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-amber-700">Last Updated</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
-                <span className="text-white text-sm">⏰</span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold text-gray-900">Today</div>
-              <p className="text-xs text-gray-500 mt-1">Settings modified</p>
-            </CardContent>
-          </Card>
+           <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-amber-50/30">
+             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+               <CardTitle className="text-sm font-medium text-amber-700">Configuration</CardTitle>
+               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center">
+                 <span className="text-white text-sm">⚙️</span>
+               </div>
+             </CardHeader>
+             <CardContent>
+               <div className="text-lg font-bold text-gray-900">Basic</div>
+               <p className="text-xs text-gray-500 mt-1">Setup required</p>
+             </CardContent>
+           </Card>
         </div>
 
         {/* Branding Section */}
@@ -102,16 +106,17 @@ export default function AdminSettingsPage() {
                 />
                 <p className="text-xs text-gray-500">This name appears in the header and emails</p>
               </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Email</label>
-                <Input
-                  type="email"
-                  value={branding.contactEmail}
-                  onChange={e => setBranding({ ...branding, contactEmail: e.target.value })}
-                  className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
-                />
-                <p className="text-xs text-gray-500">Support and admin contact email</p>
-              </div>
+                             <div className="space-y-2">
+                 <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Email</label>
+                 <Input
+                   type="email"
+                   value={branding.contactEmail}
+                   onChange={e => setBranding({ ...branding, contactEmail: e.target.value })}
+                   placeholder="contact@yourplatform.com"
+                   className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                 />
+                 <p className="text-xs text-gray-500">Support and admin contact email</p>
+               </div>
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Logo URL</label>
@@ -152,58 +157,54 @@ export default function AdminSettingsPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {admins.map((admin, index) => (
-                <div
-                  key={admin.id}
-                  className="p-4 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-semibold text-sm">
-                          {admin.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">{admin.name}</div>
-                        <div className="text-sm text-gray-500">{admin.email}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                            <span className="mr-1">👑</span>
-                            Administrator
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline" disabled className="text-gray-400">
-                        <span className="mr-1">✏️</span>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="outline" disabled className="text-red-400 border-red-200">
-                        <span className="mr-1">🗑️</span>
-                        Remove
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                     <CardContent className="space-y-4">
+             {/* Current Admin User */}
+             <div className="space-y-3">
+               <div className="p-4 rounded-lg bg-white shadow-sm border border-gray-100">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center flex-shrink-0">
+                       <span className="text-white font-semibold text-sm">
+                         {currentAdmin.name.charAt(0).toUpperCase()}
+                       </span>
+                     </div>
+                     <div>
+                       <div className="font-semibold text-gray-900">{currentAdmin.name}</div>
+                       <div className="text-sm text-gray-500">{currentAdmin.email}</div>
+                       <div className="flex items-center gap-2 mt-1">
+                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#486682]/10 text-[#486682]">
+                           <span className="mr-1">👑</span>
+                           {currentAdmin.role}
+                         </span>
+                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                           <span className="mr-1">🟢</span>
+                           You
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <Button size="sm" variant="outline" disabled className="text-gray-400">
+                       <span className="mr-1">✏️</span>
+                       Edit Profile
+                     </Button>
+                   </div>
+                 </div>
+               </div>
             </div>
-            <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="flex items-center gap-3">
-                <span className="text-purple-600 text-lg">🚧</span>
-                <div>
-                  <p className="text-sm font-medium text-purple-800">User Management Coming Soon</p>
-                  <p className="text-xs text-purple-600">Admin user management features are being developed</p>
-                </div>
-              </div>
-              <Button disabled className="bg-purple-200 text-purple-600">
-                <span className="mr-1">➕</span>
-                Add Admin
-              </Button>
-            </div>
+                         <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
+               <div className="flex items-center gap-3">
+                 <span className="text-purple-600 text-lg">🚧</span>
+                 <div>
+                   <p className="text-sm font-medium text-purple-800">Multi-Admin Support Coming Soon</p>
+                   <p className="text-xs text-purple-600">Features to add and manage multiple administrators will be available in future updates</p>
+                 </div>
+               </div>
+               <Button disabled className="bg-purple-200 text-purple-600">
+                 <span className="mr-1">➕</span>
+                 Add Administrator
+               </Button>
+             </div>
           </CardContent>
         </Card>
 
