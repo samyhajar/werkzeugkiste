@@ -1,60 +1,168 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, profile, role, loading, signOut } = useAuth()
+interface User {
+  id: string
+  email: string
+  role: string
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
-  console.log('[AdminLayout] render', { user, profile, role, loading })
+  console.log('[AdminLayout] render', { isAuthenticated, isAdmin, loading, user: user?.email })
 
-  // Redirect logic handled **after** auth finishes
-  useEffect(() => {
-    console.log('[AdminLayout] useEffect', { loading, user, profile, role })
-    if (loading) return
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
 
-    if (!user || !profile) {
-      console.log('[AdminLayout] redirecting to /login')
+      if (response.ok) {
+        router.replace('/login')
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Force redirect even if logout API fails
       router.replace('/login')
-      return
     }
-    if (role !== 'admin') {
-      console.log('[AdminLayout] redirecting to /dashboard')
-      router.replace('/dashboard')
-    }
-  }, [loading, user, profile, role, router])
+  }
 
-  if (loading || !user || !profile || role !== 'admin') {
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log('[AdminLayout] Starting auth check via API...')
+
+      // Add timeout to prevent infinite hanging
+      const timeoutId = setTimeout(() => {
+        console.log('[AdminLayout] TIMEOUT - Auth check took too long, redirecting to login')
+        setLoading(false)
+        router.replace('/login')
+      }, 10000) // 10 second timeout
+
+      try {
+        console.log('[AdminLayout] Calling /api/auth/me...')
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include', // Important: include cookies
+        })
+
+        console.log('[AdminLayout] API response status:', response.status)
+
+        if (!response.ok) {
+          console.log('[AdminLayout] API returned error status, redirecting to login')
+          clearTimeout(timeoutId)
+          setIsAuthenticated(false)
+          setIsAdmin(false)
+          setUser(null)
+          router.replace('/login')
+          return
+        }
+
+        const data = await response.json()
+        console.log('[AdminLayout] API response data:', data)
+
+        if (data.authenticated && data.user) {
+          console.log('[AdminLayout] User authenticated:', {
+            email: data.user.email,
+            role: data.user.role,
+            isAdmin: data.isAdmin
+          })
+
+          setIsAuthenticated(true)
+          setIsAdmin(data.isAdmin)
+          setUser(data.user)
+
+          if (!data.isAdmin) {
+            console.log('[AdminLayout] User not admin, redirecting to dashboard')
+            router.replace('/dashboard')
+            return
+          }
+
+          console.log('[AdminLayout] Admin user authenticated successfully!')
+        } else {
+          console.log('[AdminLayout] User not authenticated, redirecting to login')
+          setIsAuthenticated(false)
+          setIsAdmin(false)
+          setUser(null)
+          router.replace('/login')
+          return
+        }
+
+        clearTimeout(timeoutId)
+      } catch (error) {
+        clearTimeout(timeoutId)
+        console.error('[AdminLayout] Auth check error:', error)
+        setIsAuthenticated(false)
+        setIsAdmin(false)
+        setUser(null)
+        router.replace('/login')
+        return
+      } finally {
+        console.log('[AdminLayout] Setting loading to false')
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  // Show loading state
+  if (loading) {
+    console.log('[AdminLayout] Rendering loading state')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-          <p className="text-foreground/60">Loading admin dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+          <span className="text-gray-600">Loading admin dashboard...</span>
         </div>
       </div>
     )
   }
 
-  const handleLogout = async () => {
-    console.log('[AdminLayout] logging out')
-    await signOut()
-    router.replace('/login')
+  // Don't render anything if not authenticated or not admin
+  if (!isAuthenticated || !isAdmin || !user) {
+    console.log('[AdminLayout] Not authenticated or not admin, returning null')
+    return null
   }
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      <AdminSidebar
-        profile={profile}
-        role={role || 'admin'}
-        userEmail={user.email || ''}
-        onLogout={() => void handleLogout()}
-      />
+  // Create a mock profile object for AdminSidebar
+  const mockProfile = {
+    id: user.id,
+    email: user.email,
+    full_name: user.email.split('@')[0], // Use email username as display name
+    role: user.role,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-auto">{children}</main>
+  console.log('[AdminLayout] Rendering admin dashboard')
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AdminSidebar
+        profile={mockProfile}
+        role={user.role}
+        userEmail={user.email}
+        onLogout={handleLogout}
+      />
+      <main className="pl-64">
+        <div className="min-h-screen">
+          <div className="p-8">
+            {children}
+          </div>
+        </div>
+      </main>
     </div>
   )
 }

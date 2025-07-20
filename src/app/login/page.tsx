@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import SignInForm from '@/components/auth/SignInForm'
@@ -9,11 +9,33 @@ import SignUpForm from '@/components/auth/SignUpForm'
 export default function Login() {
   const [message, setMessage] = useState('')
   const [messageType, setMessageType] = useState<'success' | 'error'>('error')
+  const [mounted, setMounted] = useState(false)
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const showMessage = (msg: string, type: 'success' | 'error' = 'error') => {
     setMessage(msg)
     setMessageType(type)
+  }
 
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#486681] p-4">
+        <Card className="w-full max-w-md shadow-xl border border-[#486681]/20">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-[#486681]">
+              Digi+ Learning Platform
+            </CardTitle>
+            <CardDescription>
+              Loading...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -63,10 +85,8 @@ export default function Login() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Google OAuth coming soon...
-            </p>
+          <div className="text-center text-sm text-gray-500 mt-6">
+            Google OAuth coming soon...
           </div>
         </CardContent>
       </Card>

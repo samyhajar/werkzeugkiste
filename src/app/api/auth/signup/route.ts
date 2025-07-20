@@ -1,17 +1,9 @@
-import { createClient } from '@/lib/supabase/server-client'
 import { NextRequest, NextResponse } from 'next/server'
-
-interface SignupRequestBody {
-  email: string
-  password: string
-  fullName?: string
-  role?: 'student' | 'admin'
-}
+import { getServerClient } from '@/lib/supabase/server-client'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as SignupRequestBody
-    const { email, password, fullName, role = 'student' } = body
+    const { email, password } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json(
@@ -20,35 +12,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = getServerClient()
 
-    // Sign up the user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: fullName,
-          role: role,
+          role: 'student', // Default role for new users
         },
       },
     })
 
     if (error) {
+      console.error('Signup error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message:
-          'User created successfully. Please check your email for verification.',
-        user: data.user,
-      },
-      { status: 201 }
-    )
+    return NextResponse.json({
+      message:
+        'Account created successfully! Please check your email to verify your account.',
+      user: data.user,
+    })
   } catch (error) {
-    console.error('Signup error:', error)
+    console.error('Signup API error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

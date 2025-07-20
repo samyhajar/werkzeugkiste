@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
-import SessionBootstrap from "@/components/shared/SessionBootstrap";
 import ConditionalLayout from "@/components/shared/ConditionalLayout";
 
 const geistSans = Geist({
@@ -17,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Digi+ Learning Platform",
-  description: "Modern learning platform built with Next.js 15, Supabase, and Tailwind CSS v4",
+  description: "Digital learning platform for essential digital skills",
 };
 
 export default function RootLayout({
@@ -28,14 +26,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
-        </AuthProvider>
-        <SessionBootstrap />
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   );

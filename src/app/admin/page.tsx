@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
 import {
   Card,
   CardContent,
@@ -25,388 +24,195 @@ interface RecentActivity {
   badge_color?: string
 }
 
+interface DashboardStats {
+  totalStudents: number
+  totalCourses: number
+  publishedCourses: number
+  totalLessons: number
+  totalQuizzes: number
+}
+
 export default function AdminDashboard() {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([])
+  const [stats, setStats] = useState<DashboardStats>({
+    totalStudents: 0,
+    totalCourses: 0,
+    publishedCourses: 0,
+    totalLessons: 0,
+    totalQuizzes: 0
+  })
   const [loading, setLoading] = useState(true)
-  const supabase = getBrowserClient()
+  const [error, setError] = useState<string | null>(null)
 
   console.log('[AdminDashboard] render')
 
   useEffect(() => {
-    console.log('[AdminDashboard] fetching recent activities')
-    const fetchRecentActivities = async () => {
+    const fetchDashboardData = async () => {
+      console.log('[AdminDashboard] fetching dashboard data via API')
+      setLoading(true)
+      setError(null)
+
       try {
-        const activities: RecentActivity[] = []
-
-        // ‑‑‑ recent registrations ------------------------------------------------
-        const { data: newStudents } = await supabase
-          .from('profiles')
-          .select('id, full_name, created_at')
-          .eq('role', 'student')
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        newStudents?.forEach((s) => {
-          if (s.created_at)
-            activities.push({
-              id: `registration-${s.id}`,
-              type: 'registration',
-              title: 'New student registration',
-              description: `${s.full_name || 'Anonymous'} joined the platform`,
-              timestamp: s.created_at,
-              user_name: s.full_name || 'Anonymous',
-              badge_color: 'bg-green-500',
-            })
+        const response = await fetch('/api/admin/dashboard', {
+          method: 'GET',
+          credentials: 'include',
         })
 
-        // ‑‑‑ lesson completions ---------------------------------------------------
-        const { data: recentCompletions } = await supabase
-          .from('lesson_progress')
-          .select('completed_at, lessons(title), profiles(full_name)')
-          .order('completed_at', { ascending: false })
-          .limit(5)
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
 
-        recentCompletions?.forEach((c) => {
-          if (c.completed_at)
-            activities.push({
-              id: `completion-${c.completed_at}`,
-              type: 'lesson_completion',
-              title: 'Lesson completed',
-              description: `${(c.profiles as any)?.full_name || 'Student'} completed "${
-                (c.lessons as any)?.title || 'Unknown lesson'
-              }"`,
-              timestamp: c.completed_at,
-              user_name: (c.profiles as any)?.full_name,
-              badge_color: 'bg-blue-500',
-            })
-        })
+        const data = await response.json()
+        console.log('[AdminDashboard] API response:', data)
 
-        // ‑‑‑ quiz attempts --------------------------------------------------------
-        const { data: recentQuizAttempts } = await supabase
-          .from('quiz_attempts')
-          .select(
-            'completed_at, score_percentage, passed, quizzes(title), profiles(full_name)'
-          )
-          .order('completed_at', { ascending: false })
-          .limit(5)
-
-        recentQuizAttempts?.forEach((a) => {
-          if (a.completed_at)
-            activities.push({
-              id: `quiz-${a.completed_at}`,
-              type: 'quiz_attempt',
-              title: a.passed ? 'Quiz passed' : 'Quiz attempted',
-              description: `${(a.profiles as any)?.full_name || 'Student'} ${
-                a.passed ? 'passed' : 'attempted'
-              } "${(a.quizzes as any)?.title || 'Unknown quiz'}" (${a.score_percentage}%)`,
-              timestamp: a.completed_at,
-              user_name: (a.profiles as any)?.full_name,
-              badge_color: a.passed ? 'bg-emerald-500' : 'bg-yellow-500',
-            })
-        })
-
-        // ‑‑‑ newly created content -----------------------------------------------
-        const { data: recentCourses } = await supabase
-          .from('courses')
-          .select('created_at, title')
-          .order('created_at', { ascending: false })
-          .limit(3)
-
-        recentCourses?.forEach((c, index) => {
-          if (c.created_at)
-            activities.push({
-              id: `course-${c.created_at}-${index}`,
-              type: 'content_created',
-              title: 'New course created',
-              description: `Course "${c.title}" was created`,
-              timestamp: c.created_at,
-              badge_color: 'bg-purple-500',
-            })
-        })
-
-        const { data: recentLessons } = await supabase
-          .from('lessons')
-          .select('created_at, title')
-          .order('created_at', { ascending: false })
-          .limit(3)
-
-        recentLessons?.forEach((l, index) => {
-          if (l.created_at)
-            activities.push({
-              id: `lesson-${l.created_at}-${index}`,
-              type: 'content_created',
-              title: 'New lesson created',
-              description: `Lesson "${l.title}" was created`,
-              timestamp: l.created_at,
-              badge_color: 'bg-indigo-500',
-            })
-        })
-
-        // sort & keep ten newest
-        activities.sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )
-        setRecentActivities(activities.slice(0, 10))
-        console.log('[AdminDashboard] fetched activities', activities.length)
+        if (data.success) {
+          setRecentActivities(data.recentActivities || [])
+          setStats(data.stats || {})
+          console.log('[AdminDashboard] Data loaded successfully')
+        } else {
+          throw new Error(data.error || 'Failed to fetch dashboard data')
+        }
       } catch (err) {
-        console.error('[AdminDashboard] error fetching activities', err)
+        console.error('[AdminDashboard] Error fetching dashboard data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
       } finally {
         setLoading(false)
-        console.log('[AdminDashboard] loading complete')
       }
     }
 
-    fetchRecentActivities()
-  }, []) // ← empty deps, runs once
+    fetchDashboardData()
+  }, [])
 
-  // icon helper
-  const getActivityIcon = (type: RecentActivity['type']) => {
-    switch (type) {
-      case 'registration':
-        return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-        )
-      case 'lesson_completion':
-        return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        )
-      case 'quiz_attempt':
-        return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-            />
-          </svg>
-        )
-      case 'content_created':
-        return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
-          </svg>
-        )
-      default:
-        return (
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        )
-    }
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+            <span className="text-gray-600">Loading dashboard...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-600 mb-2">Failed to load dashboard</div>
+            <div className="text-gray-500 text-sm">{error}</div>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-6xl space-y-8">
-        {/* Stats Grid */}
-        <AdminStatsGrid />
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">
+            Overview of your learning platform
+          </p>
+        </div>
+      </div>
 
+      {/* Stats Grid */}
+      <AdminStatsGrid stats={stats} />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common administrative tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Button
-                asChild
-                className="h-auto p-6 flex flex-col items-center gap-2"
-              >
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common administrative tasks</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button asChild className="w-full">
                 <Link href="/admin/modules">
-                  <svg
-                    className="h-8 w-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                  <span>Manage Modules</span>
+                  <span className="mr-2">📚</span>
+                  Manage Modules
                 </Link>
               </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="h-auto p-6 flex flex-col items-center gap-2"
-              >
+              <Button asChild variant="outline" className="w-full">
                 <Link href="/admin/lessons">
-                  <svg
-                    className="h-8 w-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  <span>Manage Lessons</span>
+                  <span className="mr-2">📖</span>
+                  Manage Lessons
                 </Link>
               </Button>
-
-              <Button
-                asChild
-                variant="outline"
-                className="h-auto p-6 flex flex-col items-center gap-2"
-              >
+              <Button asChild variant="outline" className="w-full">
                 <Link href="/admin/quizzes">
-                  <svg
-                    className="h-8 w-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                    />
-                  </svg>
-                  <span>Manage Quizzes</span>
+                  <span className="mr-2">❓</span>
+                  Manage Quizzes
                 </Link>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest platform activity and updates
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center space-x-4 p-4">
-                    <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentActivities.length > 0 ? (
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center space-x-4 p-4 hover:bg-gray-50 rounded-lg"
-                  >
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Latest platform activity and updates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentActivities.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No recent activity to display
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivities.map((activity) => (
                     <div
-                      className={`p-2 rounded-full ${
-                        activity.badge_color || 'bg-gray-500'
-                      } text-white`}
+                      key={activity.id}
+                      className="flex items-start gap-4 p-4 rounded-lg border bg-gray-50/50"
                     >
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-foreground">
+                      <div className="flex-shrink-0">
+                        <Badge
+                          className={`${activity.badge_color} text-white`}
+                          variant="secondary"
+                        >
+                          {activity.type === 'registration' && '👤'}
+                          {activity.type === 'lesson_completion' && '✅'}
+                          {activity.type === 'quiz_attempt' && '🎯'}
+                          {activity.type === 'content_created' && '📝'}
+                        </Badge>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900">
                           {activity.title}
                         </h4>
-                        <span className="text-sm text-foreground/60">
+                        <p className="text-sm text-gray-600 mt-1">
+                          {activity.description}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
                           {formatDistanceToNow(new Date(activity.timestamp), {
                             addSuffix: true,
                           })}
-                        </span>
+                        </p>
                       </div>
-                      <p className="text-sm text-foreground/70">
-                        {activity.description}
-                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-foreground/60">
-                <svg
-                  className="mx-auto h-12 w-12 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <p>No recent activity</p>
-                <p className="text-sm">
-                  Activity will appear here once you start managing content
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

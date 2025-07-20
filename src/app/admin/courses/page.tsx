@@ -1,95 +1,127 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Tables } from '@/types/supabase'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
-type Course = Tables<'courses'>
+interface Course {
+  id: string
+  title: string
+  description: string | null
+  status: 'draft' | 'published'
+  admin_id: string | null
+  created_at: string
+  updated_at: string
+}
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string>('')
-  const supabase = createClient()
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    description: '',
+    status: 'draft' as 'draft' | 'published'
+  })
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setLoading(true)
-        const { data, error } = await supabase
-          .from('courses')
-          .select('*')
-          .order('created_at', { ascending: false })
+  const fetchCourses = async () => {
+    setLoading(true)
+    setError(null)
 
-        if (error) {
-          setError(error.message)
-        } else {
-          setCourses(data || [])
-        }
-      } catch (err) {
-        setError('Failed to fetch courses')
-      } finally {
-        setLoading(false)
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
       }
+
+      const data = await response.json()
+
+      if (data.success) {
+        setCourses(data.courses || [])
+      } else {
+        throw new Error(data.error || 'Failed to fetch courses')
+      }
+    } catch (err) {
+      console.error('Error fetching courses:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load courses')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    void fetchCourses()
-  }, [supabase])
-
-  const handleDelete = async (courseId: string) => {
-    if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+  const createCourse = async () => {
+    if (!newCourse.title.trim()) {
       return
     }
 
-    try {
-      const { error } = await supabase
-        .from('courses')
-        .delete()
-        .eq('id', courseId)
+    setCreating(true)
 
-      if (error) {
-        setError(error.message)
+    try {
+      const response = await fetch('/api/admin/courses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(newCourse),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        setCourses([data.course, ...courses])
+        setNewCourse({ title: '', description: '', status: 'draft' })
+        setIsCreateDialogOpen(false)
       } else {
-        setCourses(courses.filter(course => course.id !== courseId))
+        throw new Error(data.error || 'Failed to create course')
       }
     } catch (err) {
-      setError('Failed to delete course')
+      console.error('Error creating course:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create course')
+    } finally {
+      setCreating(false)
     }
   }
 
-  const handleStatusToggle = async (courseId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'published' ? 'draft' : 'published'
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || course.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 
-    try {
-      const { error } = await supabase
-        .from('courses')
-        .update({ status: newStatus })
-        .eq('id', courseId)
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setCourses(courses.map(course =>
-          course.id === courseId
-            ? { ...course, status: newStatus }
-            : course
-        ))
-      }
-    } catch (err) {
-      setError('Failed to update course status')
-    }
-  }
+  useEffect(() => {
+    fetchCourses()
+  }, [])
 
   if (loading) {
     return (
       <div className="p-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+            <span className="text-gray-600">Loading courses...</span>
+          </div>
         </div>
       </div>
     )
@@ -98,10 +130,17 @@ export default function CoursesPage() {
   if (error) {
     return (
       <div className="p-8">
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-destructive text-lg mb-4">Error loading courses</p>
-            <p className="text-foreground/60">{error}</p>
+            <div className="text-red-600 mb-2">Failed to load courses</div>
+            <div className="text-gray-500 text-sm">{error}</div>
+            <Button
+              onClick={() => fetchCourses()}
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </div>
@@ -109,128 +148,154 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Courses</h2>
-            <p className="text-foreground/60">
-              Manage all courses and their content
-            </p>
-          </div>
-          <Button asChild>
-            <Link href="/admin/courses/new">
-              <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Create Course
-            </Link>
-          </Button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your learning courses and content
+          </p>
         </div>
-
-        {/* Courses Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>All Courses</CardTitle>
-            <CardDescription>
-              {courses.length} course{courses.length === 1 ? '' : 's'} total
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {courses.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-foreground/40 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <h3 className="text-lg font-medium text-foreground mb-2">No courses yet</h3>
-                <p className="text-foreground/60 mb-4">Get started by creating your first course</p>
-                <Button asChild>
-                  <Link href="/admin/courses/new">Create Course</Link>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Create New Course</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Course</DialogTitle>
+              <DialogDescription>
+                Add a new course to your learning platform
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Course Title</Label>
+                <Input
+                  id="title"
+                  value={newCourse.title}
+                  onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                  placeholder="Enter course title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newCourse.description}
+                  onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                  placeholder="Enter course description"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={newCourse.status}
+                  onValueChange={(value: 'draft' | 'published') =>
+                    setNewCourse({ ...newCourse, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={createCourse} disabled={creating || !newCourse.title.trim()}>
+                  {creating ? 'Creating...' : 'Create Course'}
                 </Button>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4 font-medium text-foreground">Course</th>
-                      <th className="text-left p-4 font-medium text-foreground">Status</th>
-                      <th className="text-left p-4 font-medium text-foreground">Created</th>
-                      <th className="text-left p-4 font-medium text-foreground">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {courses.map((course) => (
-                      <tr key={course.id} className="border-b hover:bg-muted/50">
-                        <td className="p-4">
-                          <div>
-                            <Link
-                              href={`/admin/courses/${course.id}`}
-                              className="text-brand-primary hover:underline font-medium"
-                            >
-                              {course.title}
-                            </Link>
-                            {course.description && (
-                              <p className="text-sm text-foreground/60 mt-1">
-                                {course.description.length > 100
-                                  ? `${course.description.substring(0, 100)}...`
-                                  : course.description}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                                                    <Badge
-                            variant={course.status === 'published' ? 'default' : 'secondary'}
-                            className="cursor-pointer"
-                            onClick={() => handleStatusToggle(course.id, course.status || 'draft')}
-                          >
-                            {course.status || 'draft'}
-                          </Badge>
-                        </td>
-                        <td className="p-4 text-sm text-foreground/60">
-                          {course.created_at
-                            ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true })
-                            : 'Unknown'}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/admin/courses/${course.id}`}>
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                              </Link>
-                            </Button>
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`/admin/courses/${course.id}/builder`}>
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(course.id)}
-                            >
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search courses..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Courses</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Courses Grid */}
+      {filteredCourses.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 mb-4">
+            {courses.length === 0 ? 'No courses created yet' : 'No courses match your search'}
+          </div>
+          {courses.length === 0 && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Create Your First Course
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <Card key={course.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg">{course.title}</CardTitle>
+                  <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
+                    {course.status}
+                  </Badge>
+                </div>
+                {course.description && (
+                  <CardDescription className="line-clamp-2">
+                    {course.description}
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <span>Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/admin/courses/${course.id}`}>
+                      Manage
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/admin/courses/${course.id}/lessons`}>
+                      Lessons
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

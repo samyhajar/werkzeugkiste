@@ -1,112 +1,121 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 
 const links = [
   { href: '/digi-sammlung', label: 'Digi-Sammlung' },
   { href: '/fragen', label: 'Fragen' },
-  { href: '/ueber-uns', label: 'Über Uns' },
+  { href: '/ueber-uns', label: 'Über uns' },
 ]
 
 export default function Navbar() {
-  const pathname = usePathname()
-  const [open, setOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const { user, profile, signOut, loading } = useAuth()
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false)
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
       }
     }
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [])
 
-  const handleSignOut = async () => {
-    await signOut()
-  }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
 
   return (
-    <header className="w-full bg-[#486681] text-background">
-      <div className="w-full flex items-center justify-between py-3 px-4 md:px-6">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="Digi+ site-logo" width={120} height={32} priority />
-        </Link>
+    <nav className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/file.svg"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="mr-2"
+            />
+            <span className="text-xl font-bold text-gray-900">Werkzeugkiste</span>
+          </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6 ml-auto mr-4 relative">
-          {/* Suche link first */}
-          <Link href="/#search" className={`text-sm hover:underline ${pathname === '/#search' ? 'font-semibold' : ''}`}>Suche</Link>
-          {/* Lernmodule dropdown */}
-          <div
-            className="relative"
-            ref={dropdownRef}
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
-          >
-            <button onClick={() => setOpen(!open)} className="flex items-center gap-1 text-sm hover:underline focus:outline-none">
-              <span className="whitespace-nowrap">Lernmodule</span>
-              <svg className="h-4 w-4 transition-transform" style={{transform: open ? 'rotate(180deg)' : 'rotate(0deg)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <Link
+              href="/login"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Login
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-600 hover:text-gray-900 focus:outline-none focus:text-gray-900"
+            >
+              <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
+                {isOpen ? (
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M18.278 16.864a1 1 0 0 1-1.414 1.414l-4.829-4.828-4.828 4.828a1 1 0 0 1-1.414-1.414l4.828-4.829-4.828-4.828a1 1 0 0 1 1.414-1.414l4.829 4.828 4.828-4.828a1 1 0 1 1 1.414 1.414l-4.828 4.829 4.828 4.828z"
+                  />
+                ) : (
+                  <path
+                    fillRule="evenodd"
+                    d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"
+                  />
+                )}
               </svg>
             </button>
-            {open && (
-              <ul className="absolute top-full left-0 mt-2 w-64 bg-[#486681] shadow-lg rounded p-4 space-y-4 z-50">
-                {['Modul 1 – Einstieg in die digitale Welt','Modul 2 – Internet & E-Mails','Modul 3 – Digitale Sicherheit','Modul 4 – Jobs digital'].map((title, idx) => (
-                  <li key={idx}>
-                    <Link href="#" className="block text-background hover:underline">
-                      {title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
-          {links.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`text-sm hover:underline ${pathname === href ? 'font-semibold' : ''}`}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
+        </div>
 
-        {/* Auth Section */}
-        {!loading && (
-          <>
-            {user ? (
-              <div className="flex items-center gap-4">
-                <div className="text-sm">
-                  <span className="font-medium">{profile?.full_name || user.email}</span>
-                  <span className="ml-2 text-xs opacity-80">({profile?.role || 'student'})</span>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSignOut}
-                  className="text-background border-background hover:bg-background hover:text-[#486681]"
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div ref={menuRef} className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  onClick={() => setIsOpen(false)}
                 >
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <Button asChild size="sm" variant="secondary">
-                <Link href="/login">Einloggen</Link>
-              </Button>
-            )}
-          </>
+                  {link.label}
+                </Link>
+              ))}
+
+              <Link
+                href="/login"
+                className="block px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center"
+                onClick={() => setIsOpen(false)}
+              >
+                Login
+              </Link>
+            </div>
+          </div>
         )}
       </div>
-    </header>
+    </nav>
   )
 }

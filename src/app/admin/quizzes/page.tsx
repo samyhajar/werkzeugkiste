@@ -1,53 +1,80 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Tables } from '@/types/supabase'
+import { Textarea } from '@/components/ui/textarea'
+import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
-type Quiz = Tables<'quizzes'>
-type Lesson = Tables<'lessons'>
+interface Course {
+  id: string
+  title: string
+}
+
+interface Lesson {
+  id: string
+  title: string
+  course: Course
+}
+
+interface Quiz {
+  id: string
+  title: string
+  description: string | null
+  lesson_id: string
+  questions: any[]
+  admin_id: string | null
+  created_at: string
+  updated_at: string
+  lesson: Lesson
+}
 
 export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [lessonFilter, setLessonFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
+  const [creating, setCreating] = useState(false)
   const [newQuiz, setNewQuiz] = useState({
     title: '',
     description: '',
     lesson_id: '',
-    pass_pct: 70
+    questions: []
   })
 
-  const supabase = createClient()
-
   const fetchQuizzes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('quizzes')
-        .select('*, lessons(title)')
-        .order('created_at', { ascending: false })
+    setLoading(true)
+    setError(null)
 
-      if (error) {
-        console.error('Error fetching quizzes:', error)
-        return
+    try {
+      const response = await fetch('/api/admin/quizzes', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
       }
 
-      setQuizzes(data || [])
-    } catch (error) {
-      console.error('Error fetching quizzes:', error)
+      const data = await response.json()
+
+      if (data.success) {
+        setQuizzes(data.quizzes || [])
+      } else {
+        throw new Error(data.error || 'Failed to fetch quizzes')
+      }
+    } catch (err) {
+      console.error('Error fetching quizzes:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load quizzes')
     } finally {
       setLoading(false)
     }
@@ -55,89 +82,57 @@ export default function QuizzesPage() {
 
   const fetchLessons = async () => {
     try {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('*')
-        .order('title', { ascending: true })
+      const response = await fetch('/api/admin/lessons', {
+        method: 'GET',
+        credentials: 'include',
+      })
 
-      if (error) {
-        console.error('Error fetching lessons:', error)
-        return
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setLessons(data.lessons || [])
+        }
       }
-
-      setLessons(data || [])
-    } catch (error) {
-      console.error('Error fetching lessons:', error)
+    } catch (err) {
+      console.error('Error fetching lessons:', err)
     }
   }
 
   const createQuiz = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('quizzes')
-        .insert([{
-          title: newQuiz.title,
-          description: newQuiz.description || null,
-          lesson_id: newQuiz.lesson_id || null,
-          pass_pct: newQuiz.pass_pct
-        }])
-        .select('*, lessons(title)')
+    if (!newQuiz.title.trim() || !newQuiz.lesson_id) {
+      return
+    }
 
-      if (error) {
-        console.error('Error creating quiz:', error)
-        return
+    setCreating(true)
+
+    try {
+      const response = await fetch('/api/admin/quizzes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(newQuiz),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
       }
 
-      if (data) {
-        setQuizzes([data[0], ...quizzes])
-        setNewQuiz({ title: '', description: '', lesson_id: '', pass_pct: 70 })
+      const data = await response.json()
+
+      if (data.success) {
+        setQuizzes([data.quiz, ...quizzes])
+        setNewQuiz({ title: '', description: '', lesson_id: '', questions: [] })
         setIsCreateDialogOpen(false)
+      } else {
+        throw new Error(data.error || 'Failed to create quiz')
       }
-    } catch (error) {
-      console.error('Error creating quiz:', error)
-    }
-  }
-
-  const updateQuiz = async (id: string, updates: Partial<Quiz>) => {
-    try {
-      const { data, error } = await supabase
-        .from('quizzes')
-        .update(updates)
-        .eq('id', id)
-        .select('*, lessons(title)')
-
-      if (error) {
-        console.error('Error updating quiz:', error)
-        return
-      }
-
-      if (data) {
-        setQuizzes(quizzes.map(quiz =>
-          quiz.id === id ? { ...quiz, ...data[0] } : quiz
-        ))
-      }
-    } catch (error) {
-      console.error('Error updating quiz:', error)
-    }
-  }
-
-  const deleteQuiz = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this quiz?')) return
-
-    try {
-      const { error } = await supabase
-        .from('quizzes')
-        .delete()
-        .eq('id', id)
-
-      if (error) {
-        console.error('Error deleting quiz:', error)
-        return
-      }
-
-      setQuizzes(quizzes.filter(quiz => quiz.id !== id))
-    } catch (error) {
-      console.error('Error deleting quiz:', error)
+    } catch (err) {
+      console.error('Error creating quiz:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create quiz')
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -148,12 +143,6 @@ export default function QuizzesPage() {
     return matchesSearch && matchesLesson
   })
 
-  const getLessonTitle = (lessonId: string | null) => {
-    if (!lessonId) return 'No Lesson'
-    const lesson = lessons.find(l => l.id === lessonId)
-    return lesson?.title || 'Unknown Lesson'
-  }
-
   useEffect(() => {
     fetchQuizzes()
     fetchLessons()
@@ -163,289 +152,197 @@ export default function QuizzesPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+            <span className="text-gray-600">Loading quizzes...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-red-600 mb-2">Failed to load quizzes</div>
+            <div className="text-gray-500 text-sm">{error}</div>
+            <Button
+              onClick={() => fetchQuizzes()}
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Quizzes</h1>
-            <p className="text-foreground/60">
-              Manage your quizzes and link them to lessons
-            </p>
-          </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Create Quiz
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Create New Quiz</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={newQuiz.title}
-                    onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
-                    placeholder="Enter quiz title"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newQuiz.description}
-                    onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
-                    placeholder="Enter quiz description"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="lesson_id">Lesson</Label>
-                  <Select value={newQuiz.lesson_id} onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select lesson (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">No Lesson</SelectItem>
-                      {lessons.map((lesson) => (
-                        <SelectItem key={lesson.id} value={lesson.id}>
-                          {lesson.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="pass_pct">Pass Percentage</Label>
-                  <Input
-                    id="pass_pct"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={newQuiz.pass_pct}
-                    onChange={(e) => setNewQuiz({ ...newQuiz, pass_pct: parseInt(e.target.value) || 70 })}
-                    placeholder="Enter pass percentage"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createQuiz} disabled={!newQuiz.title.trim()}>
-                  Create Quiz
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Quizzes</h1>
+          <p className="text-gray-600 mt-2">
+            Manage quizzes across all lessons
+          </p>
         </div>
-
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search quizzes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="w-full sm:w-48">
-                <Select value={lessonFilter} onValueChange={setLessonFilter}>
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Create New Quiz</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Quiz</DialogTitle>
+              <DialogDescription>
+                Add a new quiz to one of your lessons
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="lesson">Lesson</Label>
+                <Select
+                  value={newQuiz.lesson_id}
+                  onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by lesson" />
+                    <SelectValue placeholder="Select a lesson" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Lessons</SelectItem>
-                    <SelectItem value="">No Lesson</SelectItem>
                     {lessons.map((lesson) => (
                       <SelectItem key={lesson.id} value={lesson.id}>
-                        {lesson.title}
+                        {lesson.title} ({lesson.course?.title || 'Unknown Course'})
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quizzes Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quizzes ({filteredQuizzes.length})</CardTitle>
-            <CardDescription>
-              Manage your quizzes and their lesson assignments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredQuizzes.length === 0 ? (
-              <div className="text-center py-8 text-foreground/60">
-                <svg className="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                <p>No quizzes found</p>
-                <p className="text-sm">Create your first quiz to get started</p>
+              <div className="space-y-2">
+                <Label htmlFor="title">Quiz Title</Label>
+                <Input
+                  id="title"
+                  value={newQuiz.title}
+                  onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
+                  placeholder="Enter quiz title"
+                />
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">Title</th>
-                      <th className="text-left p-2">Description</th>
-                      <th className="text-left p-2">Lesson</th>
-                      <th className="text-left p-2">Pass %</th>
-                      <th className="text-left p-2">Created</th>
-                      <th className="text-left p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredQuizzes.map((quiz) => (
-                      <tr key={quiz.id} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-medium">{quiz.title}</td>
-                        <td className="p-2 text-sm text-foreground/70 max-w-xs truncate">
-                          {quiz.description || 'No description'}
-                        </td>
-                        <td className="p-2">
-                          <Badge variant="outline">
-                            {getLessonTitle(quiz.lesson_id)}
-                          </Badge>
-                        </td>
-                        <td className="p-2 text-sm text-foreground/70">
-                          {quiz.pass_pct || 70}%
-                        </td>
-                        <td className="p-2 text-sm text-foreground/70">
-                          {quiz.created_at ? formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true }) : 'Unknown'}
-                        </td>
-                        <td className="p-2">
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingQuiz(quiz)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteQuiz(quiz.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newQuiz.description}
+                  onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
+                  placeholder="Enter quiz description"
+                  rows={3}
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Edit Dialog */}
-        {editingQuiz && (
-          <Dialog open={!!editingQuiz} onOpenChange={() => setEditingQuiz(null)}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Edit Quiz</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-title">Title</Label>
-                  <Input
-                    id="edit-title"
-                    value={editingQuiz.title}
-                    onChange={(e) => setEditingQuiz({ ...editingQuiz, title: e.target.value })}
-                    placeholder="Enter quiz title"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-description">Description</Label>
-                  <Textarea
-                    id="edit-description"
-                    value={editingQuiz.description || ''}
-                    onChange={(e) => setEditingQuiz({ ...editingQuiz, description: e.target.value })}
-                    placeholder="Enter quiz description"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-lesson_id">Lesson</Label>
-                  <Select
-                    value={editingQuiz.lesson_id || ''}
-                    onValueChange={(value) => setEditingQuiz({ ...editingQuiz, lesson_id: value || null })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select lesson (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">No Lesson</SelectItem>
-                      {lessons.map((lesson) => (
-                        <SelectItem key={lesson.id} value={lesson.id}>
-                          {lesson.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-pass_pct">Pass Percentage</Label>
-                  <Input
-                    id="edit-pass_pct"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={editingQuiz.pass_pct || 70}
-                    onChange={(e) => setEditingQuiz({ ...editingQuiz, pass_pct: parseInt(e.target.value) || 70 })}
-                    placeholder="Enter pass percentage"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setEditingQuiz(null)}>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={creating}
+                >
                   Cancel
                 </Button>
                 <Button
-                  onClick={async () => {
-                    await updateQuiz(editingQuiz.id, {
-                      title: editingQuiz.title,
-                      description: editingQuiz.description,
-                      lesson_id: editingQuiz.lesson_id,
-                      pass_pct: editingQuiz.pass_pct
-                    })
-                    setEditingQuiz(null)
-                  }}
-                  disabled={!editingQuiz.title.trim()}
+                  onClick={createQuiz}
+                  disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
                 >
-                  Save Changes
+                  {creating ? 'Creating...' : 'Create Quiz'}
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <Input
+            placeholder="Search quizzes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select
+          value={lessonFilter}
+          onValueChange={(value: string) => setLessonFilter(value)}
+        >
+          <SelectTrigger className="w-[250px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Lessons</SelectItem>
+            {lessons.map((lesson) => (
+              <SelectItem key={lesson.id} value={lesson.id}>
+                {lesson.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Quizzes Grid */}
+      {filteredQuizzes.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 mb-4">
+            {quizzes.length === 0 ? 'No quizzes created yet' : 'No quizzes match your search'}
+          </div>
+          {quizzes.length === 0 && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Create Your First Quiz
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredQuizzes.map((quiz) => (
+            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg">{quiz.title}</CardTitle>
+                  <Badge variant="outline">
+                    {quiz.questions?.length || 0} questions
+                  </Badge>
+                </div>
+                <CardDescription>
+                  Lesson: {quiz.lesson?.title || 'Unknown'}
+                </CardDescription>
+                <CardDescription className="text-xs">
+                  Course: {quiz.lesson?.course?.title || 'Unknown'}
+                </CardDescription>
+                {quiz.description && (
+                  <CardDescription className="line-clamp-2 mt-2">
+                    {quiz.description}
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <span>Created {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
+                      Edit
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
+                      Questions
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
