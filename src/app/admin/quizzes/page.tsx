@@ -198,34 +198,34 @@ export default function QuizzesPage() {
               Create New Quiz
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader className="text-center pb-6">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-4">
-                <span className="text-white text-2xl">❓</span>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="text-center pb-4 flex-shrink-0">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+                <span className="text-white text-lg">❓</span>
               </div>
-              <DialogTitle className="text-2xl font-bold text-gray-900">Create New Quiz</DialogTitle>
-              <DialogDescription className="text-gray-600 mt-2">
+              <DialogTitle className="text-xl font-bold text-gray-900">Create New Quiz</DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
                 Create an assessment quiz to test student understanding within a lesson
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
               {/* Lesson Selection Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">📖</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📖</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Lesson Assignment</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Lesson Assignment</h3>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lesson" className="text-sm font-semibold text-gray-700">Select Lesson *</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="lesson" className="text-xs font-semibold text-gray-700">Select Lesson *</Label>
                   <Select
                     value={newQuiz.lesson_id}
                     onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}
                   >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
                       <SelectValue placeholder="Choose a lesson for this quiz" />
                     </SelectTrigger>
                     <SelectContent>
@@ -247,34 +247,34 @@ export default function QuizzesPage() {
               </div>
 
               {/* Quiz Info Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">📝</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📝</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Quiz Information</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Quiz Information</h3>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Quiz Title *</Label>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Quiz Title *</Label>
                     <Input
                       id="title"
                       value={newQuiz.title}
                       onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
                       placeholder="e.g., Social Media Marketing Knowledge Check"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
                     <Textarea
                       id="description"
                       value={newQuiz.description}
                       onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
                       placeholder="Describe the purpose and scope of this quiz. What will students be tested on?"
-                      rows={3}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                      rows={2}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
                     />
                     <p className="text-xs text-gray-500">This description helps students understand what the quiz covers</p>
                   </div>
@@ -282,20 +282,20 @@ export default function QuizzesPage() {
               </div>
 
               {/* Quiz Settings Info */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">⚙️</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">⚙️</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">What's Next?</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">What's Next?</h3>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[#486682]">🎯</span>
-                    <span className="font-medium text-gray-900">After creating the quiz</span>
+                    <span className="text-[#486682] text-sm">🎯</span>
+                    <span className="font-medium text-gray-900 text-xs">After creating the quiz</span>
                   </div>
-                  <ul className="text-sm text-gray-600 space-y-1 ml-6">
+                  <ul className="text-xs text-gray-600 space-y-1 ml-6">
                     <li>• Add questions to make the quiz interactive</li>
                     <li>• Configure scoring and passing requirements</li>
                     <li>• Set time limits and attempt restrictions</li>
@@ -303,36 +303,36 @@ export default function QuizzesPage() {
                   </ul>
                 </div>
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={creating}
-                  className="sm:w-auto w-full"
-                >
-                  <span className="mr-2">❌</span>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={createQuiz}
-                  disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
-                  className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
-                >
-                  {creating ? (
-                    <>
-                      <span className="mr-2 animate-spin">⏳</span>
-                      Creating Quiz...
-                    </>
-                  ) : (
-                    <>
-                      <span className="mr-2">✨</span>
-                      Create Quiz
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Action Buttons - Fixed Footer */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={creating}
+                className="sm:w-auto w-full h-9 text-sm"
+              >
+                <span className="mr-2">❌</span>
+                Cancel
+              </Button>
+              <Button
+                onClick={createQuiz}
+                disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
+                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+              >
+                {creating ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">✨</span>
+                    Create Quiz
+                  </>
+                )}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
