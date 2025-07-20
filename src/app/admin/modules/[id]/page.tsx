@@ -208,7 +208,7 @@ export default function ModuleManagePage() {
       </div>
 
       {/* Module Edit Form */}
-      <Card>
+      <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30">
         <CardHeader>
           <CardTitle>Module Details</CardTitle>
           <CardDescription>
@@ -304,7 +304,7 @@ export default function ModuleManagePage() {
         </div>
 
         {courses.length === 0 ? (
-          <Card>
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30">
             <CardContent className="text-center py-12">
               <div className="text-gray-500 mb-4">No courses in this module yet</div>
               <Button
@@ -320,7 +320,7 @@ export default function ModuleManagePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
-              <Card key={course.id} className="hover:shadow-lg transition-shadow">
+              <Card key={course.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg">{course.title}</CardTitle>
@@ -359,7 +359,7 @@ export default function ModuleManagePage() {
 
       {/* Module Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-l-4 border-l-[#486682]">
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
             <CardTitle className="text-base text-[#486682]">Total Courses</CardTitle>
           </CardHeader>
@@ -367,7 +367,7 @@ export default function ModuleManagePage() {
             <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-[#486682]">
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
             <CardTitle className="text-base text-[#486682]">Published Courses</CardTitle>
           </CardHeader>
@@ -377,7 +377,7 @@ export default function ModuleManagePage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-[#486682]">
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
             <CardTitle className="text-base text-[#486682]">Draft Courses</CardTitle>
           </CardHeader>
