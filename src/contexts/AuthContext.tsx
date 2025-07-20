@@ -153,18 +153,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setLoading(false)
 
-      // Call Supabase signOut to clear session and cookies
+      // Call server-side logout API to clear cookies properly
+      console.log('[AuthContext] Calling server logout API...')
+      try {
+        const response = await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        })
+
+        if (response.ok) {
+          console.log('[AuthContext] ✅ Server logout successful')
+        } else {
+          console.error('[AuthContext] Server logout failed:', response.status)
+        }
+      } catch (fetchError) {
+        console.error('[AuthContext] Server logout request failed:', fetchError)
+      }
+
+      // Call Supabase signOut to clear session
       console.log('[AuthContext] Calling supabase.auth.signOut()...')
       const { error } = await supabase.auth.signOut()
 
       if (error) {
         console.error('[AuthContext] SignOut error (but user state already cleared):', error)
       } else {
-        console.log('[AuthContext] ✅ SignOut successful')
+        console.log('[AuthContext] ✅ Supabase SignOut successful')
       }
 
-      // Clear any remaining auth cookies manually
-      console.log('[AuthContext] Clearing auth cookies manually...')
+      // Clear any remaining auth cookies manually as backup
+      console.log('[AuthContext] Clearing auth cookies manually as backup...')
       const authCookies = document.cookie
         .split('; ')
         .filter(cookie => cookie.includes('sb-') && cookie.includes('auth-token'))
