@@ -187,77 +187,140 @@ export default function LessonsPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white">Create New Lesson</Button>
+            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+              <span className="mr-2">📖</span>
+              Create New Lesson
+            </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Lesson</DialogTitle>
-              <DialogDescription>
-                Add a new lesson to one of your courses
+          <DialogContent className="max-w-2xl">
+            <DialogHeader className="text-center pb-6">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-4">
+                <span className="text-white text-2xl">📖</span>
+              </div>
+              <DialogTitle className="text-2xl font-bold text-gray-900">Create New Lesson</DialogTitle>
+              <DialogDescription className="text-gray-600 mt-2">
+                Add a new learning lesson with content and organize it within a course
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="course">Course</Label>
-                <Select
-                  value={newLesson.course_id}
-                  onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((course) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+            <div className="space-y-6">
+              {/* Course Selection Card */}
+              <div className="bg-gradient-to-r from-white to-orange-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📚</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Course Assignment</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="course" className="text-sm font-semibold text-gray-700">Select Course *</Label>
+                  <Select
+                    value={newLesson.course_id}
+                    onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value })}
+                  >
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                      <SelectValue placeholder="Choose a course for this lesson" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📚</span>
+                            <span>{course.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Lesson Title</Label>
-                <Input
-                  id="title"
-                  value={newLesson.title}
-                  onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                  placeholder="Enter lesson title"
-                />
+
+              {/* Lesson Info Card */}
+              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📝</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Lesson Information</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Lesson Title *</Label>
+                    <Input
+                      id="title"
+                      value={newLesson.title}
+                      onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
+                      placeholder="e.g., Introduction to Social Media Marketing"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="content" className="text-sm font-semibold text-gray-700">Lesson Content</Label>
+                    <Textarea
+                      id="content"
+                      value={newLesson.content}
+                      onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
+                      placeholder="Write your lesson content here. You can include text, links, and instructions..."
+                      rows={4}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                    <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  value={newLesson.content}
-                  onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
-                  placeholder="Enter lesson content"
-                  rows={4}
-                />
+
+              {/* Organization Card */}
+              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📋</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Organization</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="order" className="text-sm font-semibold text-gray-700">Sort Order</Label>
+                  <Input
+                    id="order"
+                    type="number"
+                    value={newLesson.sort_order}
+                    onChange={(e) => setNewLesson({ ...newLesson, sort_order: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                  />
+                  <p className="text-xs text-gray-500">Lower numbers appear first (0 = first lesson, 1 = second, etc.)</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="order">Sort Order</Label>
-                <Input
-                  id="order"
-                  type="number"
-                  value={newLesson.sort_order}
-                  onChange={(e) => setNewLesson({ ...newLesson, sort_order: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex justify-end gap-2">
+
+              {/* Action Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={creating}
+                  className="sm:w-auto w-full"
                 >
+                  <span className="mr-2">❌</span>
                   Cancel
                 </Button>
                 <Button
                   onClick={createLesson}
                   disabled={creating || !newLesson.title.trim() || !newLesson.course_id}
-                  className="bg-[#486682] hover:bg-[#3e5570] text-white"
+                  className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
                 >
-                  {creating ? 'Creating...' : 'Create Lesson'}
+                  {creating ? (
+                    <>
+                      <span className="mr-2 animate-spin">⏳</span>
+                      Creating Lesson...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">✨</span>
+                      Create Lesson
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

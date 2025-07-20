@@ -159,62 +159,122 @@ export default function CoursesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white">Create New Course</Button>
+            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+              <span className="mr-2">📚</span>
+              Create New Course
+            </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Course</DialogTitle>
-              <DialogDescription>
-                Add a new course to your learning platform
+          <DialogContent className="max-w-2xl">
+            <DialogHeader className="text-center pb-6">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-4">
+                <span className="text-white text-2xl">📚</span>
+              </div>
+              <DialogTitle className="text-2xl font-bold text-gray-900">Create New Course</DialogTitle>
+              <DialogDescription className="text-gray-600 mt-2">
+                Add a new learning course to your platform and start building educational content
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Course Title</Label>
-                <Input
-                  id="title"
-                  value={newCourse.title}
-                  onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
-                  placeholder="Enter course title"
-                />
+
+            <div className="space-y-6">
+              {/* Course Info Card */}
+              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📝</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Course Information</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Course Title *</Label>
+                    <Input
+                      id="title"
+                      value={newCourse.title}
+                      onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+                      placeholder="e.g., Introduction to Digital Marketing"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newCourse.description}
+                      onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+                      placeholder="Describe what students will learn in this course..."
+                      rows={3}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newCourse.description}
-                  onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
-                  placeholder="Enter course description"
-                  rows={3}
-                />
+
+              {/* Settings Card */}
+              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">⚙️</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Course Settings</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-semibold text-gray-700">Publication Status</Label>
+                  <Select
+                    value={newCourse.status}
+                    onValueChange={(value: 'draft' | 'published') =>
+                      setNewCourse({ ...newCourse, status: value })
+                    }
+                  >
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">
+                        <div className="flex items-center gap-2">
+                          <span>📝</span>
+                          <span>Draft - Not visible to students</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="published">
+                        <div className="flex items-center gap-2">
+                          <span>🌟</span>
+                          <span>Published - Available to students</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={newCourse.status}
-                  onValueChange={(value: 'draft' | 'published') =>
-                    setNewCourse({ ...newCourse, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2">
+
+              {/* Action Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={creating}
+                  className="sm:w-auto w-full"
                 >
+                  <span className="mr-2">❌</span>
                   Cancel
                 </Button>
-                <Button onClick={createCourse} disabled={creating || !newCourse.title.trim()} className="bg-[#486682] hover:bg-[#3e5570] text-white">
-                  {creating ? 'Creating...' : 'Create Course'}
+                <Button
+                  onClick={createCourse}
+                  disabled={creating || !newCourse.title.trim()}
+                  className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
+                >
+                  {creating ? (
+                    <>
+                      <span className="mr-2 animate-spin">⏳</span>
+                      Creating Course...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">✨</span>
+                      Create Course
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

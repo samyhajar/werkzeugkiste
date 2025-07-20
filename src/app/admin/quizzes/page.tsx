@@ -193,67 +193,144 @@ export default function QuizzesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white">Create New Quiz</Button>
+            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+              <span className="mr-2">❓</span>
+              Create New Quiz
+            </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Quiz</DialogTitle>
-              <DialogDescription>
-                Add a new quiz to one of your lessons
+          <DialogContent className="max-w-2xl">
+            <DialogHeader className="text-center pb-6">
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-4">
+                <span className="text-white text-2xl">❓</span>
+              </div>
+              <DialogTitle className="text-2xl font-bold text-gray-900">Create New Quiz</DialogTitle>
+              <DialogDescription className="text-gray-600 mt-2">
+                Create an assessment quiz to test student understanding within a lesson
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="lesson">Lesson</Label>
-                <Select
-                  value={newQuiz.lesson_id}
-                  onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a lesson" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lessons.map((lesson) => (
-                      <SelectItem key={lesson.id} value={lesson.id}>
-                        {lesson.title} ({lesson.course?.title || 'Unknown Course'})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+            <div className="space-y-6">
+              {/* Lesson Selection Card */}
+              <div className="bg-gradient-to-r from-white to-orange-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📖</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Lesson Assignment</h3>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lesson" className="text-sm font-semibold text-gray-700">Select Lesson *</Label>
+                  <Select
+                    value={newQuiz.lesson_id}
+                    onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}
+                  >
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                      <SelectValue placeholder="Choose a lesson for this quiz" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lessons.map((lesson) => (
+                        <SelectItem key={lesson.id} value={lesson.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📖</span>
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{lesson.title}</span>
+                              <span className="text-xs text-gray-500">{lesson.course?.title || 'Unknown Course'}</span>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Select the lesson where this quiz will appear</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Quiz Title</Label>
-                <Input
-                  id="title"
-                  value={newQuiz.title}
-                  onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
-                  placeholder="Enter quiz title"
-                />
+
+              {/* Quiz Info Card */}
+              <div className="bg-gradient-to-r from-white to-blue-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">📝</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Quiz Information</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Quiz Title *</Label>
+                    <Input
+                      id="title"
+                      value={newQuiz.title}
+                      onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
+                      placeholder="e.g., Social Media Marketing Knowledge Check"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newQuiz.description}
+                      onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
+                      placeholder="Describe the purpose and scope of this quiz. What will students be tested on?"
+                      rows={3}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    />
+                    <p className="text-xs text-gray-500">This description helps students understand what the quiz covers</p>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newQuiz.description}
-                  onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
-                  placeholder="Enter quiz description"
-                  rows={3}
-                />
+
+              {/* Quiz Settings Info */}
+              <div className="bg-gradient-to-r from-white to-purple-50/30 rounded-lg p-6 border border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm">⚙️</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900">What's Next?</h3>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-purple-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-purple-600">🎯</span>
+                    <span className="font-medium text-gray-900">After creating the quiz</span>
+                  </div>
+                  <ul className="text-sm text-gray-600 space-y-1 ml-6">
+                    <li>• Add questions to make the quiz interactive</li>
+                    <li>• Configure scoring and passing requirements</li>
+                    <li>• Set time limits and attempt restrictions</li>
+                    <li>• Preview the quiz before publishing</li>
+                  </ul>
+                </div>
               </div>
-              <div className="flex justify-end gap-2">
+
+              {/* Action Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
                 <Button
                   variant="outline"
                   onClick={() => setIsCreateDialogOpen(false)}
                   disabled={creating}
+                  className="sm:w-auto w-full"
                 >
+                  <span className="mr-2">❌</span>
                   Cancel
                 </Button>
                 <Button
                   onClick={createQuiz}
                   disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
-                  className="bg-[#486682] hover:bg-[#3e5570] text-white"
+                  className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
                 >
-                  {creating ? 'Creating...' : 'Create Quiz'}
+                  {creating ? (
+                    <>
+                      <span className="mr-2 animate-spin">⏳</span>
+                      Creating Quiz...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">✨</span>
+                      Create Quiz
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
