@@ -123,50 +123,108 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* Students Grid */}
+      {/* Students Table */}
       {filteredStudents.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
-            {students.length === 0 ? 'No students registered yet' : 'No students match your search'}
-          </div>
-        </div>
+        <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30">
+          <CardContent className="text-center py-12">
+            <div className="text-gray-500 mb-4">
+              {students.length === 0 ? 'No students registered yet' : 'No students match your search'}
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudents.map((student) => (
-            <Card key={student.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {student.full_name || 'No Name'}
-                    </CardTitle>
-                    <CardDescription>
-                      {student.email}
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary">
-                    {student.role}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>
-                    Joined {formatDistanceToNow(new Date(student.created_at), { addSuffix: true })}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
-                    View Progress
-                  </Button>
-                  <Button size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
-                    Send Message
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#486682] to-[#3e5570]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
+                    Student
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
+                    Joined
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredStudents.map((student, index) => (
+                  <tr
+                    key={student.id}
+                    className={`
+                      hover:bg-gray-50/50 transition-colors duration-200
+                      ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                    `}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center shadow-sm">
+                            <span className="text-white font-medium text-sm">
+                              {(student.full_name || student.email).charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {student.full_name || 'No Name'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Student ID: {student.id.slice(0, 8)}...
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{student.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant="secondary"
+                        className="bg-[#486682]/10 text-[#486682] border-[#486682]/20"
+                      >
+                        {student.role}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDistanceToNow(new Date(student.created_at), { addSuffix: true })}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(student.created_at).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm"
+                        >
+                          Progress
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-[#486682] text-[#486682] hover:bg-[#486682]/10 shadow-sm"
+                        >
+                          Message
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       {/* Summary Stats */}
