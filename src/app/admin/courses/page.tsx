@@ -119,7 +119,7 @@ export default function CoursesPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
             <span className="text-gray-600">Loading courses...</span>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function CoursesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Create New Course</Button>
+            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white">Create New Course</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -213,7 +213,7 @@ export default function CoursesPage() {
                 >
                   Cancel
                 </Button>
-                <Button onClick={createCourse} disabled={creating || !newCourse.title.trim()}>
+                <Button onClick={createCourse} disabled={creating || !newCourse.title.trim()} className="bg-[#486682] hover:bg-[#3e5570] text-white">
                   {creating ? 'Creating...' : 'Create Course'}
                 </Button>
               </div>
@@ -253,7 +253,7 @@ export default function CoursesPage() {
             {courses.length === 0 ? 'No courses created yet' : 'No courses match your search'}
           </div>
           {courses.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
               Create Your First Course
             </Button>
           )}
@@ -280,12 +280,12 @@ export default function CoursesPage() {
                   <span>Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1">
+                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
                     <Link href={`/admin/courses/${course.id}`}>
                       Manage
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
                     <Link href={`/admin/courses/${course.id}/lessons`}>
                       Lessons
                     </Link>

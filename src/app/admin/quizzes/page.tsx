@@ -153,7 +153,7 @@ export default function QuizzesPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
             <span className="text-gray-600">Loading quizzes...</span>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function QuizzesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Create New Quiz</Button>
+            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white">Create New Quiz</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -251,6 +251,7 @@ export default function QuizzesPage() {
                 <Button
                   onClick={createQuiz}
                   disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id}
+                  className="bg-[#486682] hover:bg-[#3e5570] text-white"
                 >
                   {creating ? 'Creating...' : 'Create Quiz'}
                 </Button>
@@ -294,7 +295,7 @@ export default function QuizzesPage() {
             {quizzes.length === 0 ? 'No quizzes created yet' : 'No quizzes match your search'}
           </div>
           {quizzes.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
               Create Your First Quiz
             </Button>
           )}
@@ -327,12 +328,12 @@ export default function QuizzesPage() {
                   <span>Created {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1">
+                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
                     <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
                       Edit
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
                     <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
                       Questions
                     </Link>

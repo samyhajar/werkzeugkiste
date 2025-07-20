@@ -51,14 +51,14 @@ export default function AdminStatsGrid({ stats }: AdminStatsGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
       {statCards.map((stat, index) => (
-        <Card key={index}>
+        <Card key={index} className="border-l-4 border-l-[#486682] hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#486682]">{stat.title}</CardTitle>
             <span className="text-2xl">{stat.icon}</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
+            <div className="text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</div>
+            <p className="text-xs text-gray-500">{stat.description}</p>
           </CardContent>
         </Card>
       ))}
