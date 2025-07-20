@@ -42,37 +42,6 @@ export async function POST(request: NextRequest) {
       // Also create/update profile record with role
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: data.user.id,
-        email: data.user.email,
-        full_name: email.split('@')[0],
-        role: role,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Don't fail the signup if profile creation fails
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'User created successfully',
-      user: data.user,
-    })
-  } catch (error) {
-    console.error('Signup error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function GET() {
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
-}
-
         full_name: email.split('@')[0],
         role: role,
         created_at: new Date().toISOString(),

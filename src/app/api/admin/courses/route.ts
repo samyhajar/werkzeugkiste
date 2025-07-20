@@ -119,24 +119,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-    if (error) {
-      console.error('Error creating course:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to create course' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      course,
-    })
-  } catch (error) {
-    console.error('Admin create course API error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
