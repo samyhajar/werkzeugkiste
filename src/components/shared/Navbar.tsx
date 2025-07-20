@@ -173,7 +173,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-brand-primary">
+      <nav className="bg-brand-primary" style={{ boxShadow: 'none', border: 'none', outline: 'none' }}>
         <div className="w-full px-8">
           <div className="flex justify-between items-center h-24">
             {/* Logo */}
