@@ -303,7 +303,7 @@ export default function QuizzesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuizzes.map((quiz) => (
-            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+            <Card key={quiz.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{quiz.title}</CardTitle>

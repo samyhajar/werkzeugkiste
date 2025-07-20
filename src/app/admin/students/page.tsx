@@ -133,7 +133,7 @@ export default function StudentsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-lg transition-shadow">
+            <Card key={student.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
@@ -171,20 +171,20 @@ export default function StudentsPage() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base">Total Students</CardTitle>
+            <CardTitle className="text-base text-[#486682]">Total Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{students.length}</div>
+            <div className="text-2xl font-bold text-gray-900">{students.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base">Recent Registrations</CardTitle>
+            <CardTitle className="text-base text-[#486682]">Recent Registrations</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-gray-900">
               {students.filter(s => {
                 const weekAgo = new Date()
                 weekAgo.setDate(weekAgo.getDate() - 7)
@@ -194,12 +194,12 @@ export default function StudentsPage() {
             <p className="text-sm text-gray-500">This week</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base">Active Students</CardTitle>
+            <CardTitle className="text-base text-[#486682]">Active Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-gray-900">
               {students.filter(s => {
                 const monthAgo = new Date()
                 monthAgo.setMonth(monthAgo.getMonth() - 1)
