@@ -108,7 +108,7 @@ export default async function Home({
   return (
     <>
       {/* Hero Banner */}
-      <section className="w-full">
+      <section className="w-full relative -mt-1 z-10">
         <Image
           src="/header-full-computer-final.jpg"
           alt="Banner"
