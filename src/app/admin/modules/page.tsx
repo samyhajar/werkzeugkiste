@@ -165,92 +165,92 @@ export default function ModulesPage() {
               Create New Module
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader className="text-center pb-6">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-4">
-                <span className="text-white text-2xl">📦</span>
+          <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="text-center pb-4 flex-shrink-0">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+                <span className="text-white text-lg">📦</span>
               </div>
-              <DialogTitle className="text-2xl font-bold text-gray-900">Create New Module</DialogTitle>
-              <DialogDescription className="text-gray-600 mt-2">
+              <DialogTitle className="text-xl font-bold text-gray-900">Create New Module</DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
                 Create a learning module to organize and group related courses together
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
               {/* Module Info Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">📝</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📝</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Module Information</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Module Information</h3>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-semibold text-gray-700">Module Title *</Label>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Module Title *</Label>
                     <Input
                       id="title"
                       value={newModule.title}
                       onChange={(e) => setNewModule({ ...newModule, title: e.target.value })}
                       placeholder="e.g., Digital Marketing Fundamentals"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">Description</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
                     <Textarea
                       id="description"
                       value={newModule.description}
                       onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                       placeholder="Describe what this module covers and its learning objectives..."
-                      rows={3}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                      rows={2}
+                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Visual Design Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">🎨</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">🎨</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Visual Design</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="hero_image" className="text-sm font-semibold text-gray-700">Hero Image URL</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
                   <Input
                     id="hero_image"
                     value={newModule.hero_image}
                     onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
                     placeholder="https://example.com/module-image.jpg (optional)"
-                    className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                    className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
                   />
-                  <p className="text-xs text-gray-500">Add an image to make your module more engaging (recommended size: 800x400px)</p>
+                  <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
                 </div>
               </div>
 
               {/* Settings Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-sm">⚙️</span>
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">⚙️</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900">Module Settings</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Module Settings</h3>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-semibold text-gray-700">Publication Status</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="status" className="text-xs font-semibold text-gray-700">Publication Status</Label>
                   <Select
                     value={newModule.status}
                     onValueChange={(value: 'draft' | 'published') =>
                       setNewModule({ ...newModule, status: value })
                     }
                   >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20">
+                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -270,36 +270,36 @@ export default function ModulesPage() {
                   </Select>
                 </div>
               </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={creating}
-                  className="sm:w-auto w-full"
-                >
-                  <span className="mr-2">❌</span>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={createModule}
-                  disabled={creating || !newModule.title.trim()}
-                  className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full"
-                >
-                  {creating ? (
-                    <>
-                      <span className="mr-2 animate-spin">⏳</span>
-                      Creating Module...
-                    </>
-                  ) : (
-                    <>
-                      <span className="mr-2">✨</span>
-                      Create Module
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Action Buttons - Fixed Footer */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={creating}
+                className="sm:w-auto w-full h-9 text-sm"
+              >
+                <span className="mr-2">❌</span>
+                Cancel
+              </Button>
+              <Button
+                onClick={createModule}
+                disabled={creating || !newModule.title.trim()}
+                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+              >
+                {creating ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">✨</span>
+                    Create Module
+                  </>
+                )}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
