@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ChevronLeft, BookOpen, HelpCircle, Clock, CheckCircle } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useProgressTracking } from '@/hooks/useProgressTracking'
 
 interface Lesson {
   id: string
@@ -40,6 +42,8 @@ interface Course {
 export default function LessonDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { user } = useAuth()
+  const { markLessonComplete } = useProgressTracking()
   const lessonId = params.id as string
 
   const [lesson, setLesson] = useState<Lesson | null>(null)
@@ -124,6 +128,16 @@ export default function LessonDetailPage() {
     }
   }, [lessonId])
 
+  // Smart navigation that tracks progress
+  const handleNavigateToLesson = useCallback(async (targetLessonId: string) => {
+    if (user && lessonId && targetLessonId !== lessonId) {
+      // Mark current lesson as complete when navigating to next lesson
+      console.log(`[LessonNavigation] Marking lesson ${lessonId} as complete before navigating to ${targetLessonId}`)
+      await markLessonComplete(lessonId)
+    }
+    router.push(`/lessons/${targetLessonId}`)
+  }, [user, lessonId, markLessonComplete, router])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -156,7 +170,6 @@ export default function LessonDetailPage() {
   const currentLessonIndex = course.lessons.findIndex(l => l.id === lessonId)
   const nextLesson = course.lessons[currentLessonIndex + 1]
   const prevLesson = course.lessons[currentLessonIndex - 1]
-  const completedLessons = course.lessons.length // For now, assume all are completed
   const totalLessons = course.lessons.length
 
   // Create a combined list of lessons and quizzes in order
@@ -200,23 +213,13 @@ export default function LessonDetailPage() {
           </Link>
           <div className="flex items-center justify-between mb-2">
             <h1 className="font-bold text-lg">{course.title}</h1>
-            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">
-              abgeschlossen
-            </span>
           </div>
         </div>
 
         {/* Progress */}
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">100%</span>
-            <span className="text-gray-600">{completedLessons} von {totalLessons} Lektionen fertig</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-            <div
-              className="bg-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(completedLessons / totalLessons) * 100}%` }}
-            ></div>
+            <span className="text-gray-600">{totalLessons} Lektionen</span>
           </div>
         </div>
 
@@ -246,20 +249,20 @@ export default function LessonDetailPage() {
                 return (
                   <div key={`${item.type}-${item.data.id}`}>
                     {item.type === 'lesson' ? (
-                      <Link
-                        href={`/lessons/${item.data.id}`}
-                        className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                      <button
+                        onClick={() => handleNavigateToLesson(item.data.id)}
+                        className={`w-full flex items-center gap-3 p-2 rounded transition-colors ${
                           isActive
                             ? 'bg-blue-50 text-blue-700'
                             : 'hover:bg-gray-50 text-gray-700'
                         }`}
                       >
                         <BookOpen className="w-4 h-4 text-red-500" />
-                        <span className="flex-1 text-sm font-medium text-red-500">
+                        <span className="flex-1 text-sm font-medium text-red-500 text-left">
                           Lektion {item.index}: {item.data.title}
                         </span>
                         {isCompleted && <CheckCircle className="w-4 h-4 text-red-500" />}
-                      </Link>
+                      </button>
                     ) : (
                       <Link
                         href={`/quizzes/${item.data.id}`}
@@ -387,29 +390,39 @@ export default function LessonDetailPage() {
             {/* Navigation buttons */}
             <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-200">
               {prevLesson ? (
-                <Link href={`/lessons/${prevLesson.id}`}>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <ChevronLeft className="w-4 h-4" />
-                    Vorherige Lektion
-                  </Button>
-                </Link>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={() => handleNavigateToLesson(prevLesson.id)}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Vorherige Lektion
+                </Button>
               ) : (
                 <div></div>
               )}
 
               {nextLesson ? (
-                <Link href={`/lessons/${nextLesson.id}`}>
-                  <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
-                    Nächste Lektion
-                    <ChevronLeft className="w-4 h-4 rotate-180" />
-                  </Button>
-                </Link>
+                <Button
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleNavigateToLesson(nextLesson.id)}
+                >
+                  Nächste Lektion
+                  <ChevronLeft className="w-4 h-4 rotate-180" />
+                </Button>
               ) : (
-                <Link href={`/modules/${course.id}`}>
-                  <Button className="bg-green-600 hover:bg-green-700">
-                    Kurs abschließen
-                  </Button>
-                </Link>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={async () => {
+                    // Mark current lesson as complete when finishing course
+                    if (user && lessonId) {
+                      await markLessonComplete(lessonId)
+                    }
+                    router.push(`/modules/${course.id}`)
+                  }}
+                >
+                  Kurs abschließen
+                </Button>
               )}
             </div>
           </div>

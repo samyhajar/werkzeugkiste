@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, FileText, HelpCircle, Check } from 'lucide-react'
+import { ChevronDown, ChevronUp, FileText, HelpCircle } from 'lucide-react'
 
 interface Lesson {
   id: string
@@ -75,9 +75,9 @@ export default function ModuleDetailPage() {
           ...firstCourse,
           ...moduleData,
           // Combine all lessons from all courses
-          lessons: moduleData.courses?.flatMap(course => course.lessons || []) || [],
+          lessons: moduleData.courses?.flatMap((course: any) => course.lessons || []) || [],
           // Combine all quizzes from all courses
-          quizzes: moduleData.courses?.flatMap(course => course.quizzes || []) || []
+          quizzes: moduleData.courses?.flatMap((course: any) => course.quizzes || []) || []
         })
       } else {
         setError(data.error || 'Failed to load module')
@@ -309,10 +309,9 @@ export default function ModuleDetailPage() {
                                 <span>Kurs Inhalte</span>
                               </div>
                               <div className="flex items-center gap-4">
-                                <span className="text-[#de0449] font-medium">
-                                  {module.status === 'published' ? '100% veröffentlicht' : '0% abgeschlossen'}
+                                <span className="text-gray-500">
+                                  {module.lessons.length + module.quizzes.filter(q => !q.lesson_id).length} Inhalte
                                 </span>
-                                <span>{module.lessons.length + module.quizzes.filter(q => !q.lesson_id).length} Inhalte</span>
                               </div>
                             </div>
 
@@ -330,7 +329,6 @@ export default function ModuleDetailPage() {
                                         <FileText className="h-4 w-4 text-[#de0449]" />
                                         <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{lesson.title}</span>
                                       </div>
-                                      <Check className="h-5 w-5 text-[#de0449]" />
                                     </Link>
 
                                     {/* Quizzes for this lesson */}
@@ -346,7 +344,6 @@ export default function ModuleDetailPage() {
                                             <HelpCircle className="h-4 w-4 text-[#de0449]" />
                                             <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{quiz.title}</span>
                                           </div>
-                                          <Check className="h-5 w-5 text-[#de0449]" />
                                         </Link>
                                       ))}
                                   </div>
@@ -365,7 +362,6 @@ export default function ModuleDetailPage() {
                                       <HelpCircle className="h-4 w-4 text-[#de0449]" />
                                       <span className="text-[#de0449] font-medium hover:text-[#b8043a]">{quiz.title}</span>
                                     </div>
-                                    <Check className="h-5 w-5 text-[#de0449]" />
                                   </Link>
                                 ))}
                             </div>
