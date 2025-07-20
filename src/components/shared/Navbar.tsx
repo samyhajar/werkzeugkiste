@@ -88,7 +88,14 @@ export default function Navbar() {
     }
   }
 
-  // Fetch modules when dropdown opens
+  // Fetch modules on component mount (for both mobile and desktop)
+  useEffect(() => {
+    if (modules.length === 0) {
+      fetchModules()
+    }
+  }, [modules.length])
+
+  // Also fetch modules when dropdown opens (backup for any edge cases)
   useEffect(() => {
     if (isModulesOpen && modules.length === 0) {
       fetchModules()
