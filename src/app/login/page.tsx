@@ -13,7 +13,7 @@ export default function Login() {
   const showMessage = (msg: string, type: 'success' | 'error' = 'error') => {
     setMessage(msg)
     setMessageType(type)
-    setTimeout(() => setMessage(''), 5000)
+
   }
 
   return (

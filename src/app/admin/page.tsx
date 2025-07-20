@@ -72,9 +72,9 @@ export default function AdminDashboard() {
               id: `completion-${c.completed_at}`,
               type: 'lesson_completion',
               title: 'Lesson completed',
-              description: `${(c.profiles as any)?.full_name || 'Student'} completed “${
+              description: `${(c.profiles as any)?.full_name || 'Student'} completed "${
                 (c.lessons as any)?.title || 'Unknown lesson'
-              }”`,
+              }"`,
               timestamp: c.completed_at,
               user_name: (c.profiles as any)?.full_name,
               badge_color: 'bg-blue-500',
@@ -85,21 +85,21 @@ export default function AdminDashboard() {
         const { data: recentQuizAttempts } = await supabase
           .from('quiz_attempts')
           .select(
-            'attempted_at, score, passed, quizzes(title), profiles(full_name)'
+            'completed_at, score_percentage, passed, quizzes(title), profiles(full_name)'
           )
-          .order('attempted_at', { ascending: false })
+          .order('completed_at', { ascending: false })
           .limit(5)
 
         recentQuizAttempts?.forEach((a) => {
-          if (a.attempted_at)
+          if (a.completed_at)
             activities.push({
-              id: `quiz-${a.attempted_at}`,
+              id: `quiz-${a.completed_at}`,
               type: 'quiz_attempt',
               title: a.passed ? 'Quiz passed' : 'Quiz attempted',
               description: `${(a.profiles as any)?.full_name || 'Student'} ${
                 a.passed ? 'passed' : 'attempted'
-              } “${(a.quizzes as any)?.title || 'Unknown quiz'}” (${a.score}%)`,
-              timestamp: a.attempted_at,
+              } "${(a.quizzes as any)?.title || 'Unknown quiz'}" (${a.score_percentage}%)`,
+              timestamp: a.completed_at,
               user_name: (a.profiles as any)?.full_name,
               badge_color: a.passed ? 'bg-emerald-500' : 'bg-yellow-500',
             })
@@ -112,13 +112,13 @@ export default function AdminDashboard() {
           .order('created_at', { ascending: false })
           .limit(3)
 
-        recentCourses?.forEach((c) => {
+        recentCourses?.forEach((c, index) => {
           if (c.created_at)
             activities.push({
-              id: `course-${c.created_at}`,
+              id: `course-${c.created_at}-${index}`,
               type: 'content_created',
               title: 'New course created',
-              description: `Course “${c.title}” was created`,
+              description: `Course "${c.title}" was created`,
               timestamp: c.created_at,
               badge_color: 'bg-purple-500',
             })
@@ -130,13 +130,13 @@ export default function AdminDashboard() {
           .order('created_at', { ascending: false })
           .limit(3)
 
-        recentLessons?.forEach((l) => {
+        recentLessons?.forEach((l, index) => {
           if (l.created_at)
             activities.push({
-              id: `lesson-${l.created_at}`,
+              id: `lesson-${l.created_at}-${index}`,
               type: 'content_created',
               title: 'New lesson created',
-              description: `Lesson “${l.title}” was created`,
+              description: `Lesson "${l.title}" was created`,
               timestamp: l.created_at,
               badge_color: 'bg-indigo-500',
             })

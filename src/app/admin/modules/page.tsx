@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,27 +14,27 @@ import { Tables } from '@/types/supabase'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
-type Course = Tables<'courses'>
+type Module = Tables<'modules'>
 
 export default function ModulesPage() {
-  const [modules, setModules] = useState<Course[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingModule, setEditingModule] = useState<Course | null>(null)
+  const [editingModule, setEditingModule] = useState<Module | null>(null)
   const [newModule, setNewModule] = useState({
     title: '',
     description: '' as string | null,
     status: 'draft' as 'draft' | 'published'
   })
 
-  const supabase = createClient()
+  const supabase = getBrowserClient()
 
   const fetchModules = async () => {
     try {
       const { data, error } = await supabase
-        .from('courses')
+        .from('modules')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -54,7 +54,7 @@ export default function ModulesPage() {
   const createModule = async () => {
     try {
       const { data, error } = await supabase
-        .from('courses')
+        .from('modules')
         .insert([newModule])
         .select()
 
@@ -73,10 +73,10 @@ export default function ModulesPage() {
     }
   }
 
-  const updateModule = async (id: string, updates: Partial<Course>) => {
+  const updateModule = async (id: string, updates: Partial<Module>) => {
     try {
       const { data, error } = await supabase
-        .from('courses')
+        .from('modules')
         .update(updates)
         .eq('id', id)
         .select()
@@ -97,11 +97,11 @@ export default function ModulesPage() {
   }
 
   const deleteModule = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this module?')) return
+    if (!confirm('Are you sure you want to delete this module? This will also delete all associated courses and lessons.')) return
 
     try {
       const { error } = await supabase
-        .from('courses')
+        .from('modules')
         .delete()
         .eq('id', id)
 
@@ -145,7 +145,7 @@ export default function ModulesPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Modules</h1>
             <p className="text-foreground/60">
-              Manage your learning modules independently
+              Manage your learning modules - the top-level content containers
             </p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -175,7 +175,7 @@ export default function ModulesPage() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    value={newModule.description}
+                    value={newModule.description || ''}
                     onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                     placeholder="Enter module description"
                   />
@@ -366,7 +366,7 @@ export default function ModulesPage() {
                   onClick={async () => {
                     await updateModule(editingModule.id, {
                       title: editingModule.title,
-                      description: editingModule.description,
+                      description: editingModule.description || undefined,
                       status: editingModule.status
                     })
                     setEditingModule(null)

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const links = [
   { href: '/digi-sammlung', label: 'Digi-Sammlung' },
@@ -16,6 +17,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const { user, profile, signOut, loading } = useAuth()
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -26,6 +28,10 @@ export default function Navbar() {
     document.addEventListener('click', handleClick)
     return () => document.removeEventListener('click', handleClick)
   }, [])
+
+  const handleSignOut = async () => {
+    await signOut()
+  }
 
   return (
     <header className="w-full bg-[#486681] text-background">
@@ -75,9 +81,31 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Button asChild size="sm" variant="secondary">
-          <Link href="/login">Einloggen</Link>
-        </Button>
+        {/* Auth Section */}
+        {!loading && (
+          <>
+            {user ? (
+              <div className="flex items-center gap-4">
+                <div className="text-sm">
+                  <span className="font-medium">{profile?.full_name || user.email}</span>
+                  <span className="ml-2 text-xs opacity-80">({profile?.role || 'student'})</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSignOut}
+                  className="text-background border-background hover:bg-background hover:text-[#486681]"
+                >
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/login">Einloggen</Link>
+              </Button>
+            )}
+          </>
+        )}
       </div>
     </header>
   )

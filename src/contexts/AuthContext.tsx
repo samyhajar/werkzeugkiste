@@ -7,6 +7,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useMemo,
 } from 'react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { User, Session } from '@supabase/supabase-js'
@@ -52,25 +53,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(
     async (userId: string) => {
-      console.log('[AuthContext] fetchProfile called for userId:', userId)
+      console.log('[AUTH DEBUG] fetchProfile called for userId:', userId)
       try {
+        console.log('[AUTH DEBUG] About to query profiles table')
+        console.log('[AUTH DEBUG] Supabase client:', supabase)
+
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .single()
 
-        console.log('fetchProfile result:', { data, error })
+        console.log('[AUTH DEBUG] fetchProfile result:', { data, error })
 
         if (error) {
-          console.error('❌ Error fetching profile:', error)
-          console.error('❌ Error details:', error.message, error.code)
+          console.error('[AUTH DEBUG] Error fetching profile:', error)
+          console.error('[AUTH DEBUG] Error details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+          })
+
+          // If profile doesn't exist, try to create one
+          if (error.code === 'PGRST116') { // No rows returned
+            console.log('[AUTH DEBUG] Profile not found, creating default profile')
+            const defaultProfile = {
+              id: userId,
+              full_name: null,
+              role: 'student',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
+
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([defaultProfile])
+              .select()
+              .single()
+
+            if (createError) {
+              console.error('[AUTH DEBUG] Error creating default profile:', createError)
+              return null
+            }
+
+            console.log('[AUTH DEBUG] Created default profile:', newProfile)
+            return newProfile
+          }
+
           return null
         }
-        console.log('✅ Fetched profile:', data)
+        console.log('[AUTH DEBUG] Successfully fetched profile:', data)
         return data
       } catch (err) {
-        console.error('❌ Unexpected error fetching profile:', err)
+        console.error('[AUTH DEBUG] Unexpected error fetching profile:', err)
+        console.error('[AUTH DEBUG] Error type:', typeof err)
+        console.error('[AUTH DEBUG] Error stack:', err instanceof Error ? err.stack : 'No stack')
         return null
       }
     },
@@ -84,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, fetchProfile])
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     metadata?: Record<string, unknown>
@@ -96,60 +134,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     if (!error && data.user) {
-      // Create profile row
-      await supabase.from('profiles').insert([
-        { id: data.user.id, ...metadata }
-      ])
+      // Create profile row with proper structure
+      const profileData = {
+        id: data.user.id,
+        full_name: metadata?.full_name as string || null,
+        role: metadata?.role as string || 'student',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([profileData])
+
+      if (profileError) {
+        console.error('[AUTH DEBUG] Error creating profile:', profileError)
+        // Don't fail the signup if profile creation fails
+        // The user can still sign in and we'll create the profile later
+      }
     }
 
     return { error }
-  }
+  }, [supabase])
 
-  // Simplified signIn - let onAuthStateChange handle state updates
-  const signIn = async (email: string, password: string) => {
-    console.log('[AuthContext] signIn called', { email })
-
+  const signIn = useCallback(async (email: string, password: string) => {
+    console.log('[AUTH DEBUG] signIn called with email:', email)
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
-    console.log('[AuthContext] signInWithPassword result', { error })
+    console.log('[AUTH DEBUG] signIn result:', { error })
     return { error }
-  }
+  }, [supabase])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
+    console.log('[AUTH DEBUG] signOut called')
     await supabase.auth.signOut()
-    // Don't manually clear state - let onAuthStateChange handle it
-  }
+  }, [supabase])
 
   useEffect(() => {
     const init = async () => {
-      console.log('[AuthContext] Initializing...')
+      console.log('[AUTH DEBUG] AuthContext initializing...')
 
       const {
         data: { session },
       } = await supabase.auth.getSession()
 
-      console.log('[AuthContext] Initial session:', session)
+      console.log('[AUTH DEBUG] Initial session:', session)
+      console.log('[AUTH DEBUG] Session user:', session?.user)
+      console.log('[AUTH DEBUG] Session access token:', session?.access_token ? 'present' : 'missing')
 
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        console.log('[AuthContext] Fetching profile for initial user:', session.user.id)
+        console.log('[AUTH DEBUG] Fetching profile for initial user:', session.user.id)
         const p = await fetchProfile(session.user.id)
-        console.log('[AuthContext] Initial profile fetch result:', p)
+        console.log('[AUTH DEBUG] Initial profile fetch result:', p)
         if (p && typeof p === 'object' && 'id' in p) {
           setProfile(p as Profile)
         } else {
           setProfile(null)
         }
+      } else {
+        console.log('[AUTH DEBUG] No session user found')
       }
 
-      console.log('[AuthContext] Setting loading to false after init')
+      console.log('[AUTH DEBUG] Setting loading to false after init')
       setLoading(false)
-      console.log('[AuthContext] Initialization complete')
+      console.log('[AUTH DEBUG] Initialization complete')
     }
 
     void init()
@@ -157,43 +211,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔁 Auth state change:', event, session?.user?.id)
-      console.log('[AuthContext] Current loading state before processing:', loading)
+      console.log('[AUTH DEBUG] Auth state change:', event, session?.user?.id)
+      console.log('[AUTH DEBUG] Auth state change event:', event)
+      console.log('[AUTH DEBUG] Auth state change session user:', session?.user)
 
       setSession(session)
       setUser(session?.user ?? null)
 
       if (session?.user) {
-        console.log('[AuthContext] Fetching profile for user:', session.user.id)
+        console.log('[AUTH DEBUG] Fetching profile for user:', session.user.id)
 
         try {
           const p = await fetchProfile(session.user.id)
-          console.log('[AuthContext] Profile fetch result:', p)
+          console.log('[AUTH DEBUG] Profile fetch result:', p)
           if (p && typeof p === 'object' && 'id' in p) {
             setProfile(p as Profile)
           } else {
             setProfile(null)
           }
         } catch (error) {
-          console.error('[AuthContext] Profile fetch failed:', error)
+          console.error('[AUTH DEBUG] Profile fetch failed:', error)
           setProfile(null)
         }
 
-        console.log('[AuthContext] Setting loading to false after profile fetch')
         setLoading(false)
       } else {
-        console.log('[AuthContext] No user, clearing profile and setting loading to false')
+        console.log('[AUTH DEBUG] No user, clearing profile and setting loading to false')
         setProfile(null)
         setLoading(false)
       }
 
-      console.log('[AuthContext] Auth state change processing complete')
+      console.log('[AUTH DEBUG] Auth state change processing complete')
     })
 
     return () => subscription.unsubscribe()
   }, [fetchProfile])
 
-  const value: AuthContextType = {
+  // Log current state on every render
+  console.log('[AUTH DEBUG] Current state:', { user: user?.id, profile: profile?.id, role, loading })
+
+  const value = useMemo<AuthContextType>(() => ({
     user,
     session,
     profile,
@@ -203,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     refreshProfile,
-  }
+  }), [user, session, profile, role, loading, signUp, signIn, signOut, refreshProfile])
 
   return (
     <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

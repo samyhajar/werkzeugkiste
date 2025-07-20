@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,34 +12,41 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tables } from '@/types/supabase'
 import { formatDistanceToNow } from 'date-fns'
-import RichTextEditor from '@/components/ui/rich-text-editor'
+import Link from 'next/link'
 
 type Lesson = Tables<'lessons'>
 type Course = Tables<'courses'>
 
+interface LessonWithCourse extends Lesson {
+  courses: Course | null
+}
+
 export default function LessonsPage() {
-  const [lessons, setLessons] = useState<Lesson[]>([])
-  const [modules, setModules] = useState<Course[]>([])
+  const [lessons, setLessons] = useState<LessonWithCourse[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [moduleFilter, setModuleFilter] = useState<string>('all')
+  const [courseFilter, setCourseFilter] = useState<string>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
+  const [editingLesson, setEditingLesson] = useState<LessonWithCourse | null>(null)
   const [newLesson, setNewLesson] = useState({
     title: '',
-    markdown: '',
-    video_url: '',
-    course_id: '',
-    sort_order: 0
+    content: '' as string | null,
+    course_id: '' as string | null,
+    sort_order: 0,
+    video_url: '' as string | null
   })
 
-  const supabase = createClient()
+  const supabase = getBrowserClient()
 
   const fetchLessons = async () => {
     try {
       const { data, error } = await supabase
         .from('lessons')
-        .select('*, courses(title)')
+        .select(`
+          *,
+          courses (*)
+        `)
         .order('sort_order', { ascending: true })
 
       if (error) {
@@ -55,21 +62,21 @@ export default function LessonsPage() {
     }
   }
 
-  const fetchModules = async () => {
+  const fetchCourses = async () => {
     try {
       const { data, error } = await supabase
         .from('courses')
         .select('*')
-        .order('title', { ascending: true })
+        .order('title')
 
       if (error) {
-        console.error('Error fetching modules:', error)
+        console.error('Error fetching courses:', error)
         return
       }
 
-      setModules(data || [])
+      setCourses(data || [])
     } catch (error) {
-      console.error('Error fetching modules:', error)
+      console.error('Error fetching courses:', error)
     }
   }
 
@@ -81,7 +88,7 @@ export default function LessonsPage() {
           ...newLesson,
           course_id: newLesson.course_id || null
         }])
-        .select('*, courses(title)')
+        .select()
 
       if (error) {
         console.error('Error creating lesson:', error)
@@ -89,8 +96,9 @@ export default function LessonsPage() {
       }
 
       if (data) {
-        setLessons([...lessons, data[0]])
-        setNewLesson({ title: '', markdown: '', video_url: '', course_id: '', sort_order: 0 })
+        // Refetch to get the course data
+        await fetchLessons()
+        setNewLesson({ title: '', content: '', course_id: '', sort_order: 0, video_url: '' })
         setIsCreateDialogOpen(false)
       }
     } catch (error) {
@@ -104,7 +112,7 @@ export default function LessonsPage() {
         .from('lessons')
         .update(updates)
         .eq('id', id)
-        .select('*, courses(title)')
+        .select()
 
       if (error) {
         console.error('Error updating lesson:', error)
@@ -112,9 +120,8 @@ export default function LessonsPage() {
       }
 
       if (data) {
-        setLessons(lessons.map(lesson =>
-          lesson.id === id ? { ...lesson, ...data[0] } : lesson
-        ))
+        // Refetch to get updated data
+        await fetchLessons()
       }
     } catch (error) {
       console.error('Error updating lesson:', error)
@@ -122,7 +129,7 @@ export default function LessonsPage() {
   }
 
   const deleteLesson = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return
+    if (!confirm('Are you sure you want to delete this lecture?')) return
 
     try {
       const { error } = await supabase
@@ -143,20 +150,14 @@ export default function LessonsPage() {
 
   const filteredLessons = lessons.filter(lesson => {
     const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lesson.markdown?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesModule = moduleFilter === 'all' || lesson.course_id === moduleFilter
-    return matchesSearch && matchesModule
+                         lesson.content?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCourse = courseFilter === 'all' || (courseFilter === 'none' ? !lesson.course_id : lesson.course_id === courseFilter)
+    return matchesSearch && matchesCourse
   })
-
-  const getModuleTitle = (courseId: string | null) => {
-    if (!courseId) return 'No Module'
-    const module = modules.find(m => m.id === courseId)
-    return module?.title || 'Unknown Module'
-  }
 
   useEffect(() => {
     fetchLessons()
-    fetchModules()
+    fetchCourses()
   }, [])
 
   if (loading) {
@@ -175,9 +176,9 @@ export default function LessonsPage() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Lessons</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Lectures</h1>
             <p className="text-foreground/60">
-              Manage your lessons and link them to modules
+              Manage your lectures and assign them to courses
             </p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -186,12 +187,12 @@ export default function LessonsPage() {
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Create Lesson
+                Create Lecture
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Create New Lesson</DialogTitle>
+                <DialogTitle>Create New Lecture</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
@@ -200,51 +201,52 @@ export default function LessonsPage() {
                     id="title"
                     value={newLesson.title}
                     onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                    placeholder="Enter lesson title"
+                    placeholder="Enter lecture title"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="content">Content</Label>
-                  <RichTextEditor
-                    content={newLesson.markdown || ''}
-                    onChange={(value) => setNewLesson({ ...newLesson, markdown: value })}
-                    placeholder="Enter lesson content..."
-                    className="w-full"
+                  <Textarea
+                    id="content"
+                    value={newLesson.content || ''}
+                    onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
+                    placeholder="Enter lecture content"
+                    rows={4}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="video_url">Video URL</Label>
-                  <Input
-                    id="video_url"
-                    value={newLesson.video_url}
-                    onChange={(e) => setNewLesson({ ...newLesson, video_url: e.target.value })}
-                    placeholder="Enter video URL (optional)"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="course_id">Module</Label>
-                  <Select value={newLesson.course_id} onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value })}>
+                  <Label htmlFor="course">Course</Label>
+                  <Select value={newLesson.course_id || 'none'} onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value === 'none' ? null : value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select module (optional)" />
+                      <SelectValue placeholder="Select a course" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Module</SelectItem>
-                      {modules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          {module.title}
+                      <SelectItem value="none">No Course</SelectItem>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="sort_order">Sort Order</Label>
+                  <Label htmlFor="sort_order">Order</Label>
                   <Input
                     id="sort_order"
                     type="number"
                     value={newLesson.sort_order}
                     onChange={(e) => setNewLesson({ ...newLesson, sort_order: parseInt(e.target.value) || 0 })}
-                    placeholder="Enter sort order"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="video_url">Video URL (Optional)</Label>
+                  <Input
+                    id="video_url"
+                    value={newLesson.video_url || ''}
+                    onChange={(e) => setNewLesson({ ...newLesson, video_url: e.target.value })}
+                    placeholder="https://..."
                   />
                 </div>
               </div>
@@ -253,7 +255,7 @@ export default function LessonsPage() {
                   Cancel
                 </Button>
                 <Button onClick={createLesson} disabled={!newLesson.title.trim()}>
-                  Create Lesson
+                  Create Lecture
                 </Button>
               </div>
             </DialogContent>
@@ -269,22 +271,22 @@ export default function LessonsPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <Input
-                  placeholder="Search lessons..."
+                  placeholder="Search lectures..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="w-full sm:w-48">
-                <Select value={moduleFilter} onValueChange={setModuleFilter}>
+                <Select value={courseFilter} onValueChange={(value) => setCourseFilter(value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Filter by module" />
+                    <SelectValue placeholder="Filter by course" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Modules</SelectItem>
-                    <SelectItem value="">No Module</SelectItem>
-                    {modules.map((module) => (
-                      <SelectItem key={module.id} value={module.id}>
-                        {module.title}
+                    <SelectItem value="all">All Courses</SelectItem>
+                    <SelectItem value="none">No Course</SelectItem>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -297,9 +299,9 @@ export default function LessonsPage() {
         {/* Lessons Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Lessons ({filteredLessons.length})</CardTitle>
+            <CardTitle>Lectures ({filteredLessons.length})</CardTitle>
             <CardDescription>
-              Manage your lessons and their module assignments
+              Manage your lectures and their course assignments
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -308,18 +310,19 @@ export default function LessonsPage() {
                 <svg className="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p>No lessons found</p>
-                <p className="text-sm">Create your first lesson to get started</p>
+                <p>No lectures found</p>
+                <p className="text-sm">Create your first lecture to get started</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
+                      <th className="text-left p-2">Order</th>
                       <th className="text-left p-2">Title</th>
-                      <th className="text-left p-2">Module</th>
-                      <th className="text-left p-2">Sort Order</th>
-                      <th className="text-left p-2">Has Video</th>
+                      <th className="text-left p-2">Course</th>
+                      <th className="text-left p-2">Content Preview</th>
+                      <th className="text-left p-2">Video</th>
                       <th className="text-left p-2">Created</th>
                       <th className="text-left p-2">Actions</th>
                     </tr>
@@ -327,20 +330,26 @@ export default function LessonsPage() {
                   <tbody>
                     {filteredLessons.map((lesson) => (
                       <tr key={lesson.id} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-mono text-sm">{lesson.sort_order}</td>
                         <td className="p-2 font-medium">{lesson.title}</td>
                         <td className="p-2">
-                          <Badge variant="outline">
-                            {getModuleTitle(lesson.course_id)}
-                          </Badge>
+                          {lesson.courses ? (
+                            <Badge variant="outline">{lesson.courses.title}</Badge>
+                          ) : (
+                            <span className="text-foreground/40">No course</span>
+                          )}
                         </td>
-                        <td className="p-2 text-sm text-foreground/70">
-                          {lesson.sort_order || 0}
+                        <td className="p-2 text-sm text-foreground/70 max-w-xs truncate">
+                          {lesson.content ?
+                            (lesson.content.length > 50 ? `${lesson.content.substring(0, 50)}...` : lesson.content)
+                            : 'No content'
+                          }
                         </td>
                         <td className="p-2">
                           {lesson.video_url ? (
-                            <Badge variant="default">Yes</Badge>
+                            <Badge variant="secondary">Has Video</Badge>
                           ) : (
-                            <Badge variant="secondary">No</Badge>
+                            <span className="text-foreground/40">No video</span>
                           )}
                         </td>
                         <td className="p-2 text-sm text-foreground/70">
@@ -377,9 +386,9 @@ export default function LessonsPage() {
         {/* Edit Dialog */}
         {editingLesson && (
           <Dialog open={!!editingLesson} onOpenChange={() => setEditingLesson(null)}>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Edit Lesson</DialogTitle>
+                <DialogTitle>Edit Lecture</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
@@ -388,54 +397,52 @@ export default function LessonsPage() {
                     id="edit-title"
                     value={editingLesson.title}
                     onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
-                    placeholder="Enter lesson title"
+                    placeholder="Enter lecture title"
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-content">Content</Label>
-                  <RichTextEditor
-                    content={editingLesson.markdown || ''}
-                    onChange={(value) => setEditingLesson({ ...editingLesson, markdown: value })}
-                    placeholder="Enter lesson content..."
-                    className="w-full"
+                  <Textarea
+                    id="edit-content"
+                    value={editingLesson.content || ''}
+                    onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value || null })}
+                    placeholder="Enter lecture content"
+                    rows={4}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-video_url">Video URL</Label>
-                  <Input
-                    id="edit-video_url"
-                    value={editingLesson.video_url || ''}
-                    onChange={(e) => setEditingLesson({ ...editingLesson, video_url: e.target.value })}
-                    placeholder="Enter video URL (optional)"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-course_id">Module</Label>
-                  <Select
-                    value={editingLesson.course_id || ''}
-                    onValueChange={(value) => setEditingLesson({ ...editingLesson, course_id: value || null })}
-                  >
+                  <Label htmlFor="edit-course">Course</Label>
+                  <Select value={editingLesson.course_id || 'none'} onValueChange={(value) => setEditingLesson({ ...editingLesson, course_id: value === 'none' ? null : value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select module (optional)" />
+                      <SelectValue placeholder="Select a course" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No Module</SelectItem>
-                      {modules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          {module.title}
+                      <SelectItem value="none">No Course</SelectItem>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.title}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-sort_order">Sort Order</Label>
+                  <Label htmlFor="edit-sort_order">Order</Label>
                   <Input
                     id="edit-sort_order"
                     type="number"
-                    value={editingLesson.sort_order || 0}
+                    value={editingLesson.sort_order}
                     onChange={(e) => setEditingLesson({ ...editingLesson, sort_order: parseInt(e.target.value) || 0 })}
-                    placeholder="Enter sort order"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-video_url">Video URL (Optional)</Label>
+                  <Input
+                    id="edit-video_url"
+                    value={editingLesson.video_url || ''}
+                    onChange={(e) => setEditingLesson({ ...editingLesson, video_url: e.target.value || null })}
+                    placeholder="https://..."
                   />
                 </div>
               </div>
@@ -447,10 +454,10 @@ export default function LessonsPage() {
                   onClick={async () => {
                     await updateLesson(editingLesson.id, {
                       title: editingLesson.title,
-                      markdown: editingLesson.markdown,
-                      video_url: editingLesson.video_url,
+                      content: editingLesson.content || undefined,
                       course_id: editingLesson.course_id,
-                      sort_order: editingLesson.sort_order
+                      sort_order: editingLesson.sort_order,
+                      video_url: editingLesson.video_url || undefined
                     })
                     setEditingLesson(null)
                   }}
