@@ -58,7 +58,8 @@ export default function ModuleDetailPage() {
   const fetchModule = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/courses/${moduleId}`)
+      console.log('[ModuleDetail] Fetching module:', moduleId)
+      const response = await fetch(`/api/modules/${moduleId}`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch module')
@@ -66,7 +67,18 @@ export default function ModuleDetailPage() {
 
       const data = await response.json()
       if (data.success) {
-        setModule(data.course)
+        // Transform module structure to match the component's expectations
+        const moduleData = data.module
+        // Flatten the first course's data to the module level for compatibility
+        const firstCourse = moduleData.courses?.[0] || {}
+        setModule({
+          ...firstCourse,
+          ...moduleData,
+          // Combine all lessons from all courses
+          lessons: moduleData.courses?.flatMap(course => course.lessons || []) || [],
+          // Combine all quizzes from all courses
+          quizzes: moduleData.courses?.flatMap(course => course.quizzes || []) || []
+        })
       } else {
         setError(data.error || 'Failed to load module')
       }

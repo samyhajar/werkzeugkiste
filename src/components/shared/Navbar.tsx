@@ -15,10 +15,11 @@ const links = [
   { href: '/ueber-uns', label: 'Über Uns' },
 ]
 
-interface Course {
+interface Module {
   id: string
   title: string
   description: string | null
+  hero_image: string | null
   status: 'draft' | 'published'
 }
 
@@ -29,23 +30,35 @@ interface UserProfile {
 }
 
 export default function Navbar() {
-  const { user, loading } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [isModulesOpen, setIsModulesOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [modules, setModules] = useState<Course[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [modulesLoading, setModulesLoading] = useState(false)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [forceShowButton, setForceShowButton] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const supabase = getBrowserClient()
 
+  // Force show login button after 3 seconds if still loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading && !user) {
+        setForceShowButton(true)
+      }
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [loading, user])
+
   // Debug logging
   useEffect(() => {
-    console.log('Navbar state:', { user: user?.email, loading, userProfile })
-  }, [user, loading, userProfile])
+    console.log('Navbar state:', { user: user?.email, loading, userProfile, forceShowButton })
+  }, [user, loading, userProfile, forceShowButton])
 
   // Fetch user profile when user changes
   useEffect(() => {
@@ -86,7 +99,7 @@ export default function Navbar() {
   const fetchModules = async () => {
     setModulesLoading(true)
     try {
-      const response = await fetch('/api/student/courses', {
+      const response = await fetch('/api/modules', {
         method: 'GET',
         credentials: 'include',
       })
@@ -94,7 +107,7 @@ export default function Navbar() {
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setModules(data.courses || [])
+          setModules(data.modules || [])
         }
       }
     } catch (error) {
@@ -106,12 +119,22 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut()
-      setUserProfile(null)
+      console.log('[Navbar] Starting logout process...')
+
+      // Close user menu immediately for better UX
       setIsUserMenuOpen(false)
+      setUserProfile(null)
+
+      // Use AuthContext's comprehensive logout
+      await signOut()
+
+      console.log('[Navbar] Redirecting to home...')
       window.location.href = '/'
+
     } catch (error) {
-      console.error('Error logging out:', error)
+      console.error('[Navbar] Error during logout:', error)
+      // Force redirect even if logout fails
+      window.location.href = '/'
     }
   }
 
@@ -222,7 +245,7 @@ export default function Navbar() {
               </div>
 
               {/* User Menu or Login Button */}
-              {loading ? (
+              {loading && !forceShowButton ? (
                 <div className="bg-gray-300 animate-pulse h-10 w-24 rounded-lg"></div>
               ) : user ? (
                 <div className="relative" ref={userMenuRef}>
@@ -276,8 +299,17 @@ export default function Navbar() {
                     console.log('Login button clicked!')
                     setIsLoginModalOpen(true)
                   }}
-                  className="bg-[#de0449] hover:bg-[#c5043e] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
-                  style={{ backgroundColor: '#de0449' }}
+                  className="text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
+                  style={{
+                    backgroundColor: '#de0449',
+                    borderColor: '#de0449'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#c5043e'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#de0449'
+                  }}
                 >
                   Einloggen
                 </button>
@@ -378,8 +410,16 @@ export default function Navbar() {
                       setIsOpen(false)
                       setIsLoginModalOpen(true)
                     }}
-                    className="block w-full text-left px-3 py-2 bg-[#de0449] hover:bg-[#c5043e] text-white font-medium rounded-lg transition-colors duration-200 mt-2"
-                    style={{ backgroundColor: '#de0449' }}
+                    className="block w-full text-left px-3 py-2 text-white font-medium rounded-lg transition-colors duration-200 mt-2"
+                    style={{
+                      backgroundColor: '#de0449'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#c5043e'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#de0449'
+                    }}
                   >
                     Einloggen
                   </button>

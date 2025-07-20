@@ -25,17 +25,25 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     try {
+      console.log('[AdminLayout] Starting admin logout...')
+
+      // Call the improved logout API
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       })
 
-      if (response.ok) {
-        router.replace('/')
-      }
+      const data = await response.json()
+      console.log('[AdminLayout] Logout API response:', data)
+
+      // Always redirect, regardless of API response
+      console.log('[AdminLayout] Redirecting to home...')
+      router.replace('/')
+
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('[AdminLayout] Logout error:', error)
       // Force redirect even if logout API fails
+      console.log('[AdminLayout] Force redirecting due to error...')
       router.replace('/')
     }
   }

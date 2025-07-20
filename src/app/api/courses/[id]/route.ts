@@ -44,37 +44,42 @@ export async function GET(
       )
     }
 
-    // Fetch quizzes for this course
-    const { data: quizzes, error: quizzesError } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('lesson_id', null) // Course-level quizzes
-      .in('lesson_id', lessons?.map(l => l.id) || []) // OR lesson-specific quizzes
-
-    // Actually, let's get quizzes that belong to lessons in this course
+    // Fetch course-level quizzes (directly associated with course)
     const { data: courseQuizzes, error: courseQuizzesError } = await supabase
       .from('quizzes')
-      .select(
-        `
-        *,
-        lessons!inner(course_id)
-      `
-      )
-      .eq('lessons.course_id', id)
+      .select('*')
+      .eq('course_id', id)
+
+    // Fetch lesson-specific quizzes (associated with lessons in this course)
+    const lessonIds = lessons?.map(l => l.id) || []
+    let lessonQuizzes = []
+    if (lessonIds.length > 0) {
+      const { data: lessonQuizzesData, error: lessonQuizzesError } =
+        await supabase.from('quizzes').select('*').in('lesson_id', lessonIds)
+
+      if (lessonQuizzesError) {
+        console.error('Error fetching lesson quizzes:', lessonQuizzesError)
+      } else {
+        lessonQuizzes = lessonQuizzesData || []
+      }
+    }
 
     if (courseQuizzesError) {
-      console.error('Error fetching quizzes:', courseQuizzesError)
+      console.error('Error fetching course quizzes:', courseQuizzesError)
       return NextResponse.json(
         { success: false, error: 'Failed to fetch quizzes' },
         { status: 500 }
       )
     }
 
+    // Combine all quizzes
+    const allQuizzes = [...(courseQuizzes || []), ...lessonQuizzes]
+
     // Combine course with its lessons and quizzes
     const courseWithContent = {
       ...course,
       lessons: lessons || [],
-      quizzes: courseQuizzes || [],
+      quizzes: allQuizzes,
     }
 
     return NextResponse.json({

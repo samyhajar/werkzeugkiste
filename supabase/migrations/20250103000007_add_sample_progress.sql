@@ -3,7 +3,7 @@ DO $$
 DECLARE
     student_user_id UUID;
     lesson_ids UUID[];
-    lesson_id UUID;
+    current_lesson_id UUID;
     i INTEGER := 0;
 BEGIN
     -- Get the first student user
@@ -15,7 +15,7 @@ BEGIN
         SELECT ARRAY(SELECT id FROM lessons ORDER BY created_at LIMIT 8) INTO lesson_ids;
 
         -- Add progress for some lessons (simulate partial completion)
-        FOREACH lesson_id IN ARRAY lesson_ids
+        FOREACH current_lesson_id IN ARRAY lesson_ids
         LOOP
             i := i + 1;
             -- Only add progress for first 5 lessons (partial completion)
@@ -23,7 +23,7 @@ BEGIN
                 INSERT INTO lesson_progress (student_id, lesson_id, completed_at)
                 VALUES (
                     student_user_id,
-                    lesson_id,
+                    current_lesson_id,
                     NOW() - (i || ' days')::INTERVAL
                 )
                 ON CONFLICT (student_id, lesson_id) DO NOTHING;

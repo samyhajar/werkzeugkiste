@@ -47,12 +47,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }, [isOpen])
 
-  const handleSignIn = async (e: React.FormEvent) => {
+    const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    try {
+        try {
+      // Use server-side login API that sets proper cookies
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,24 +62,33 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       const data = await response.json()
 
-      if (data.success) {
-        setSuccess('Anmeldung erfolgreich!')
+      if (!response.ok || !data.success) {
+        setError(data.error || 'Anmeldung fehlgeschlagen')
+        setLoading(false)
+        return
+      }
 
-        // Refresh the client-side session to immediately reflect the login
-        await supabase.auth.refreshSession()
+      setSuccess('Anmeldung erfolgreich!')
+      setLoading(false)
 
-        // Close modal and let the page update naturally
+              console.log('Server login successful, user role:', data.user?.role)
+        console.log('Closing modal and letting AuthContext handle session sync...')
+
+        // Close modal immediately and let AuthContext handle the rest
         setTimeout(() => {
           onClose()
-          // Force a page refresh to ensure auth state is properly updated
-          window.location.reload()
+
+          if (data.user?.role === 'admin') {
+            console.log('Redirecting admin to /admin')
+            router.push('/admin')
+          } else {
+            console.log('Student login complete - AuthContext will detect the session')
+          }
         }, 1000)
-      } else {
-        setError(data.error || 'Anmeldung fehlgeschlagen')
-      }
+
     } catch (err) {
+      console.error('Login error:', err)
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
-    } finally {
       setLoading(false)
     }
   }

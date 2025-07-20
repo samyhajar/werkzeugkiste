@@ -7,8 +7,8 @@ import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
 import { cookies } from 'next/headers'
 import NewHereButton from '@/components/shared/NewHereButton'
-import ProgressTester from '@/components/shared/ProgressTester'
 
+type Module = Tables<'modules'>
 type Course = Tables<'courses'>
 type LessonProgress = Tables<'lesson_progress'>
 
@@ -30,60 +30,76 @@ export default async function Home({
   const cookieStore = await cookies()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch all published courses
-  const { data: fetchedCourses } = await supabase
-    .from('courses')
+  // Fetch all published modules
+  const { data: fetchedModules } = await supabase
+    .from('modules')
     .select('*')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
 
-  const courses = fetchedCourses ?? []
+  const modules = fetchedModules ?? []
 
   // Fetch user progress if logged in
   let userProgress: Record<string, number> = {}
-  if (user) {
-    // Get user's completed lessons with course info in a single query
-    const { data: progressData, error: progressError } = await supabase
-      .from('lesson_progress')
-      .select(`
-        lesson_id,
-        completed_at,
-        lessons!inner(
-          id,
-          course_id,
-          title
-        )
-      `)
-      .eq('student_id', user.id)
+  if (user && modules.length > 0) {
+    // Get all courses for these modules
+    const { data: courses } = await supabase
+      .from('courses')
+      .select('id, module_id')
+      .in('module_id', modules.map(m => m.id))
+      .eq('status', 'published')
 
-    if (progressData && !progressError) {
-      // Get total lesson counts per course in a single query
-      const { data: lessonCounts, error: countError } = await supabase
-        .from('lessons')
-        .select('course_id')
-        .in('course_id', courses.map(c => c.id))
+    if (courses && courses.length > 0) {
+      // Get user's completed lessons with course info in a single query
+      const { data: progressData, error: progressError } = await supabase
+        .from('lesson_progress')
+        .select(`
+          lesson_id,
+          completed_at,
+          lessons!inner(
+            id,
+            course_id,
+            title
+          )
+        `)
+        .eq('student_id', user.id)
 
-      if (lessonCounts && !countError) {
-        // Count lessons per course
-        const lessonCountByCourse: Record<string, number> = {}
-        lessonCounts.forEach(lesson => {
-          lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
-        })
+      if (progressData && !progressError) {
+        // Get total lesson counts per course in a single query
+        const { data: lessonCounts, error: countError } = await supabase
+          .from('lessons')
+          .select('course_id')
+          .in('course_id', courses.map(c => c.id))
 
-        // Count completed lessons per course
-        const completedByCourse: Record<string, number> = {}
-        progressData.forEach(progress => {
-          const courseId = (progress.lessons as any)?.course_id
-          if (courseId) {
-            completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1
+        if (lessonCounts && !countError) {
+          // Count lessons per course
+          const lessonCountByCourse: Record<string, number> = {}
+          lessonCounts.forEach(lesson => {
+            lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
+          })
+
+          // Count completed lessons per course
+          const completedByCourse: Record<string, number> = {}
+          progressData.forEach(progress => {
+            const courseId = (progress.lessons as any)?.course_id
+            if (courseId) {
+              completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1
+            }
+          })
+
+          // Calculate progress per module
+          for (const module of modules) {
+            const moduleCourses = courses.filter(c => c.module_id === module.id)
+            let totalLessons = 0
+            let completedLessons = 0
+
+            for (const course of moduleCourses) {
+              totalLessons += lessonCountByCourse[course.id] || 0
+              completedLessons += completedByCourse[course.id] || 0
+            }
+
+            userProgress[module.id] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
           }
-        })
-
-        // Calculate percentages
-        for (const courseId of courses.map(c => c.id)) {
-          const totalLessons = lessonCountByCourse[courseId] || 0
-          const completedLessons = completedByCourse[courseId] || 0
-          userProgress[courseId] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
         }
       }
     }
@@ -108,13 +124,13 @@ export default async function Home({
         <h2 className="text-3xl font-bold mb-8 text-center md:text-left text-gray-800">
           Lernmodule
         </h2>
-        {courses.length > 0 ? (
+        {modules.length > 0 ? (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {courses.map((course: Course) => (
+            {modules.map((module: Module) => (
               <ModuleCard
-                key={course.id}
-                course={course}
-                progress={userProgress[course.id] || 0}
+                key={module.id}
+                course={module}
+                progress={userProgress[module.id] || 0}
                 isLoggedIn={!!user}
               />
             ))}
@@ -126,9 +142,6 @@ export default async function Home({
           </div>
         )}
       </section>
-
-      {/* Progress Tester for Development */}
-      <ProgressTester />
 
       <PartnerSection />
 

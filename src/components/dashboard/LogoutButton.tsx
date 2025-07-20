@@ -1,19 +1,29 @@
 'use client'
 
-import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const supabase = getBrowserClient()
+  const { signOut } = useAuth()
 
   const handleLogout = async () => {
     setLoading(true)
-    await supabase.auth.signOut()
-    router.push('/')
-    setLoading(false)
+
+    try {
+      console.log('[LogoutButton] Starting logout...')
+      await signOut()
+      console.log('[LogoutButton] Logout successful, redirecting...')
+      router.push('/')
+    } catch (error) {
+      console.error('[LogoutButton] Logout error:', error)
+      // Force redirect even if logout fails
+      router.push('/')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

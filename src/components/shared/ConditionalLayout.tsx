@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
@@ -10,25 +11,33 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
-  const isAdminPage = pathname.startsWith('/admin')
+  const [isAdminPage, setIsAdminPage] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  if (isAdminPage) {
-    // Admin pages: no navbar/footer, full height
+  useEffect(() => {
+    // Only update after hydration to prevent server/client mismatch
+    setIsAdminPage(pathname.startsWith('/admin'))
+    setIsHydrated(true)
+  }, [pathname])
+
+  // During SSR and initial hydration, always render with navbar/footer
+  // This ensures consistent HTML structure
+  if (!isHydrated || !isAdminPage) {
     return (
-      <div className="min-h-screen w-full">
-        {children}
-      </div>
+      <>
+        <Navbar />
+        <main className="flex-1 w-full">
+          {children}
+        </main>
+        <Footer />
+      </>
     )
   }
 
-  // Regular pages: with navbar and footer
+  // After hydration, render admin layout if needed
   return (
-    <>
-      <Navbar />
-      <main className="flex-1 w-full">
-        {children}
-      </main>
-      <Footer />
-    </>
+    <div className="min-h-screen w-full">
+      {children}
+    </div>
   )
 }

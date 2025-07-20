@@ -21,9 +21,18 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Ensure cookies persist and are accessible to client
+              const cookieOptions = {
+                ...options,
+                maxAge: 60 * 60 * 24 * 7, // 7 days
+                httpOnly: false, // Allow client-side access
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax' as const,
+                path: '/',
+              }
+              cookieStore.set(name, value, cookieOptions)
+            })
           } catch {
             /* Called from a Server Component – safe to ignore. */
           }
