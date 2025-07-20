@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ChevronLeft, BookOpen, HelpCircle, Clock, CheckCircle } from 'lucide-react'
+import { ChevronLeft, BookOpen, HelpCircle, CheckCircle } from 'lucide-react'
+// import { Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
 
@@ -242,7 +243,7 @@ export default function LessonDetailPage() {
 
             {/* Lessons and Quizzes List */}
             <div className="space-y-1 ml-8">
-              {courseContent.map((item, index) => {
+              {courseContent.map((item, _index) => {
                 const isActive = item.type === 'lesson' && item.data.id === lessonId
                 const isCompleted = true // For now, assume all are completed
 

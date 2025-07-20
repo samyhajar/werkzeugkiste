@@ -11,7 +11,7 @@ export async function GET(
 
     // Get current user (optional for public modules, but good for progress tracking)
     const {
-      data: { user },
+      data: { user: _user },
     } = await supabase.auth.getUser()
 
     // Fetch module details
@@ -49,14 +49,14 @@ export async function GET(
     const coursesWithContent = await Promise.all(
       (courses || []).map(async course => {
         // Fetch lessons for this course
-        const { data: lessons, error: lessonsError } = await supabase
+        const { data: lessons, error: _lessonsError } = await supabase
           .from('lessons')
           .select('*')
           .eq('course_id', course.id)
           .order('sort_order', { ascending: true })
 
         // Fetch course-level quizzes
-        const { data: courseQuizzes, error: courseQuizzesError } =
+        const { data: courseQuizzes, error: _courseQuizzesError } =
           await supabase.from('quizzes').select('*').eq('course_id', course.id)
 
         // Fetch lesson-specific quizzes

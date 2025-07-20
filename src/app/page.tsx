@@ -1,16 +1,16 @@
 import ModuleCard from '@/components/shared/ModuleCard'
-import DummyModuleCard from '@/components/shared/DummyModuleCard'
+// import DummyModuleCard from '@/components/shared/DummyModuleCard'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server-client'
 import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
-import { cookies } from 'next/headers'
+// import { cookies } from 'next/headers'
 
 
 type Module = Tables<'modules'>
-type Course = Tables<'courses'>
-type LessonProgress = Tables<'lesson_progress'>
+// type Course = Tables<'courses'>
+// type LessonProgress = Tables<'lesson_progress'>
 
 export const revalidate = 60 // ISR every minute
 
@@ -27,7 +27,7 @@ export default async function Home({
   const supabase = await createClient()
 
   // Get current user session
-  const cookieStore = await cookies()
+  // const cookieStore = await cookies()
   const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch all published modules
@@ -40,7 +40,7 @@ export default async function Home({
   const modules = fetchedModules ?? []
 
   // Fetch user progress if logged in
-  let userProgress: Record<string, number> = {}
+  const userProgress: Record<string, number> = {}
   if (user && modules.length > 0) {
     // Get all courses for these modules
     const { data: courses } = await supabase
@@ -90,8 +90,8 @@ export default async function Home({
           })
 
           // Calculate progress per module
-          for (const module of modules) {
-            const moduleCourses = courses.filter(c => c.module_id === module.id)
+          for (const moduleItem of modules) {
+            const moduleCourses = courses.filter(c => c.module_id === moduleItem.id)
             let totalLessons = 0
             let completedLessons = 0
 
@@ -100,7 +100,7 @@ export default async function Home({
               completedLessons += completedByCourse[course.id] || 0
             }
 
-            userProgress[module.id] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+            userProgress[moduleItem.id] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
           }
         }
       }
@@ -129,11 +129,11 @@ export default async function Home({
           </h2>
           {modules.length > 0 ? (
             <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {modules.map((module: Module) => (
+              {modules.map((moduleItem: Module) => (
                 <ModuleCard
-                  key={module.id}
-                  module={module}
-                  progress={userProgress[module.id] || 0}
+                  key={moduleItem.id}
+                  module={moduleItem}
+                  progress={userProgress[moduleItem.id] || 0}
                   isLoggedIn={!!user}
                 />
               ))}

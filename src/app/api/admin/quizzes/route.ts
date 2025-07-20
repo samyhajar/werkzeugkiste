@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -73,8 +73,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, description, lesson_id, questions, pass_percentage } =
-      await request.json()
+    const {
+      title,
+      description: _description,
+      lesson_id,
+      questions: _questions,
+      pass_percentage,
+    } = await request.json()
 
     if (!title || !lesson_id) {
       return NextResponse.json(

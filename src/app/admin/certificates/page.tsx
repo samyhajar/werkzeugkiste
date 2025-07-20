@@ -45,7 +45,7 @@ export default function CertificatesPage() {
             file_url: row.file_url
           }))
         )
-      } catch (err) {
+      } catch (_err) {
         setCertificates([])
       } finally {
         setLoading(false)

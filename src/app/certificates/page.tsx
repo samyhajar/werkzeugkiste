@@ -18,7 +18,7 @@ interface Certificate {
 export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchCertificates()
@@ -39,7 +39,7 @@ export default function CertificatesPage() {
     }
   }
 
-  const handleDownloadCertificate = (certificateId: string) => {
+  const handleDownloadCertificate = (_certificateId: string) => {
     // TODO: Implement real certificate download
     alert('Certificate download will be implemented when certificates are earned.')
   }

@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function GET(request: NextRequest) {
+interface RecentActivity {
+  id: string
+  timestamp: string
+  type: 'lesson_completed' | 'quiz_completed' | 'course_completed'
+  studentName: string
+}
+
+interface DashboardStats {
+  totalCourses: number
+  totalLessons: number
+  totalQuizzes: number
+  totalStudents: number
+  recentActivities: RecentActivity[]
+}
+
+interface DashboardResponse {
+  success: boolean
+  stats?: DashboardStats
+  recentActivities?: RecentActivity[]
+  error?: string
+}
+
+export async function GET(
+  _request: NextRequest
+): Promise<NextResponse<DashboardResponse>> {
   try {
     const supabase = await createClient()
 
@@ -10,182 +34,126 @@ export async function GET(request: NextRequest) {
       data: { session },
       error: sessionError,
     } = await supabase.auth.getSession()
+
     if (sessionError || !session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
     const userRole = session.user.user_metadata?.role
     if (userRole !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
     }
 
-    // Fetch dashboard data
-    const [
-      profilesResult,
-      coursesResult,
-      lessonsResult,
-      quizzesResult,
-      lessonProgressResult,
-      quizAttemptsResult,
-    ] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, full_name, role, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('courses')
-        .select('id, title, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('lessons')
-        .select('id, title, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('quizzes')
-        .select('id, title, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('lesson_progress')
-        .select(
-          'completed_at, lesson_id, student_id, lessons(title), profiles(full_name)'
-        )
-        .order('completed_at', { ascending: false })
-        .limit(5),
-      supabase
-        .from('quiz_attempts')
-        .select(
-          'completed_at, score_percentage, passed, quiz_id, student_id, quizzes(title), profiles(full_name)'
-        )
-        .order('completed_at', { ascending: false })
-        .limit(5),
+    // Get dashboard statistics
+    const [coursesResult, lessonsResult, studentsResult] = await Promise.all([
+      supabase.from('courses').select('id'),
+      supabase.from('lessons').select('id'),
+      supabase.from('profiles').select('id').eq('role', 'student'),
     ])
 
-    // Build recent activities
-    const activities: any[] = []
-
-    // Recent registrations
-    if (profilesResult.data) {
-      profilesResult.data.forEach((profile: any) => {
-        if (profile.role === 'student') {
-          activities.push({
-            id: `registration-${profile.id}`,
-            type: 'registration',
-            title: 'New student registration',
-            description: `${profile.full_name || 'Anonymous'} joined the platform`,
-            timestamp: profile.created_at,
-            user_name: profile.full_name || 'Anonymous',
-            badge_color: 'bg-green-500',
-          })
-        }
-      })
+    if (coursesResult.error || lessonsResult.error || studentsResult.error) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch dashboard stats' },
+        { status: 500 }
+      )
     }
 
-    // Recent lesson completions
-    if (lessonProgressResult.data) {
-      lessonProgressResult.data.forEach((progress: any) => {
-        activities.push({
-          id: `completion-${progress.lesson_id}-${progress.student_id}-${progress.completed_at}`,
-          type: 'lesson_completion',
-          title: 'Lesson completed',
-          description: `${progress.profiles?.full_name || 'Student'} completed "${progress.lessons?.title || 'Unknown lesson'}"`,
-          timestamp: progress.completed_at,
-          user_name: progress.profiles?.full_name,
-          badge_color: 'bg-blue-500',
-        })
-      })
-    }
+    // Get recent activities - lessons completed
+    const { data: lessonActivities } = await supabase
+      .from('lesson_progress')
+      .select(
+        `
+        lesson_id,
+        student_id,
+        completed_at,
+        profiles (
+          full_name
+        ),
+        lessons (
+          title
+        )
+      `
+      )
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(20)
 
-    // Recent quiz attempts
-    if (quizAttemptsResult.data) {
-      quizAttemptsResult.data.forEach((attempt: any) => {
-        activities.push({
-          id: `quiz-${attempt.quiz_id}-${attempt.student_id}-${attempt.completed_at}`,
-          type: 'quiz_attempt',
-          title: attempt.passed ? 'Quiz passed' : 'Quiz attempted',
-          description: `${attempt.profiles?.full_name || 'Student'} ${attempt.passed ? 'passed' : 'attempted'} "${attempt.quizzes?.title || 'Unknown quiz'}" (${attempt.score_percentage}%)`,
-          timestamp: attempt.completed_at,
-          user_name: attempt.profiles?.full_name,
-          badge_color: attempt.passed ? 'bg-emerald-500' : 'bg-yellow-500',
-        })
-      })
-    }
+    // Get recent activities - quizzes completed
+    const { data: quizActivities } = await supabase
+      .from('quiz_attempts')
+      .select(
+        `
+        quiz_id,
+        user_id,
+        completed_at,
+        passed,
+        profiles (
+          full_name
+        ),
+        quizzes (
+          title,
+          pass_percentage
+        )
+      `
+      )
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(20)
 
-    // Recent content creation
-    if (coursesResult.data) {
-      coursesResult.data.forEach((course: any) => {
-        activities.push({
-          id: `course-${course.id}-${course.created_at}`,
-          type: 'content_created',
-          title: 'New course created',
-          description: `Course "${course.title}" was created`,
-          timestamp: course.created_at,
-          badge_color: 'bg-purple-500',
-        })
-      })
-    }
+    // Process lesson activities
+    const processedLessonActivities: RecentActivity[] = (
+      lessonActivities || []
+    ).map(activity => ({
+      id: `lesson-${activity.lesson_id}-${activity.student_id}`,
+      timestamp: activity.completed_at || '',
+      type: 'lesson_completed' as const,
+      studentName: (activity.profiles as any)?.full_name || 'Unknown Student',
+    }))
 
-    if (lessonsResult.data) {
-      lessonsResult.data.forEach((lesson: any) => {
-        activities.push({
-          id: `lesson-${lesson.id}-${lesson.created_at}`,
-          type: 'content_created',
-          title: 'New lesson created',
-          description: `Lesson "${lesson.title}" was created`,
-          timestamp: lesson.created_at,
-          badge_color: 'bg-indigo-500',
-        })
-      })
-    }
+    // Process quiz activities
+    const processedQuizActivities: RecentActivity[] = (
+      quizActivities || []
+    ).map(activity => ({
+      id: `quiz-${activity.quiz_id}-${activity.user_id}`,
+      timestamp: activity.completed_at || '',
+      type: 'quiz_completed' as const,
+      studentName: (activity.profiles as any)?.full_name || 'Unknown Student',
+    }))
 
-    // Sort activities by timestamp and take the 10 most recent
-    activities.sort(
-      (a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    )
-    const recentActivities = activities.slice(0, 10)
+    // Combine and sort all activities
+    const allActivities = [
+      ...processedLessonActivities,
+      ...processedQuizActivities,
+    ]
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )
+      .slice(0, 10)
 
-    // Get basic stats
-    const [
-      totalStudentsResult,
-      totalCoursesResult,
-      publishedCoursesResult,
-      totalLessonsResult,
-      totalQuizzesResult,
-    ] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'student'),
-      supabase.from('courses').select('*', { count: 'exact', head: true }),
-      supabase
-        .from('courses')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'published'),
-      supabase.from('lessons').select('*', { count: 'exact', head: true }),
-      supabase.from('quizzes').select('*', { count: 'exact', head: true }),
-    ])
-
-    const stats = {
-      totalStudents: totalStudentsResult.count || 0,
-      totalCourses: totalCoursesResult.count || 0,
-      publishedCourses: publishedCoursesResult.count || 0,
-      totalLessons: totalLessonsResult.count || 0,
-      totalQuizzes: totalQuizzesResult.count || 0,
+    const stats: DashboardStats = {
+      totalCourses: coursesResult.data?.length || 0,
+      totalLessons: lessonsResult.data?.length || 0,
+      totalQuizzes: 0, // Will be populated when needed
+      totalStudents: studentsResult.data?.length || 0,
+      recentActivities: allActivities,
     }
 
     return NextResponse.json({
       success: true,
-      recentActivities,
       stats,
+      recentActivities: allActivities,
     })
   } catch (error) {
     console.error('Dashboard API error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

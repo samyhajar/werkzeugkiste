@@ -594,7 +594,7 @@ export default function QuizzesPage() {
                   <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">⚙️</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">What's Next?</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">What&apos;s Next?</h3>
                 </div>
 
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">

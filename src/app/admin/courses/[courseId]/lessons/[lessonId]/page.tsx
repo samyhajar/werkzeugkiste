@@ -7,7 +7,7 @@ import { Tables } from '@/types/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
+// import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -410,7 +410,7 @@ export default function LessonDetailsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 className="text-lg font-medium text-foreground mb-2">No quizzes yet</h3>
-                <p className="text-foreground/60 mb-4">Add a quiz to test students' understanding</p>
+                <p className="text-foreground/60 mb-4">Add a quiz to test students&apos; understanding</p>
                 <Button asChild>
                   <Link href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/new`}>Add First Quiz</Link>
                 </Button>
