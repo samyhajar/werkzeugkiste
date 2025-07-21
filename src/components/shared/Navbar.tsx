@@ -41,7 +41,14 @@ export default function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
-  const supabase = getBrowserClient()
+  const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
+
+  // Initialize Supabase client only in browser
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSupabase(getBrowserClient())
+    }
+  }, [])
 
   // Force show login button after 3 seconds if still loading
   useEffect(() => {
@@ -69,6 +76,8 @@ export default function Navbar() {
   }, [user])
 
   const fetchUserProfile = async (userId: string) => {
+    if (!supabase) return
+
     try {
       const { data, error } = await supabase
         .from('profiles')

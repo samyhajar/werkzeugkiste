@@ -58,7 +58,9 @@ export default function AdminStatsGrid({ stats }: AdminStatsGridProps) {
             <span className="text-2xl">{stat.icon}</span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-gray-900">
+              {typeof stat.value === 'number' ? stat.value.toLocaleString() : '0'}
+            </div>
             <p className="text-xs text-gray-500">{stat.description}</p>
           </CardContent>
         </Card>
