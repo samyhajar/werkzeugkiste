@@ -4,6 +4,9 @@ import { Briefcase, MessageSquare, LifeBuoy } from 'lucide-react'
 
 export const metadata = { title: 'Digi-Sammlung' }
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic'
+
 const categories = [
   {
     title: 'Erwerbsarbeit',

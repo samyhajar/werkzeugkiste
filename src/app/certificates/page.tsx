@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Award, Download, Calendar, CheckCircle, FileText } from 'lucide-react'
 
+// Force dynamic rendering to prevent SSR issues
+export const dynamic = 'force-dynamic'
+
 interface Certificate {
   id: string
   courseName: string

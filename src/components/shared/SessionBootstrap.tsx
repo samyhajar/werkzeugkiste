@@ -12,6 +12,11 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
  */
 export default function SessionBootstrap() {
     useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return
+    }
+
     const syncAuthState = async () => {
       try {
         const supabase = getBrowserClient()
@@ -46,6 +51,11 @@ export default function SessionBootstrap() {
 
     // Also run when cookies change (in case login happens in another tab)
     const interval = setInterval(() => {
+      if (typeof document === 'undefined') {
+        clearInterval(interval)
+        return
+      }
+
       const hasAuthCookie = document.cookie.includes('sb-') && document.cookie.includes('auth-token')
       if (hasAuthCookie) {
         clearInterval(interval)

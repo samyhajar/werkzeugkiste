@@ -2,23 +2,22 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConditionalLayout from "@/components/shared/ConditionalLayout";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
   display: 'swap',
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "Digi+ Learning Platform",
-  description: "Digital learning platform for essential digital skills",
+  title: "Werkzeugkiste",
+  description: "Learning Platform",
 };
 
 export const viewport = {
@@ -36,9 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          <ConditionalLayout>{children}</ConditionalLayout>
-        </AuthProvider>
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   );

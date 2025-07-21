@@ -15,9 +15,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = getBrowserClient()
+
+  // Only initialize Supabase client in browser
+  const supabase = typeof window !== 'undefined' ? getBrowserClient() : null
 
     useEffect(() => {
+    // Only run in browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined' || !supabase) {
+      setLoading(false)
+      return
+    }
+
     console.log('[AuthContext] 🚀 Starting AuthContext useEffect...')
 
     // Get initial session
@@ -142,10 +150,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
       clearTimeout(loadingTimeout)
     }
-  }, [supabase.auth])
+  }, [supabase])
 
   const signOut = async () => {
     console.log('[AuthContext] 🚪 Starting logout process...')
+
+    if (typeof window === 'undefined' || !supabase) {
+      console.log('[AuthContext] Not in browser environment, skipping logout')
+      return
+    }
 
     try {
       // Clear user state immediately (don't wait for signOut)
@@ -181,22 +194,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Clear any remaining auth cookies manually as backup
-      console.log('[AuthContext] Clearing auth cookies manually as backup...')
-      const authCookies = document.cookie
-        .split('; ')
-        .filter(cookie => cookie.includes('sb-') && cookie.includes('auth-token'))
+      if (typeof document !== 'undefined') {
+        console.log('[AuthContext] Clearing auth cookies manually as backup...')
+        const authCookies = document.cookie
+          .split('; ')
+          .filter(cookie => cookie.includes('sb-') && cookie.includes('auth-token'))
 
-      authCookies.forEach(cookie => {
-        const cookieName = cookie.split('=')[0]
-        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`
-        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-      })
+        authCookies.forEach(cookie => {
+          const cookieName = cookie.split('=')[0]
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+        })
+      }
 
       console.log('[AuthContext] 🎉 Logout completed successfully')
 
     } catch (error) {
-      console.error('[AuthContext] Logout error:', error)
-      // Even if signOut fails, we've cleared the user state
+      console.error('[AuthContext] Error during logout:', error)
     }
   }
 
@@ -212,7 +226,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    // During SSR or when no AuthProvider is available, return a default state
+    return {
+      user: null,
+      loading: false,
+      signOut: async () => {
+        console.warn('signOut called but no AuthProvider available')
+      },
+    }
   }
   return context
 }
