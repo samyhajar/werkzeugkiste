@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
+// import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const router = useRouter()
-  const supabase = getBrowserClient()
+  // const supabase = getBrowserClient()
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       } else {
         setError(data.error || 'Registrierung fehlgeschlagen')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     } finally {
       setLoading(false)

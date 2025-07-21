@@ -11,7 +11,7 @@ export async function GET(
 
     // Get current user (optional for public courses, but good for progress tracking)
     const {
-      data: { user },
+      data: { user: _user },
     } = await supabase.auth.getUser()
 
     // Fetch course details

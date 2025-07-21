@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
+// import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, FileText, HelpCircle } from 'lucide-react'

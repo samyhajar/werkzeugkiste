@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             supabase.auth.setSession({
               access_token: sessionData.access_token,
               refresh_token: sessionData.refresh_token
-            }).then(({ data, error }) => {
+            }).then(({ data: _data, error }) => {
               if (error) {
                 console.log('[AuthContext] Background setSession failed:', error.message)
               } else {

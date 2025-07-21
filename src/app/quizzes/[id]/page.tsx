@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { ChevronLeft, BookOpen, HelpCircle, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { HelpCircle, CheckCircle, AlertCircle } from 'lucide-react'
+// import { ChevronLeft, BookOpen, Clock } from 'lucide-react'
 
 interface Quiz {
   id: string
@@ -65,7 +66,7 @@ const sampleQuestions = [
 
 export default function QuizDetailPage() {
   const params = useParams()
-  const router = useRouter()
+  // const router = useRouter()
   const quizId = params.id as string
 
   const [quiz, setQuiz] = useState<Quiz | null>(null)
