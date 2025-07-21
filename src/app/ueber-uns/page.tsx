@@ -97,17 +97,17 @@ export default function UeberUnsPage() {
       {/* Services Section */}
       <div className="mb-16">
         <h2 className="text-2xl font-bold text-[#de0449] mb-6">Services</h2>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span>Folder "Werkzeugkiste" </span>
-            <strong>als PDF</strong>
-            <a href="#" className="text-blue-600 underline ml-2">herunterladen</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>Digi + Logo als </span>
-            <strong>JPG</strong>
-            <a href="#" className="text-blue-600 underline ml-2">herunterladen</a>
-          </div>
+                  <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span>Folder &quot;Werkzeugkiste&quot; </span>
+              <strong>als PDF</strong>
+              <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span>Digi + Logo als </span>
+              <strong>JPG</strong>
+              <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
+            </div>
           <p className="text-gray-700">
             Bei Fragen, Anregungen oder Beschwerden wenden Sie sich bitte an <strong>digiplus@arbeitplus.at</strong>.
           </p>
