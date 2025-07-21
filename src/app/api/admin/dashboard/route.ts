@@ -31,19 +31,25 @@ export async function GET(
 
     // Check if user is authenticated and is admin
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-    if (sessionError || !session?.user) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const userRole = session.user.user_metadata?.role
-    if (userRole !== 'admin') {
+    // Check if user is admin using profiles table (more reliable)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -58,6 +64,10 @@ export async function GET(
     ])
 
     if (coursesResult.error || lessonsResult.error || studentsResult.error) {
+      console.error(
+        'Database error:',
+        coursesResult.error || lessonsResult.error || studentsResult.error
+      )
       return NextResponse.json(
         { success: false, error: 'Failed to fetch dashboard stats' },
         { status: 500 }

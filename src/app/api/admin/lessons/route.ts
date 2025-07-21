@@ -7,15 +7,22 @@ export async function GET(_request: NextRequest) {
 
     // Check if user is authenticated and is admin
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-    if (sessionError || !session?.user) {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userRole = session.user.user_metadata?.role
-    if (userRole !== 'admin') {
+    // Check if user is admin using profiles table (more reliable)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -57,15 +64,22 @@ export async function POST(request: NextRequest) {
 
     // Check if user is authenticated and is admin
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
-    if (sessionError || !session?.user) {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const userRole = session.user.user_metadata?.role
-    if (userRole !== 'admin') {
+    // Check if user is admin using profiles table (more reliable)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -87,7 +101,7 @@ export async function POST(request: NextRequest) {
           content: content || null,
           course_id,
           sort_order: sort_order || 0,
-          admin_id: session.user.id,
+          admin_id: user.id,
         },
       ])
       .select(
