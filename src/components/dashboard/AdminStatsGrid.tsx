@@ -54,7 +54,7 @@ export default function AdminStatsGrid({ stats }: AdminStatsGridProps) {
       {statCards.map((stat, index) => (
         <Card key={index} className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#486682]">{stat.title}</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#486681]">{stat.title}</CardTitle>
             <span className="text-2xl">{stat.icon}</span>
           </CardHeader>
           <CardContent>

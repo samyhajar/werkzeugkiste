@@ -309,7 +309,7 @@ export default function QuizzesPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading quizzes...</span>
           </div>
         </div>
@@ -349,14 +349,14 @@ export default function QuizzesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+            <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
               <span className="mr-2">❓</span>
               Create New Quiz
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">❓</span>
               </div>
               <DialogTitle className="text-xl font-bold text-gray-900">Create New Quiz</DialogTitle>
@@ -381,7 +381,7 @@ export default function QuizzesPage() {
                     value={newQuiz.lesson_id}
                     onValueChange={(value) => setNewQuiz({ ...newQuiz, lesson_id: value })}
                   >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
                       <SelectValue placeholder="Choose a lesson for this quiz" />
                     </SelectTrigger>
                     <SelectContent>
@@ -405,7 +405,7 @@ export default function QuizzesPage() {
               {/* Quiz Info Card */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
+                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 text-sm">Quiz Information</h3>
@@ -419,7 +419,7 @@ export default function QuizzesPage() {
                       value={newQuiz.title}
                       onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
                       placeholder="e.g., Social Media Marketing Knowledge Check"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                     />
                   </div>
                   <div className="space-y-1">
@@ -430,7 +430,7 @@ export default function QuizzesPage() {
                       onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
                       placeholder="Describe the purpose and scope of this quiz. What will students be tested on?"
                       rows={2}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
                     <p className="text-xs text-gray-500">This description helps students understand what the quiz covers</p>
                   </div>
@@ -444,7 +444,7 @@ export default function QuizzesPage() {
                       value={newQuiz.pass_percentage}
                       onChange={(e) => setNewQuiz({ ...newQuiz, pass_percentage: parseInt(e.target.value) || 80 })}
                       placeholder="80"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                     />
                     <p className="text-xs text-gray-500">Percentage needed to pass this quiz</p>
                   </div>
@@ -488,7 +488,7 @@ export default function QuizzesPage() {
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-gray-700">Question Type</Label>
                     <Select value={currentQuestion.type} onValueChange={updateQuestionType}>
-                      <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-8 text-sm">
+                      <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-8 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -507,7 +507,7 @@ export default function QuizzesPage() {
                       onChange={(e) => setCurrentQuestion({ ...currentQuestion, question_text: e.target.value })}
                       placeholder="Enter your question here..."
                       rows={2}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
                   </div>
 
@@ -542,7 +542,7 @@ export default function QuizzesPage() {
                             value={option.text}
                             onChange={(e) => updateOption(index, e.target.value)}
                             placeholder={`Option ${index + 1}`}
-                            className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-8"
+                            className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-8"
                           />
                           {currentQuestion.type === 'multiple_choice' && currentQuestion.options.length > 2 && (
                             <Button
@@ -570,7 +570,7 @@ export default function QuizzesPage() {
                       onChange={(e) => setCurrentQuestion({ ...currentQuestion, explanation: e.target.value })}
                       placeholder="Explain why this is the correct answer..."
                       rows={2}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
                   </div>
 
@@ -599,7 +599,7 @@ export default function QuizzesPage() {
 
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[#486682] text-sm">🎯</span>
+                    <span className="text-[#486681] text-sm">🎯</span>
                     <span className="font-medium text-gray-900 text-xs">After creating the quiz</span>
                   </div>
                   <ul className="text-xs text-gray-600 space-y-1 ml-6">
@@ -626,7 +626,7 @@ export default function QuizzesPage() {
               <Button
                 onClick={createQuiz}
                 disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id || newQuiz.questions.length === 0}
-                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+                className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
                   <>
@@ -679,7 +679,7 @@ export default function QuizzesPage() {
             {quizzes.length === 0 ? 'No quizzes created yet' : 'No quizzes match your search'}
           </div>
           {quizzes.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white">
               Create Your First Quiz
             </Button>
           )}
@@ -712,12 +712,12 @@ export default function QuizzesPage() {
                   <span>Created {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
+                  <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
                     <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
                       Edit
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                     <Link href={`/admin/courses/${quiz.lesson?.course?.id}/lessons/${quiz.lesson_id}/quizzes/${quiz.id}`}>
                       Questions
                     </Link>

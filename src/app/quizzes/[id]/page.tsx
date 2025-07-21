@@ -27,42 +27,7 @@ interface Course {
   updated_at: string
 }
 
-// Sample quiz questions for demonstration
-const sampleQuestions = [
-  {
-    id: 1,
-    question: "Was bedeutet 'digital'?",
-    options: [
-      "Etwas, das mit Fingern zu tun hat",
-      "Etwas, das elektronisch und computerbasiert ist",
-      "Etwas, das analog ist",
-      "Etwas, das ohne Strom funktioniert"
-    ],
-    correctAnswer: 1
-  },
-  {
-    id: 2,
-    question: "Welche Vorteile hat eine digitale Stoppuhr gegenüber einer analogen?",
-    options: [
-      "Sie funktioniert ohne Strom",
-      "Sie ist ungenauer",
-      "Sie kann hunderstel Sekunden messen",
-      "Sie ist billiger"
-    ],
-    correctAnswer: 2
-  },
-  {
-    id: 3,
-    question: "Was brauchen Sie für die praktischen Teile des Kurses?",
-    options: [
-      "Nur ein Smartphone",
-      "Nur einen Computer",
-      "Smartphone, Computer, Internetverbindung und Neugier",
-      "Nichts davon"
-    ],
-    correctAnswer: 2
-  }
-]
+
 
 export default function QuizDetailPage() {
   const params = useParams()

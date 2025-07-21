@@ -120,7 +120,7 @@ export default function ModulesPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading modules...</span>
           </div>
         </div>
@@ -160,14 +160,14 @@ export default function ModulesPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+            <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
               <span className="mr-2">📦</span>
               Create New Module
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">📦</span>
               </div>
               <DialogTitle className="text-xl font-bold text-gray-900">Create New Module</DialogTitle>
@@ -180,7 +180,7 @@ export default function ModulesPage() {
               {/* Module Info Card */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
+                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 text-sm">Module Information</h3>
@@ -194,7 +194,7 @@ export default function ModulesPage() {
                       value={newModule.title}
                       onChange={(e) => setNewModule({ ...newModule, title: e.target.value })}
                       placeholder="e.g., Digital Marketing Fundamentals"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                     />
                   </div>
                   <div className="space-y-1">
@@ -205,7 +205,7 @@ export default function ModulesPage() {
                       onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                       placeholder="Describe what this module covers and its learning objectives..."
                       rows={2}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
                   </div>
                 </div>
@@ -227,7 +227,7 @@ export default function ModulesPage() {
                     value={newModule.hero_image}
                     onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
                     placeholder="https://example.com/module-image.jpg (optional)"
-                    className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                   />
                   <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
                 </div>
@@ -250,7 +250,7 @@ export default function ModulesPage() {
                       setNewModule({ ...newModule, status: value })
                     }
                   >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -286,7 +286,7 @@ export default function ModulesPage() {
               <Button
                 onClick={createModule}
                 disabled={creating || !newModule.title.trim()}
-                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+                className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
                   <>
@@ -336,7 +336,7 @@ export default function ModulesPage() {
             {modules.length === 0 ? 'No modules created yet' : 'No modules match your search'}
           </div>
           {modules.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white">
               Create Your First Module
             </Button>
           )}
@@ -375,12 +375,12 @@ export default function ModulesPage() {
                   <span>Created {formatDistanceToNow(new Date(module.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
+                  <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
                     <Link href={`/admin/modules/${module.id}`}>
                       Manage
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                     <Link href={`/modules/${module.id}`}>
                       Preview
                     </Link>

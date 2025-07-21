@@ -23,15 +23,15 @@ export default function AnalyticsOverviewCards({ analytics }: AnalyticsOverviewC
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-blue-50/30">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-[#486682]">Total Courses</CardTitle>
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center">
+          <CardTitle className="text-sm font-medium text-[#486681]">Total Courses</CardTitle>
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center">
             <span className="text-white text-sm">📚</span>
           </div>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-gray-900">{analytics.overview.totalCourses}</div>
           <div className="flex gap-2 mt-2">
-            <Badge className="bg-[#486682] text-white">
+            <Badge className="bg-[#486681] text-white">
               {analytics.overview.publishedCourses} published
             </Badge>
             <Badge variant="secondary" className="bg-gray-100 text-gray-600">

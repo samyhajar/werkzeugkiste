@@ -88,7 +88,7 @@ export default function AdminDashboard() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading dashboard...</span>
           </div>
         </div>
@@ -141,19 +141,19 @@ export default function AdminDashboard() {
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button asChild className="w-full bg-[#486682] hover:bg-[#3e5570] text-white">
+              <Button asChild className="w-full bg-[#486681] hover:bg-[#3e5570] text-white">
                 <Link href="/admin/modules">
                   <span className="mr-2">📚</span>
                   Manage Modules
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+              <Button asChild variant="outline" className="w-full border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                 <Link href="/admin/lessons">
                   <span className="mr-2">📖</span>
                   Manage Lessons
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+              <Button asChild variant="outline" className="w-full border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                 <Link href="/admin/quizzes">
                   <span className="mr-2">❓</span>
                   Manage Quizzes

@@ -74,7 +74,7 @@ export default function CertificatesPage() {
             Manage issued certificates, search, and manually issue new ones
           </p>
         </div>
-        <Button asChild className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+        <Button asChild className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
           <Link href="/admin/certificates/issue">
             <span className="mr-2">📜</span>
             Manual Issue
@@ -84,10 +84,10 @@ export default function CertificatesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-[#486682]/5">
+        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-[#486681]/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#486682]">Total Certificates</CardTitle>
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center">
+            <CardTitle className="text-sm font-medium text-[#486681]">Total Certificates</CardTitle>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center">
               <span className="text-white text-sm">📜</span>
             </div>
           </CardHeader>
@@ -132,11 +132,11 @@ export default function CertificatesPage() {
       <Card className="shadow-sm hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-white to-slate-50/30">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center">
               <span className="text-white text-lg">🎓</span>
             </div>
             <div>
-              <CardTitle className="text-xl text-[#486682]">All Certificates</CardTitle>
+              <CardTitle className="text-xl text-[#486681]">All Certificates</CardTitle>
               <CardDescription className="text-sm">Search by student, course, or ID</CardDescription>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function CertificatesPage() {
                 placeholder="Search certificates..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 w-full md:w-96 border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                className="pl-10 w-full md:w-96 border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20"
               />
             </div>
           </div>
@@ -160,7 +160,7 @@ export default function CertificatesPage() {
           {/* Content */}
           {loading ? (
             <div className="text-center py-12">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center mx-auto mb-4 animate-pulse">
                 <span className="text-white text-2xl">📜</span>
               </div>
               <div className="text-gray-600">Loading certificates...</div>
@@ -189,7 +189,7 @@ export default function CertificatesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
                       {/* Certificate Icon */}
-                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center flex-shrink-0">
+                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-semibold text-sm">{index + 1}</span>
                       </div>
 
@@ -205,7 +205,7 @@ export default function CertificatesPage() {
 
                           <div className="flex items-center gap-2 ml-4">
                             {cert.file_url ? (
-                              <Badge className="bg-[#486682] text-white">
+                              <Badge className="bg-[#486681] text-white">
                                 <span className="mr-1">✅</span>
                                 Issued
                               </Badge>
@@ -242,7 +242,7 @@ export default function CertificatesPage() {
                               <Button
                                 size="sm"
                                 asChild
-                                className="bg-[#486682] hover:bg-[#3e5570] text-white"
+                                className="bg-[#486681] hover:bg-[#3e5570] text-white"
                               >
                                 <a
                                   href={cert.file_url}

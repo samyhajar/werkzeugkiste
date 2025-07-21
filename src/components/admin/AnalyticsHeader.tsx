@@ -19,7 +19,7 @@ export default function AnalyticsHeader({ onRefresh, isLoading = false }: Analyt
       <Button
         onClick={onRefresh}
         variant="outline"
-        className="border-[#486682] text-[#486682] hover:bg-[#486682]/10 shadow-sm"
+        className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
         disabled={isLoading}
       >
         <span className="mr-2">🔄</span>

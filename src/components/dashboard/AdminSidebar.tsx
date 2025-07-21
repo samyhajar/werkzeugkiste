@@ -31,14 +31,14 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
       className={cn(
         "w-full justify-start h-12 px-4 text-left font-normal",
         isActive
-          ? "bg-[#486682]/10 text-[#486682] border-r-2 border-[#486682] hover:bg-[#486682]/10"
+          ? "bg-[#486681]/10 text-[#486681] border-r-2 border-[#486681] hover:bg-[#486681]/10"
           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
       )}
     >
       <Link href={href} className="flex items-center gap-3">
         <div className={cn(
           "flex-shrink-0",
-          isActive ? "text-[#486682]" : "text-gray-500"
+          isActive ? "text-[#486681]" : "text-gray-500"
         )}>
           {icon}
         </div>
@@ -151,7 +151,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
       {/* Header */}
       <div className="px-6 py-6 border-b border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#486682] rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#486681] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">D+</span>
           </div>
           <div>

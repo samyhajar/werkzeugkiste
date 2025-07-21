@@ -147,7 +147,7 @@ export default function LessonsPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading lessons...</span>
           </div>
         </div>
@@ -187,14 +187,14 @@ export default function LessonsPage() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+            <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
               <span className="mr-2">📖</span>
               Create New Lesson
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486682] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">📖</span>
               </div>
               <DialogTitle className="text-xl font-bold text-gray-900">Create New Lesson</DialogTitle>
@@ -219,7 +219,7 @@ export default function LessonsPage() {
                     value={newLesson.course_id}
                     onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value })}
                   >
-                    <SelectTrigger className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 h-9 text-sm">
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
                       <SelectValue placeholder="Choose a course for this lesson" />
                     </SelectTrigger>
                     <SelectContent>
@@ -240,7 +240,7 @@ export default function LessonsPage() {
               {/* Lesson Info Card */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486682] rounded-md flex items-center justify-center">
+                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 text-sm">Lesson Information</h3>
@@ -254,7 +254,7 @@ export default function LessonsPage() {
                       value={newLesson.title}
                       onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
                       placeholder="e.g., Introduction to Social Media Marketing"
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                     />
                   </div>
                   <div className="space-y-1">
@@ -265,7 +265,7 @@ export default function LessonsPage() {
                       onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
                       placeholder="Write your lesson content here. You can include text, links, and instructions..."
                       rows={3}
-                      className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm resize-none"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
                     <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
                   </div>
@@ -289,7 +289,7 @@ export default function LessonsPage() {
                     value={newLesson.sort_order}
                     onChange={(e) => setNewLesson({ ...newLesson, sort_order: parseInt(e.target.value) || 0 })}
                     placeholder="0"
-                    className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20 text-sm h-9"
+                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                   />
                   <p className="text-xs text-gray-500">Lower numbers appear first (0 = first lesson, 1 = second, etc.)</p>
                 </div>
@@ -310,7 +310,7 @@ export default function LessonsPage() {
               <Button
                 onClick={createLesson}
                 disabled={creating || !newLesson.title.trim() || !newLesson.course_id}
-                className="bg-[#486682] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+                className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
                   <>
@@ -363,7 +363,7 @@ export default function LessonsPage() {
             {lessons.length === 0 ? 'No lessons created yet' : 'No lessons match your search'}
           </div>
           {lessons.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486682] hover:bg-[#3e5570] text-white">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white">
               Create Your First Lesson
             </Button>
           )}
@@ -393,12 +393,12 @@ export default function LessonsPage() {
                   <span>Created {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true })}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
+                  <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
                     <Link href={`/admin/courses/${lesson.course_id}/lessons/${lesson.id}`}>
                       Edit
                     </Link>
                   </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                     <Link href={`/admin/courses/${lesson.course_id}/lessons/${lesson.id}/quizzes`}>
                       Quizzes
                     </Link>

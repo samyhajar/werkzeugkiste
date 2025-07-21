@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
             Manage platform settings, branding, and admin users
           </p>
         </div>
-                 <Button className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm">
+                 <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
            <span className="mr-2">⚙️</span>
            Platform Settings
          </Button>
@@ -42,9 +42,9 @@ export default function AdminSettingsPage() {
       <div className="max-w-4xl space-y-6">
         {/* Platform Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-[#486682]/5">
+          <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-[#486681]/5">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-[#486682]">Platform Status</CardTitle>
+              <CardTitle className="text-sm font-medium text-[#486681]">Platform Status</CardTitle>
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center">
                 <span className="text-white text-sm">🟢</span>
               </div>
@@ -86,11 +86,11 @@ export default function AdminSettingsPage() {
         <Card className="shadow-sm hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-white to-blue-50/30">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center">
                 <span className="text-white text-lg">🎨</span>
               </div>
               <div>
-                <CardTitle className="text-xl text-[#486682]">Branding & Identity</CardTitle>
+                <CardTitle className="text-xl text-[#486681]">Branding & Identity</CardTitle>
                 <CardDescription className="text-sm">Platform name, logo, and contact information</CardDescription>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function AdminSettingsPage() {
                   id="platform-name"
                   value={branding.platformName}
                   onChange={e => setBranding({ ...branding, platformName: e.target.value })}
-                  className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                  className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20"
                 />
                 <p className="text-xs text-gray-500">This name appears in the header and emails</p>
               </div>
@@ -115,7 +115,7 @@ export default function AdminSettingsPage() {
                    value={branding.contactEmail}
                    onChange={e => setBranding({ ...branding, contactEmail: e.target.value })}
                    placeholder="contact@yourplatform.com"
-                   className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                   className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20"
                  />
                  <p className="text-xs text-gray-500">Support and admin contact email</p>
                </div>
@@ -127,7 +127,7 @@ export default function AdminSettingsPage() {
                 value={branding.logoUrl}
                 onChange={e => setBranding({ ...branding, logoUrl: e.target.value })}
                 placeholder="https://example.com/logo.png"
-                className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
+                className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20"
               />
               <p className="text-xs text-gray-500">URL to your platform logo (PNG, JPG, or SVG recommended)</p>
             </div>
@@ -166,7 +166,7 @@ export default function AdminSettingsPage() {
                <div className="p-4 rounded-lg bg-white shadow-sm border border-gray-100">
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-4">
-                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center flex-shrink-0">
+                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center flex-shrink-0">
                        <span className="text-white font-semibold text-sm">
                          {currentAdmin.name.charAt(0).toUpperCase()}
                        </span>
@@ -175,7 +175,7 @@ export default function AdminSettingsPage() {
                        <div className="font-semibold text-gray-900">{currentAdmin.name}</div>
                        <div className="text-sm text-gray-500">{currentAdmin.email}</div>
                        <div className="flex items-center gap-2 mt-1">
-                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#486682]/10 text-[#486682]">
+                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#486681]/10 text-[#486681]">
                            <span className="mr-1">👑</span>
                            {currentAdmin.role}
                          </span>

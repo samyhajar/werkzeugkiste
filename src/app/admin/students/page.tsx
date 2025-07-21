@@ -68,7 +68,7 @@ export default function StudentsPage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading students...</span>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function StudentsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-[#486682] to-[#3e5570]">
+                <tr className="bg-gradient-to-r from-[#486681] to-[#3e5570]">
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
                     Student
                   </th>
@@ -168,7 +168,7 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486682] to-[#3e5570] flex items-center justify-center shadow-sm">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center shadow-sm">
                             <span className="text-white font-medium text-sm">
                               {(student.full_name || student.email).charAt(0).toUpperCase()}
                             </span>
@@ -190,7 +190,7 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
                         variant="secondary"
-                        className="bg-[#486682]/10 text-[#486682] border-[#486682]/20"
+                        className="bg-[#486681]/10 text-[#486681] border-[#486681]/20"
                       >
                         {student.role}
                       </Badge>
@@ -207,14 +207,14 @@ export default function StudentsPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           size="sm"
-                          className="bg-[#486682] hover:bg-[#3e5570] text-white shadow-sm"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
                         >
                           Progress
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-[#486682] text-[#486682] hover:bg-[#486682]/10 shadow-sm"
+                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
                         >
                           Message
                         </Button>
@@ -232,7 +232,7 @@ export default function StudentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Total Students</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Total Students</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{students.length}</div>
@@ -240,7 +240,7 @@ export default function StudentsPage() {
         </Card>
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Recent Registrations</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Recent Registrations</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
@@ -255,7 +255,7 @@ export default function StudentsPage() {
         </Card>
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Active Students</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Active Students</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">

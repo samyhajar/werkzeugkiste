@@ -134,7 +134,7 @@ export default function CoursesPage() {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486682] mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
           <p className="text-gray-600">Loading courses...</p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function CoursesPage() {
         </div>
         <Button
           onClick={() => setCreateModalOpen(true)}
-          className="bg-[#486682] hover:bg-[#3e5570] text-white"
+          className="bg-[#486681] hover:bg-[#3e5570] text-white"
         >
           Create Course
         </Button>
@@ -194,7 +194,7 @@ export default function CoursesPage() {
               <div className="flex gap-2 mt-4">
                 <Button
                   size="sm"
-                  className="bg-[#486682] hover:bg-[#3e5570] text-white flex-1"
+                  className="bg-[#486681] hover:bg-[#3e5570] text-white flex-1"
                   onClick={() => window.location.href = `/admin/courses/${course.id}`}
                 >
                   Edit
@@ -202,7 +202,7 @@ export default function CoursesPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#486682] text-[#486682] hover:bg-[#486682]/10 flex-1"
+                  className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 flex-1"
                   onClick={() => window.location.href = `/admin/courses/${course.id}/builder`}
                 >
                   Builder
@@ -220,7 +220,7 @@ export default function CoursesPage() {
           <p className="text-gray-600 mb-4">Create your first course to get started.</p>
           <Button
             onClick={() => setCreateModalOpen(true)}
-            className="bg-[#486682] hover:bg-[#3e5570] text-white"
+            className="bg-[#486681] hover:bg-[#3e5570] text-white"
           >
             Create Course
           </Button>
@@ -285,7 +285,7 @@ export default function CoursesPage() {
               <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[#486682] hover:bg-[#3e5570] text-white">
+              <Button type="submit" className="bg-[#486681] hover:bg-[#3e5570] text-white">
                 Create Course
               </Button>
             </DialogFooter>

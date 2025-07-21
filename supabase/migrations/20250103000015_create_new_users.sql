@@ -16,7 +16,7 @@ INSERT INTO auth.users (
 ) VALUES
 -- samy.hajar@gmail.com (admin) - password: samyto2508C/
 (
-    gen_random_uuid(),
+    '550e8400-e29b-41d4-a716-446655440020',
     '00000000-0000-0000-0000-000000000000',
     'samy.hajar@gmail.com',
     crypt('samyto2508C/', gen_salt('bf')),
@@ -29,7 +29,7 @@ INSERT INTO auth.users (
 ),
 -- philipp.vavra@qlp.at (admin) - password: password123
 (
-    gen_random_uuid(),
+    '550e8400-e29b-41d4-a716-446655440021',
     '00000000-0000-0000-0000-000000000000',
     'philipp.vavra@qlp.at',
     crypt('password123', gen_salt('bf')),
@@ -42,7 +42,7 @@ INSERT INTO auth.users (
 ),
 -- phillip.vavra@gmail.com (student) - password: password123
 (
-    gen_random_uuid(),
+    '550e8400-e29b-41d4-a716-446655440022',
     '00000000-0000-0000-0000-000000000000',
     'phillip.vavra@gmail.com',
     crypt('password123', gen_salt('bf')),
@@ -53,29 +53,36 @@ INSERT INTO auth.users (
     false,
     'authenticated'
 )
-ON CONFLICT (email) DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
 
 -- Insert corresponding profiles
 INSERT INTO public.profiles (
     id,
-    email,
     full_name,
     role,
     created_at,
     updated_at
-)
-SELECT
-    u.id,
-    u.email,
-    (u.raw_user_meta_data->>'full_name'),
-    (u.raw_user_meta_data->>'role'),
-    u.created_at,
-    u.updated_at
-FROM auth.users u
-WHERE u.email IN (
-    'samy.hajar@gmail.com',
-    'philipp.vavra@qlp.at',
-    'phillip.vavra@gmail.com'
+) VALUES
+(
+    '550e8400-e29b-41d4-a716-446655440020',
+    'samy.hajar',
+    'admin',
+    now(),
+    now()
+),
+(
+    '550e8400-e29b-41d4-a716-446655440021',
+    'philipp.vavra',
+    'admin',
+    now(),
+    now()
+),
+(
+    '550e8400-e29b-41d4-a716-446655440022',
+    'phillip.vavra',
+    'student',
+    now(),
+    now()
 )
 ON CONFLICT (id) DO UPDATE SET
     full_name = EXCLUDED.full_name,

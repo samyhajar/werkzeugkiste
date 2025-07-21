@@ -162,7 +162,7 @@ export default function ModuleManagePage() {
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486682] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
             <span className="text-gray-600">Loading module...</span>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function ModuleManagePage() {
         <Button
           onClick={() => router.push(`/modules/${moduleId}`)}
           variant="outline"
-          className="border-[#486682] text-[#486682] hover:bg-[#486682]/10"
+          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10"
         >
           Preview Module
         </Button>
@@ -356,7 +356,7 @@ export default function ModuleManagePage() {
             <Button
               onClick={updateModule}
               disabled={saving || !editForm.title.trim()}
-              className="bg-[#486682] hover:bg-[#3e5570] text-white"
+              className="bg-[#486681] hover:bg-[#3e5570] text-white"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -370,7 +370,7 @@ export default function ModuleManagePage() {
           <h2 className="text-2xl font-bold text-gray-900">Courses in this Module</h2>
           <Button
             asChild
-            className="bg-[#486682] hover:bg-[#3e5570] text-white"
+            className="bg-[#486681] hover:bg-[#3e5570] text-white"
           >
             <Link href={`/admin/courses/new?module_id=${moduleId}`}>
               Add Course
@@ -384,7 +384,7 @@ export default function ModuleManagePage() {
               <div className="text-gray-500 mb-4">No courses in this module yet</div>
               <Button
                 asChild
-                className="bg-[#486682] hover:bg-[#3e5570] text-white"
+                className="bg-[#486681] hover:bg-[#3e5570] text-white"
               >
                 <Link href={`/admin/courses/new?module_id=${moduleId}`}>
                   Create First Course
@@ -414,12 +414,12 @@ export default function ModuleManagePage() {
                     <span>Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button asChild size="sm" className="flex-1 bg-[#486682] hover:bg-[#3e5570] text-white">
+                    <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
                       <Link href={`/admin/courses/${course.id}`}>
                         Manage
                       </Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="border-[#486682] text-[#486682] hover:bg-[#486682]/10">
+                    <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                       <Link href={`/admin/courses/${course.id}/lessons`}>
                         Lessons
                       </Link>
@@ -436,7 +436,7 @@ export default function ModuleManagePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Total Courses</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Total Courses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">{courses.length}</div>
@@ -444,7 +444,7 @@ export default function ModuleManagePage() {
         </Card>
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Published Courses</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Published Courses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
@@ -454,7 +454,7 @@ export default function ModuleManagePage() {
         </Card>
         <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
           <CardHeader>
-            <CardTitle className="text-base text-[#486682]">Draft Courses</CardTitle>
+            <CardTitle className="text-base text-[#486681]">Draft Courses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">

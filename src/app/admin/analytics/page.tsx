@@ -81,8 +81,8 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-center min-h-96">
         <Card className="shadow-lg p-8 max-w-md mx-auto">
           <CardContent className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486682] mx-auto"></div>
-            <div className="text-lg font-medium text-[#486682]">Loading Analytics...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto"></div>
+            <div className="text-lg font-medium text-[#486681]">Loading Analytics...</div>
             <p className="text-gray-500">
               Gathering platform insights and performance metrics
             </p>
@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
             <div className="text-gray-500 text-sm mb-4">{error}</div>
             <Button
               onClick={() => void fetchAnalytics()}
-              className="bg-[#486682] hover:bg-[#3e5570] text-white"
+              className="bg-[#486681] hover:bg-[#3e5570] text-white"
             >
               <span className="mr-2">🔄</span>
               Retry
@@ -136,13 +136,13 @@ export default function AnalyticsPage() {
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="border-[#486682] text-[#486682] hover:bg-[#486682]/10"
+                className="border-[#486681] text-[#486681] hover:bg-[#486681]/10"
               >
                 Export CSV
               </Button>
               <Button
                 variant="outline"
-                className="border-[#486682] text-[#486682] hover:bg-[#486682]/10"
+                className="border-[#486681] text-[#486681] hover:bg-[#486681]/10"
               >
                 Export PDF
               </Button>
