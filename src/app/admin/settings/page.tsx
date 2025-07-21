@@ -14,7 +14,7 @@ export default function AdminSettingsPage() {
   })
 
   // Note: Admin users will be loaded from backend when user management is implemented
-  const [admins] = useState<Array<{id: string, name: string, email: string}>>([])
+  // const [admins] = useState<Array<{id: string, name: string, email: string}>>([])
 
   // Current admin user (you)
   const currentAdmin = {
@@ -98,8 +98,9 @@ export default function AdminSettingsPage() {
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Platform Name</label>
+                <label htmlFor="platform-name" className="block text-sm font-semibold text-gray-700 mb-2">Platform Name</label>
                 <Input
+                  id="platform-name"
                   value={branding.platformName}
                   onChange={e => setBranding({ ...branding, platformName: e.target.value })}
                   className="border-[#486682]/20 focus:border-[#486682] focus:ring-[#486682]/20"
@@ -107,8 +108,9 @@ export default function AdminSettingsPage() {
                 <p className="text-xs text-gray-500">This name appears in the header and emails</p>
               </div>
                              <div className="space-y-2">
-                 <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Email</label>
+                 <label htmlFor="contact-email" className="block text-sm font-semibold text-gray-700 mb-2">Contact Email</label>
                  <Input
+                   id="contact-email"
                    type="email"
                    value={branding.contactEmail}
                    onChange={e => setBranding({ ...branding, contactEmail: e.target.value })}
@@ -119,8 +121,9 @@ export default function AdminSettingsPage() {
                </div>
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Logo URL</label>
+              <label htmlFor="logo-url" className="block text-sm font-semibold text-gray-700 mb-2">Logo URL</label>
               <Input
+                id="logo-url"
                 value={branding.logoUrl}
                 onChange={e => setBranding({ ...branding, logoUrl: e.target.value })}
                 placeholder="https://example.com/logo.png"
