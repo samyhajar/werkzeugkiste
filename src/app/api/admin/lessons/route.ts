@@ -85,11 +85,8 @@ export async function POST(request: NextRequest) {
 
     const { title, content, course_id, sort_order } = await request.json()
 
-    if (!title || !course_id) {
-      return NextResponse.json(
-        { error: 'Title and course_id are required' },
-        { status: 400 }
-      )
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
     // Create new lesson
@@ -99,7 +96,7 @@ export async function POST(request: NextRequest) {
         {
           title,
           content: content || null,
-          course_id,
+          course_id: course_id || null, // Allow null for unassigned lessons
           sort_order: sort_order || 0,
           admin_id: user.id,
         },

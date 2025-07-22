@@ -95,11 +95,8 @@ export async function POST(request: NextRequest) {
       pass_percentage,
     } = await request.json()
 
-    if (!title || !lesson_id) {
-      return NextResponse.json(
-        { error: 'Title and lesson_id are required' },
-        { status: 400 }
-      )
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
     // Create new quiz (simplified for now - just like CourseBuilder)
@@ -107,7 +104,7 @@ export async function POST(request: NextRequest) {
       .from('quizzes')
       .insert({
         title,
-        lesson_id,
+        lesson_id: lesson_id || null, // Allow null for unassigned quizzes
         pass_pct: pass_percentage || 80,
       } as any)
       .select(

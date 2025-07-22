@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       .insert({
         title: body.title,
         description: body.description,
-        module_id: body.module_id,
+        module_id: body.module_id || null, // Convert empty string to null
         hero_image: body.hero_image,
         admin_id: user.id,
         status: 'draft',
