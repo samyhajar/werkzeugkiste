@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { BaseApiResponse } from '@/types/api'
 
 interface ProgressTrackingHook {
   markLessonComplete: (lessonId: string) => Promise<boolean>
@@ -31,7 +32,7 @@ export const useProgressTracking = (): ProgressTrackingHook => {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json()
+        const data: BaseApiResponse = await response.json()
 
         if (data.success) {
           console.log(

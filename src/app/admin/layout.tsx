@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
+import { AuthResponse, AuthUser } from '@/types/api'
 
-interface User {
-  id: string
-  email: string
-  role: string
+interface AdminAuthResponse {
+  authenticated: boolean
+  user: AuthUser | null
+  isAdmin: boolean
 }
 
 export default function AdminLayout({
@@ -18,7 +19,7 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const router = useRouter()
 
   console.log('[AdminLayout] render', { isAuthenticated, isAdmin, loading, user: user?.email })
@@ -33,12 +34,12 @@ export default function AdminLayout({
         credentials: 'include',
       })
 
-      const data = await response.json()
+      const data: AuthResponse = await response.json()
       console.log('[AdminLayout] Logout API response:', data)
 
       // Always redirect, regardless of API response
       console.log('[AdminLayout] Redirecting to home...')
-        router.replace('/')
+      router.replace('/')
 
     } catch (error) {
       console.error('[AdminLayout] Logout error:', error)
@@ -78,7 +79,7 @@ export default function AdminLayout({
           return
         }
 
-        const data = await response.json()
+        const data: AdminAuthResponse = await response.json()
         console.log('[AdminLayout] API response data:', data)
 
         if (data.authenticated && data.user) {
@@ -123,53 +124,77 @@ export default function AdminLayout({
       }
     }
 
-    checkAuth()
+    void checkAuth()
   }, [router])
 
   // Show loading state
   if (loading) {
     console.log('[AdminLayout] Rendering loading state')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
-          <span className="text-gray-600">Loading admin dashboard...</span>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading admin panel...</p>
         </div>
       </div>
     )
   }
 
-  // Don't render anything if not authenticated or not admin
-  if (!isAuthenticated || !isAdmin || !user) {
-    console.log('[AdminLayout] Not authenticated or not admin, returning null')
-    return null
+  // Show unauthorized state
+  if (!isAuthenticated || !isAdmin) {
+    console.log('[AdminLayout] Rendering unauthorized state')
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You don't have permission to access the admin panel.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  // Create a mock profile object for AdminSidebar
-  const mockProfile = {
-    id: user.id,
-    email: user.email,
-    full_name: user.email.split('@')[0], // Use email username as display name
-    role: user.role,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+  // Show admin layout
+  console.log('[AdminLayout] Rendering admin layout')
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">User Not Found</h1>
+          <p className="text-gray-600 mb-4">Unable to load user information.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    )
   }
 
-  console.log('[AdminLayout] Rendering admin dashboard')
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-100">
       <AdminSidebar
-        profile={mockProfile}
+        profile={{
+          id: user.id,
+          full_name: user.full_name,
+          role: user.role,
+          created_at: null,
+          updated_at: null
+        }}
         role={user.role}
         userEmail={user.email}
         onLogout={handleLogout}
       />
-      <main className="pl-64">
-        <div className="min-h-screen">
-          <div className="p-8">
-            {children}
-          </div>
-        </div>
+      <main className="flex-1 overflow-y-auto ml-64">
+        {children}
       </main>
     </div>
   )

@@ -62,12 +62,6 @@ export default function ModuleDetailPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
-  useEffect(() => {
-    if (moduleId) {
-      fetchModule()
-    }
-  }, [moduleId])
-
   const fetchModule = async () => {
     try {
       setLoading(true)
@@ -104,6 +98,12 @@ export default function ModuleDetailPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (moduleId) {
+      void fetchModule()
+    }
+  }, [moduleId, fetchModule])
 
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {
@@ -217,7 +217,7 @@ export default function ModuleDetailPage() {
                       {/* Lessons */}
                       {course.lessons
                         .sort((a, b) => (a.order || 0) - (b.order || 0))
-                        .map((lesson, lessonIndex) => (
+                        .map((lesson, _lessonIndex) => (
                           <div key={lesson.id}>
                             <button
                               onClick={() => selectLesson(lesson)}

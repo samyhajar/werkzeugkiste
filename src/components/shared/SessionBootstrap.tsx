@@ -47,7 +47,7 @@ export default function SessionBootstrap() {
     }
 
     // Run sync on mount
-    syncAuthState()
+    void syncAuthState()
 
     // Also run when cookies change (in case login happens in another tab)
     const interval = setInterval(() => {
@@ -59,7 +59,7 @@ export default function SessionBootstrap() {
       const hasAuthCookie = document.cookie.includes('sb-') && document.cookie.includes('auth-token')
       if (hasAuthCookie) {
         clearInterval(interval)
-        syncAuthState()
+        void syncAuthState()
       }
     }, 1000)
 

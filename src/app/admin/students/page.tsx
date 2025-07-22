@@ -60,12 +60,12 @@ export default function StudentsPage() {
   })
 
   useEffect(() => {
-    fetchStudents()
+    void fetchStudents()
   }, [])
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
@@ -78,13 +78,13 @@ export default function StudentsPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-red-600 mb-2">Failed to load students</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
-              onClick={() => fetchStudents()}
+              onClick={() => void fetchStudents()}
               className="mt-4"
               variant="outline"
             >
@@ -97,7 +97,7 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -114,27 +114,30 @@ export default function StudentsPage() {
       </div>
 
       {/* Search */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search students by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search students by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
+            />
+          </div>
         </div>
       </div>
 
       {/* Students Table */}
       {filteredStudents.length === 0 ? (
-        <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30">
+        <Card className="shadow-lg border border-gray-200 bg-white">
           <CardContent className="text-center py-12">
-            <div className="text-gray-500 mb-4">
+            <div className="text-gray-500 mb-4 text-lg">
               {students.length === 0 ? 'No students registered yet' : 'No students match your search'}
             </div>
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-sm border-0 bg-gradient-to-br from-white to-gray-50/30 overflow-hidden">
+        <Card className="shadow-lg border border-gray-200 bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -161,8 +164,8 @@ export default function StudentsPage() {
                   <tr
                     key={student.id}
                     className={`
-                      hover:bg-gray-50/50 transition-colors duration-200
-                      ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                      hover:bg-gray-50 transition-colors duration-200
+                      ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                     `}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">

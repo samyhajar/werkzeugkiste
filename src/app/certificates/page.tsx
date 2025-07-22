@@ -24,7 +24,7 @@ export default function CertificatesPage() {
   const [_error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchCertificates()
+    void fetchCertificates()
   }, [])
 
   const fetchCertificates = async () => {

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { X } from 'lucide-react'
+import { AuthResponse } from '@/types/api'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -59,7 +60,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         body: JSON.stringify({ email: signInEmail, password: signInPassword }),
       })
 
-      const data = await response.json()
+      const data: AuthResponse = await response.json()
 
       if (!response.ok || !data.success) {
         setError(data.error || 'Anmeldung fehlgeschlagen')
@@ -128,7 +129,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         }),
       })
 
-      const data = await response.json()
+      const data: AuthResponse = await response.json()
 
       if (data.success) {
         setSuccess('Registrierung erfolgreich! Sie können sich jetzt anmelden.')

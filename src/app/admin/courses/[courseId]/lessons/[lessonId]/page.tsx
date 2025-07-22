@@ -14,13 +14,13 @@ import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
-type Lesson = Tables<'lessons'>
-type Quiz = Tables<'quizzes'>
-type Course = Tables<'courses'>
+type _Lesson = Tables<'lessons'>
+type _Quiz = Tables<'quizzes'>
+type _Course = Tables<'courses'>
 
-interface LessonWithQuizzes extends Lesson {
-  quizzes: Quiz[]
-  course: Course
+interface LessonWithJoins extends Tables<'lessons'> {
+  course: Tables<'courses'>;
+  quizzes: Tables<'quizzes'>[];
 }
 
 export default function LessonDetailsPage() {
@@ -29,7 +29,7 @@ export default function LessonDetailsPage() {
   const courseId = params.courseId as string
   const lessonId = params.lessonId as string
 
-  const [lesson, setLesson] = useState<LessonWithQuizzes | null>(null)
+  const [lesson, setLesson] = useState<LessonWithJoins | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [editing, setEditing] = useState(false)
@@ -63,13 +63,34 @@ export default function LessonDetailsPage() {
 
         if (lessonError) throw lessonError
 
-        setLesson(lessonData as any)
-        setFormData({
-          title: lessonData.title || '',
-          markdown: lessonData.markdown || lessonData.content || '',
-          video_url: lessonData.video_url || '',
-          sort_order: lessonData.sort_order || 0
-        })
+        // Type guard for lessonData
+        let typedLesson: LessonWithJoins | null = null;
+        if (
+          lessonData &&
+          typeof lessonData === 'object' &&
+          'id' in lessonData &&
+          'course' in lessonData &&
+          'quizzes' in lessonData
+        ) {
+          typedLesson = {
+            ...(lessonData as Tables<'lessons'>),
+            course: (lessonData as unknown as { course: Tables<'courses'> }).course,
+            quizzes: Array.isArray((lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes) && !('error' in (lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes)
+              ? (lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes
+              : [],
+          }
+        }
+        if (typedLesson) {
+          setLesson(typedLesson)
+          setFormData({
+            title: typedLesson.title || '',
+            markdown: typedLesson.markdown || typedLesson.content || '',
+            video_url: typedLesson.video_url || '',
+            sort_order: typedLesson.sort_order || 0
+          })
+        } else {
+          setError('Failed to fetch lesson: invalid data structure')
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch lesson')
       } finally {
@@ -105,8 +126,6 @@ export default function LessonDetailsPage() {
       setSaving(false)
     }
   }
-
-
 
   const handleDeleteQuiz = async (quizId: string) => {
     if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
@@ -145,7 +164,7 @@ export default function LessonDetailsPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as { success: boolean; error?: string }
 
       if (data.success) {
         // Redirect back to course
@@ -255,7 +274,7 @@ export default function LessonDetailsPage() {
                   variant="destructive"
                   onClick={() => {
                     setShowDeleteDialog(false)
-                    handleDelete()
+                    void handleDelete()
                   }}
                   disabled={deleting}
                 >
@@ -287,7 +306,7 @@ export default function LessonDetailsPage() {
                       Cancel
                     </Button>
                     <Button
-                      onClick={handleSave}
+                      onClick={() => void handleSave()}
                       disabled={saving}
                     >
                       {saving ? 'Saving...' : 'Save'}
@@ -437,7 +456,7 @@ export default function LessonDetailsPage() {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteQuiz(quiz.id)}
+                        onClick={() => void handleDeleteQuiz(quiz.id)}
                       >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

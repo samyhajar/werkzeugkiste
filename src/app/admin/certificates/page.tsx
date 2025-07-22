@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import type { Tables } from '@/types/supabase'
 
 interface CertificateRow {
   student_id: string
@@ -16,6 +17,12 @@ interface CertificateRow {
   course_title: string | null
   issued_at: string | null
   file_url: string | null
+}
+
+// Type for the raw row returned by the certificates query with joins
+interface CertificateWithJoins extends Tables<'certificates'> {
+  courses?: Pick<Tables<'courses'>, 'title'> | null
+  profiles?: Pick<Tables<'profiles'>, 'full_name'> | null
 }
 
 export default function CertificatesPage() {
@@ -36,14 +43,14 @@ export default function CertificatesPage() {
         if (error) throw error
 
         setCertificates(
-          (data || []).map((row) => ({
+          (data as CertificateWithJoins[] | null)?.map((row) => ({
             student_id: row.student_id,
-            student_name: (row.profiles as any)?.full_name || null,
+            student_name: row.profiles?.full_name || null,
             course_id: row.course_id,
-            course_title: (row.courses as any)?.title || null,
+            course_title: row.courses?.title || null,
             issued_at: row.issued_at,
             file_url: row.file_url
-          }))
+          })) ?? []
         )
       } catch (_err) {
         setCertificates([])
@@ -51,7 +58,7 @@ export default function CertificatesPage() {
         setLoading(false)
       }
     }
-    fetchCertificates()
+    void fetchCertificates()
   }, [supabase])
 
   const filtered = certificates.filter((c) => {

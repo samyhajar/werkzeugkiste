@@ -3,17 +3,17 @@ import { createClient } from '@/lib/supabase/server-client'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ courseId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { courseId } = await params
+    const { id } = await params
     const supabase = await createClient()
 
     // Get course details to find the module_id
     const { data: course, error: courseError } = await supabase
       .from('courses')
       .select('module_id')
-      .eq('id', courseId)
+      .eq('id', id)
       .single()
 
     if (courseError || !course) {

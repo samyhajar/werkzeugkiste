@@ -9,8 +9,17 @@ import PartnerSection from '@/components/shared/PartnerSection'
 
 
 type Module = Tables<'modules'>
-// type Course = Tables<'courses'>
-// type LessonProgress = Tables<'lesson_progress'>
+type Lesson = Tables<'lessons'>
+
+interface ProgressData {
+  lesson_id: string
+  completed_at: string | null
+  lessons: {
+    id: string
+    course_id: string | null
+    title: string
+  }
+}
 
 export const revalidate = 60 // ISR every minute
 
@@ -74,7 +83,7 @@ export default async function Home({
         if (lessonCounts && !countError) {
           // Count lessons per course
           const lessonCountByCourse: Record<string, number> = {}
-          lessonCounts.forEach(lesson => {
+          lessonCounts.forEach((lesson: Pick<Lesson, 'course_id'>) => {
             if (lesson.course_id) {
               lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
             }
@@ -82,8 +91,8 @@ export default async function Home({
 
           // Count completed lessons per course
           const completedByCourse: Record<string, number> = {}
-          progressData.forEach(progress => {
-            const courseId = (progress.lessons as any)?.course_id
+          progressData.forEach((progress: ProgressData) => {
+            const courseId = progress.lessons?.course_id
             if (courseId) {
               completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1
             }
@@ -124,9 +133,6 @@ export default async function Home({
       {/* Modules */}
       <section id="modules" className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center md:text-left text-gray-800">
-            Lernmodule
-          </h2>
           {modules.length > 0 ? (
             <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {modules.map((moduleItem: Module) => (

@@ -153,9 +153,9 @@ export default function ModuleManagePage() {
 
   useEffect(() => {
     if (moduleId) {
-      fetchModule()
+      void fetchModule()
     }
-  }, [moduleId])
+  }, [moduleId, fetchModule])
 
   if (loading) {
     return (
@@ -178,7 +178,7 @@ export default function ModuleManagePage() {
             <div className="text-red-600 mb-2">Failed to load module</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
-              onClick={() => fetchModule()}
+              onClick={() => void fetchModule()}
               className="mt-4"
               variant="outline"
             >
@@ -343,7 +343,7 @@ export default function ModuleManagePage() {
                     variant="destructive"
                     onClick={() => {
                       setShowDeleteDialog(false)
-                      deleteModule()
+                      void deleteModule()
                     }}
                     disabled={deleting}
                   >
@@ -354,7 +354,7 @@ export default function ModuleManagePage() {
             </Dialog>
 
             <Button
-              onClick={updateModule}
+              onClick={() => void updateModule()}
               disabled={saving || !editForm.title.trim()}
               className="bg-[#486681] hover:bg-[#3e5570] text-white"
             >

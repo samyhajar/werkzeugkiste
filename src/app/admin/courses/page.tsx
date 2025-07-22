@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -127,33 +128,36 @@ export default function CoursesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    await createCourse(formData)
+    void createCourse(formData)
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading courses...</p>
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading courses...</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
-          <p className="text-gray-600 mt-2">Manage your learning courses</p>
+          <h1 className="text-3xl font-bold text-gray-900">Kurse</h1>
+          <p className="text-gray-600 mt-2">Verwalten Sie Ihre Lernkurse</p>
         </div>
         <Button
           onClick={() => setCreateModalOpen(true)}
           className="bg-[#486681] hover:bg-[#3e5570] text-white"
         >
-          Create Course
+          <Plus className="w-4 h-4 mr-2" />
+          Kurs erstellen
         </Button>
       </div>
 
@@ -164,9 +168,9 @@ export default function CoursesPage() {
       )}
 
       {/* Courses Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {courses.map((course) => (
-          <Card key={course.id} className="shadow-sm hover:shadow-lg transition-shadow">
+          <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 bg-white">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{course.title}</CardTitle>
@@ -181,15 +185,15 @@ export default function CoursesPage() {
                 </Badge>
               </div>
               {course.modules && (
-                <CardDescription>Module: {course.modules.title}</CardDescription>
+                <CardDescription>Modul: {course.modules.title}</CardDescription>
               )}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                {course.description || 'No description available'}
+                {course.description || 'Keine Beschreibung verfügbar'}
               </p>
               <div className="text-xs text-gray-500">
-                Created {course.created_at ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true }) : 'unknown'}
+                Erstellt {course.created_at ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true }) : 'unbekannt'}
               </div>
               <div className="flex gap-2 mt-4">
                 <Button
@@ -197,7 +201,7 @@ export default function CoursesPage() {
                   className="bg-[#486681] hover:bg-[#3e5570] text-white flex-1"
                   onClick={() => window.location.href = `/admin/courses/${course.id}`}
                 >
-                  Edit
+                  Bearbeiten
                 </Button>
                 <Button
                   size="sm"
@@ -205,7 +209,7 @@ export default function CoursesPage() {
                   className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 flex-1"
                   onClick={() => window.location.href = `/admin/courses/${course.id}/builder`}
                 >
-                  Builder
+                  Kurs-Builder
                 </Button>
               </div>
             </CardContent>
@@ -214,16 +218,16 @@ export default function CoursesPage() {
       </div>
 
       {courses.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-4xl mb-4">📚</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No courses yet</h3>
-          <p className="text-gray-600 mb-4">Create your first course to get started.</p>
-          <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="bg-[#486681] hover:bg-[#3e5570] text-white"
-          >
-            Create Course
-          </Button>
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Noch keine Kurse</h3>
+          <p className="text-gray-600 mb-4">Erstellen Sie Ihren ersten Kurs, um zu beginnen.</p>
+                      <Button
+              onClick={() => setCreateModalOpen(true)}
+              className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Kurs erstellen
+            </Button>
         </div>
       )}
 
@@ -231,37 +235,37 @@ export default function CoursesPage() {
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Course</DialogTitle>
+            <DialogTitle>Neuen Kurs erstellen</DialogTitle>
             <DialogDescription>
-              Add a new course to your learning platform.
+              Fügen Sie einen neuen Kurs zu Ihrer Lernplattform hinzu.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Titel</Label>
               <Input
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter course title"
+                placeholder="Kurstitel eingeben"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Beschreibung</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter course description"
+                placeholder="Kursbeschreibung eingeben"
                 rows={3}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="module_id">Module</Label>
+              <Label htmlFor="module_id">Modul</Label>
               <Select value={formData.module_id} onValueChange={(value) => setFormData({ ...formData, module_id: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a module" />
+                  <SelectValue placeholder="Modul auswählen" />
                 </SelectTrigger>
                 <SelectContent>
                   {modules.map((module) => (
@@ -273,7 +277,7 @@ export default function CoursesPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="hero_image">Hero Image URL</Label>
+              <Label htmlFor="hero_image">Hero-Bild URL</Label>
               <Input
                 id="hero_image"
                 value={formData.hero_image}
@@ -283,10 +287,11 @@ export default function CoursesPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
-                Cancel
+                Abbrechen
               </Button>
               <Button type="submit" className="bg-[#486681] hover:bg-[#3e5570] text-white">
-                Create Course
+                <Plus className="w-4 h-4 mr-2" />
+                Kurs erstellen
               </Button>
             </DialogFooter>
           </form>

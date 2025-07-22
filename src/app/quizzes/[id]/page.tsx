@@ -59,7 +59,7 @@ export default function QuizDetailPage() {
 
   useEffect(() => {
     if (quizId) {
-      fetchQuizDetails()
+      void fetchQuizDetails()
     }
   }, [quizId])
 

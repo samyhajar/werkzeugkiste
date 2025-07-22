@@ -1,0 +1,304 @@
+
+> werkzeugkiste@0.1.0 build
+> next build
+
+   ▲ Next.js 15.3.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2000ms
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./src/app/admin/courses/[courseId]/lessons/[lessonId]/page.tsx
+66:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+148:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+150:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+154:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+258:21  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+440:33  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/courses/[courseId]/lessons/[lessonId]/quizzes/[quizId]/page.tsx
+75:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+81:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+229:21  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+256:31  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+391:37  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/courses/[courseId]/lessons/[lessonId]/quizzes/new/page.tsx
+45:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+89:28  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/courses/[courseId]/page.tsx
+142:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+144:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+148:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+261:23  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+
+./src/app/admin/courses/page.tsx
+239:26  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/layout.tsx
+36:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+81:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+84:18  Warning: Unsafe member access .authenticated on an `any` value.  @typescript-eslint/no-unsafe-member-access
+84:40  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+86:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+86:25  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+87:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+87:24  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+88:27  Warning: Unsafe member access .isAdmin on an `any` value.  @typescript-eslint/no-unsafe-member-access
+92:27  Warning: Unsafe member access .isAdmin on an `any` value.  @typescript-eslint/no-unsafe-member-access
+93:24  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+95:21  Warning: Unsafe member access .isAdmin on an `any` value.  @typescript-eslint/no-unsafe-member-access
+126:5  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+165:18  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/lessons/page.tsx
+62:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+64:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+65:25  Warning: Unsafe member access .lessons on an `any` value.  @typescript-eslint/no-unsafe-member-access
+67:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+85:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+86:18  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+87:27  Warning: Unsafe member access .courses on an `any` value.  @typescript-eslint/no-unsafe-member-access
+116:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+118:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+119:26  Warning: Unsafe member access .lesson on an `any` value.  @typescript-eslint/no-unsafe-member-access
+123:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+141:5  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+142:5  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+311:25  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/modules/[id]/page.tsx
+67:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+69:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+70:24  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+71:25  Warning: Unsafe member access .courses on an `any` value.  @typescript-eslint/no-unsafe-member-access
+73:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+73:23  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+74:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+74:29  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+75:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+75:28  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+76:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+76:24  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+79:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+110:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+112:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+113:24  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+116:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+139:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+141:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+145:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+158:6  Warning: React Hook useEffect has a missing dependency: 'fetchModule'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+281:17  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+346:23  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+357:23  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/modules/page.tsx
+54:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+56:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+57:25  Warning: Unsafe member access .modules on an `any` value.  @typescript-eslint/no-unsafe-member-access
+59:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+90:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+92:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+93:26  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+97:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+287:25  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+362:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/admin/page.tsx
+65:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+68:18  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+69:36  Warning: Unsafe member access .recentActivities on an `any` value.  @typescript-eslint/no-unsafe-member-access
+70:25  Warning: Unsafe member access .stats on an `any` value.  @typescript-eslint/no-unsafe-member-access
+73:32  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/app/admin/quizzes/page.tsx
+99:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+101:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+102:25  Warning: Unsafe member access .quizzes on an `any` value.  @typescript-eslint/no-unsafe-member-access
+104:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+122:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+123:18  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+124:27  Warning: Unsafe member access .lessons on an `any` value.  @typescript-eslint/no-unsafe-member-access
+267:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+269:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+270:26  Warning: Unsafe member access .quiz on an `any` value.  @typescript-eslint/no-unsafe-member-access
+285:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+627:25  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/app/admin/students/page.tsx
+40:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+42:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+43:26  Warning: Unsafe member access .students on an `any` value.  @typescript-eslint/no-unsafe-member-access
+45:30  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/app/api/admin/dashboard/route.ts
+126:7  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+126:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+126:48  Warning: Unsafe member access .full_name on an `any` value.  @typescript-eslint/no-unsafe-member-access
+136:7  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+136:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+136:48  Warning: Unsafe member access .full_name on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/app/api/admin/lessons/route.ts
+86:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+100:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+101:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+102:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+103:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/admin/modules/[id]/route.ts
+116:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+117:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+119:20  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+119:26  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+130:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+130:16  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+130:22  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+131:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+131:22  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+131:35  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+132:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+132:21  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+132:33  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+133:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/admin/modules/route.ts
+92:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+93:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+95:20  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+95:26  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+107:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+107:18  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+107:24  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+108:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+108:24  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+108:37  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+109:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+109:23  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+109:35  Warning: Unsafe member access .trim on an `any` value.  @typescript-eslint/no-unsafe-member-access
+110:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/admin/quizzes/route.ts
+90:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+109:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+110:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+111:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+112:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/app/api/auth/me/route.ts
+25:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+32:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/auth/signup/route.ts
+21:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/courses/[id]/route.ts
+55:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+76:51  Warning: Unsafe spread of an `any` value in an array.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/modules/[id]/route.ts
+64:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:55  Warning: Unsafe spread of an `any` value in an array.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/api/quizzes/[id]/route.ts
+64:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+64:44  Warning: Unsafe member access .courses on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/app/api/student/progress/route.ts
+21:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+34:9  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/app/modules/[id]/page.tsx
+69:6  Warning: React Hook useEffect has a missing dependency: 'fetchModule'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+81:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+82:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+83:24  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+85:18  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+85:41  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+86:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+86:36  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+87:27  Warning: Unsafe member access .lessons on an `any` value.  @typescript-eslint/no-unsafe-member-access
+87:50  Warning: Unsafe member access .lessons on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:19  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+88:33  Warning: Unsafe call of a(n) `any` typed value.  @typescript-eslint/no-unsafe-call
+88:45  Warning: Unsafe member access .lessons on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:62  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+88:70  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+88:81  Warning: Unsafe member access .order on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:98  Warning: Unsafe member access .order on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:111  Warning: Unsafe member access [0] on an `any` value.  @typescript-eslint/no-unsafe-member-access
+95:44  Warning: Unsafe member access .module on an `any` value.  @typescript-eslint/no-unsafe-member-access
+98:23  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+220:39  Error: 'lessonIndex' is defined but never used. Allowed unused args must match /^_/u.  @typescript-eslint/no-unused-vars
+
+./src/app/page.tsx
+86:19  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+86:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+86:57  Warning: Unsafe member access .course_id on an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:33  Warning: Computed name [courseId] resolves to an `any` value.  @typescript-eslint/no-unsafe-member-access
+88:64  Warning: Computed name [courseId] resolves to an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/app/quizzes/[id]/page.tsx
+49:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+50:20  Warning: Unsafe member access .quiz on an `any` value.  @typescript-eslint/no-unsafe-member-access
+51:22  Warning: Unsafe member access .course on an `any` value.  @typescript-eslint/no-unsafe-member-access
+64:6  Warning: React Hook useEffect has a missing dependency: 'fetchQuizDetails'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/admin/AnalyticsHeader.tsx
+20:17  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/components/shared/LoginModal.tsx
+62:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+64:33  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+65:23  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+73:71  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+80:20  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+131:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+133:16  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+139:23  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+192:30  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+266:30  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+
+./src/components/shared/Navbar.tsx
+72:7  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+76:6  Warning: React Hook useEffect has a missing dependency: 'fetchUserProfile'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+103:7  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+110:7  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+123:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+124:18  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+125:27  Warning: Unsafe member access .modules on an `any` value.  @typescript-eslint/no-unsafe-member-access
+187:5  Warning: Unsafe return of a value of type `any`.  @typescript-eslint/no-unsafe-return
+300:35  Warning: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+413:25  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+
+./src/components/shared/SessionBootstrap.tsx
+50:5  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+62:9  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+
+./src/contexts/AuthContext.tsx
+60:19  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+63:73  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+63:104  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+63:135  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+67:72  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+68:84  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+71:33  Warning: Unsafe member access .user on an `any` value.  @typescript-eslint/no-unsafe-member-access
+78:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+78:41  Warning: Unsafe member access .access_token on an `any` value.  @typescript-eslint/no-unsafe-member-access
+79:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+79:42  Warning: Unsafe member access .refresh_token on an `any` value.  @typescript-eslint/no-unsafe-member-access
+87:103  Warning: Unsafe member access .message on an `any` value.  @typescript-eslint/no-unsafe-member-access
+141:5  Warning: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+
+./src/hooks/useProgressTracking.ts
+34:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+36:18  Warning: Unsafe member access .success on an `any` value.  @typescript-eslint/no-unsafe-member-access
+42:32  Warning: Unsafe member access .error on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

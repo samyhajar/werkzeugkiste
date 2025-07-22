@@ -138,13 +138,13 @@ export default function LessonsPage() {
   })
 
   useEffect(() => {
-    fetchLessons()
-    fetchCourses()
+    void fetchLessons()
+    void fetchCourses()
   }, [])
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
@@ -157,13 +157,13 @@ export default function LessonsPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-red-600 mb-2">Failed to load lessons</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
-              onClick={() => fetchLessons()}
+              onClick={() => void fetchLessons()}
               className="mt-4"
               variant="outline"
             >
@@ -176,7 +176,7 @@ export default function LessonsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -330,48 +330,51 @@ export default function LessonsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search lessons..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search lessons..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
+            />
+          </div>
+          <Select
+            value={courseFilter}
+            onValueChange={(value: string) => setCourseFilter(value)}
+          >
+            <SelectTrigger className="w-[200px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">All Courses</SelectItem>
+              {courses.map((course) => (
+                <SelectItem key={course.id} value={course.id}>
+                  {course.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select
-          value={courseFilter}
-          onValueChange={(value: string) => setCourseFilter(value)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            {courses.map((course) => (
-              <SelectItem key={course.id} value={course.id}>
-                {course.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Lessons Grid */}
       {filteredLessons.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="text-gray-500 mb-4 text-lg">
             {lessons.length === 0 ? 'No lessons created yet' : 'No lessons match your search'}
           </div>
           {lessons.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3">
               Create Your First Lesson
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredLessons.map((lesson) => (
-            <Card key={lesson.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
+            <Card key={lesson.id} className="shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 bg-white">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{lesson.title}</CardTitle>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -112,12 +113,12 @@ export default function ModulesPage() {
   })
 
   useEffect(() => {
-    fetchModules()
+    void fetchModules()
   }, [])
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
@@ -130,13 +131,13 @@ export default function ModulesPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-red-600 mb-2">Failed to load modules</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
-              onClick={() => fetchModules()}
+              onClick={() => void fetchModules()}
               className="mt-4"
               variant="outline"
             >
@@ -149,20 +150,20 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Modules</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Module</h1>
           <p className="text-gray-600 mt-2">
-            Manage learning modules and organize your courses
+                          Verwalten Sie Lernmodule und organisieren Sie Ihre Kurse
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
-              <span className="mr-2">📦</span>
-              Create New Module
+              <Plus className="w-4 h-4 mr-2" />
+              Neues Modul erstellen
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
@@ -178,7 +179,7 @@ export default function ModulesPage() {
 
             <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
               {/* Module Info Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
@@ -212,7 +213,7 @@ export default function ModulesPage() {
               </div>
 
               {/* Visual Design Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">🎨</span>
@@ -234,7 +235,7 @@ export default function ModulesPage() {
               </div>
 
               {/* Settings Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">⚙️</span>
@@ -284,7 +285,7 @@ export default function ModulesPage() {
                 Cancel
               </Button>
               <Button
-                onClick={createModule}
+                onClick={() => void createModule()}
                 disabled={creating || !newModule.title.trim()}
                 className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
@@ -306,89 +307,150 @@ export default function ModulesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search modules..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Module suchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
+          >
+            <SelectTrigger className="w-[180px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">Alle Module</SelectItem>
+              <SelectItem value="published">Veröffentlicht</SelectItem>
+              <SelectItem value="draft">Entwurf</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Modules</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Modules Grid */}
+      {/* Modules Table */}
       {filteredModules.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="text-gray-500 mb-4 text-lg">
             {modules.length === 0 ? 'No modules created yet' : 'No modules match your search'}
           </div>
           {modules.length === 0 && (
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white">
-              Create Your First Module
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3">
+              Erstellen Sie Ihr erstes Modul
             </Button>
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredModules.map((module) => (
-            <Card key={module.id} className="shadow-sm hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50/50">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{module.title}</CardTitle>
-                  <Badge variant={module.status === 'published' ? 'default' : 'secondary'}>
-                    {module.status}
-                  </Badge>
-                </div>
-                {module.description && (
-                  <CardDescription className="line-clamp-2">
-                    {module.description}
-                  </CardDescription>
-                )}
-                {module.hero_image && (
-                  <div className="mt-2">
-                    <img
-                      src={module.hero_image}
-                      alt={module.title}
-                      className="w-full h-32 object-cover rounded-lg shadow-sm"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                    />
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>Created {formatDistanceToNow(new Date(module.created_at), { addSuffix: true })}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
-                    <Link href={`/admin/modules/${module.id}`}>
-                      Manage
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
-                    <Link href={`/modules/${module.id}`}>
-                      Preview
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#486681] to-[#3e5570]">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors">
+                    Modulname
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors">
+                    Beschreibung
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors">
+                    Erstellt
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors">
+                    Aktualisiert
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
+                    Aktionen
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredModules.map((module, index) => (
+                  <tr
+                    key={module.id}
+                    className={`hover:bg-gray-50 transition-colors duration-200 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center shadow-sm">
+                            <Plus className="text-white w-5 h-5" />
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {module.title}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            ID: {module.id.slice(0, 8)}...
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {module.description || 'No description available'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant={module.status === 'published' ? 'default' : 'secondary'}
+                        className={
+                          module.status === 'published'
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                        }
+                      >
+                        {module.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDistanceToNow(new Date(module.created_at), { addSuffix: true })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDistanceToNow(new Date(module.updated_at), { addSuffix: true })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white"
+                        >
+                          <Link href={`/admin/modules/${module.id}`}>
+                            Verwalten
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10"
+                        >
+                          <Link href={`/modules/${module.id}`}>
+                            Vorschau
+                          </Link>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

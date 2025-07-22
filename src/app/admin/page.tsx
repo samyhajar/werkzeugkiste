@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import AdminStatsGrid from '@/components/dashboard/AdminStatsGrid'
 import { formatDistanceToNow } from 'date-fns'
@@ -80,16 +81,16 @@ export default function AdminDashboard() {
       }
     }
 
-    fetchDashboardData()
+    void fetchDashboardData()
   }, [])
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
-            <span className="text-gray-600">Loading dashboard...</span>
+            <span className="text-gray-600">Dashboard wird geladen...</span>
           </div>
         </div>
       </div>
@@ -98,17 +99,17 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-red-600 mb-2">Failed to load dashboard</div>
+            <div className="text-red-600 mb-2">Dashboard konnte nicht geladen werden</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
               onClick={() => window.location.reload()}
               className="mt-4"
               variant="outline"
             >
-              Retry
+              Erneut versuchen
             </Button>
           </div>
         </div>
@@ -117,13 +118,13 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-600 mt-2">
-            Overview of your learning platform
+            Übersicht über Ihre Lernplattform
           </p>
         </div>
       </div>
@@ -137,26 +138,26 @@ export default function AdminDashboard() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common administrative tasks</CardDescription>
+              <CardTitle>Schnellaktionen</CardTitle>
+              <CardDescription>Häufige Verwaltungsaufgaben</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button asChild className="w-full bg-[#486681] hover:bg-[#3e5570] text-white">
                 <Link href="/admin/modules">
-                  <span className="mr-2">📚</span>
-                  Manage Modules
+                  <Plus className="w-4 h-4 mr-2" />
+                  Module verwalten
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                 <Link href="/admin/lessons">
-                  <span className="mr-2">📖</span>
-                  Manage Lessons
+                  <Plus className="w-4 h-4 mr-2" />
+                  Lektionen verwalten
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full border-[#486681] text-[#486681] hover:bg-[#486681]/10">
                 <Link href="/admin/quizzes">
-                  <span className="mr-2">❓</span>
-                  Manage Quizzes
+                  <Plus className="w-4 h-4 mr-2" />
+                  Quizze verwalten
                 </Link>
               </Button>
             </CardContent>
@@ -167,13 +168,13 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest platform activity and updates</CardDescription>
+              <CardTitle>Aktuelle Aktivitäten</CardTitle>
+              <CardDescription>Neueste Plattformaktivitäten und Updates</CardDescription>
             </CardHeader>
             <CardContent>
               {recentActivities.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  No recent activity to display
+                  Keine aktuellen Aktivitäten vorhanden
                 </div>
               ) : (
                 <div className="space-y-4">

@@ -300,13 +300,13 @@ export default function QuizzesPage() {
   })
 
   useEffect(() => {
-    fetchQuizzes()
-    fetchLessons()
+    void fetchQuizzes()
+    void fetchLessons()
   }, [])
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="flex items-center gap-3">
             <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
@@ -319,13 +319,13 @@ export default function QuizzesPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="text-red-600 mb-2">Failed to load quizzes</div>
             <div className="text-gray-500 text-sm">{error}</div>
             <Button
-              onClick={() => fetchQuizzes()}
+              onClick={() => void fetchQuizzes()}
               className="mt-4"
               variant="outline"
             >
@@ -338,7 +338,7 @@ export default function QuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full px-8 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -624,7 +624,7 @@ export default function QuizzesPage() {
                 Cancel
               </Button>
               <Button
-                onClick={createQuiz}
+                onClick={() => void createQuiz()}
                 disabled={creating || !newQuiz.title.trim() || !newQuiz.lesson_id || newQuiz.questions.length === 0}
                 className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >

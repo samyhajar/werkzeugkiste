@@ -20,17 +20,18 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     setIsClient(true)
   }, [])
 
-  // Check if we're on a module page
+  // Check if we're on a module page or admin page
   const isModulePage = pathname?.startsWith('/modules/')
+  const isAdminPage = pathname?.startsWith('/admin')
 
-  // During SSR or before hydration, render without AuthProvider
+  // During SSR or before hydration, render a minimal layout without AuthProvider
   if (!isClient) {
     return (
       <div className="min-h-screen flex flex-col">
-        {!isModulePage && <Navbar />}
+        {/* Only render Navbar and other auth-dependent components after hydration */}
         <main className="flex-1">{children}</main>
-        {!isModulePage && <Footer />}
-        {!isModulePage && <ScrollToTopButton />}
+        {!isModulePage && !isAdminPage && <Footer />}
+        {!isModulePage && !isAdminPage && <ScrollToTopButton />}
       </div>
     )
   }
@@ -39,11 +40,11 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   return (
     <AuthProvider>
       <SessionBootstrap />
-      <div className="min-h-screen flex flex-col">
-        {!isModulePage && <Navbar />}
-        <main className="flex-1">{children}</main>
-        {!isModulePage && <Footer />}
-        {!isModulePage && <ScrollToTopButton />}
+      <div className="min-h-screen">
+        {!isModulePage && !isAdminPage && <Navbar />}
+        <main className={`flex-1 ${!isModulePage && !isAdminPage ? 'pt-24' : ''}`}>{children}</main>
+        {!isModulePage && !isAdminPage && <Footer />}
+        {!isModulePage && !isAdminPage && <ScrollToTopButton />}
       </div>
     </AuthProvider>
   )

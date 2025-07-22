@@ -7,20 +7,14 @@ import { ChevronDown, User, LogOut } from 'lucide-react'
 import LoginModal from './LoginModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { ModulesResponse, ModuleData } from '@/types/api'
+import { Tables } from '@/types/supabase'
 
 const links = [
-  { href: '/digi-sammlung', label: 'Digi-Sammlung' },
+  { href: '/', label: 'Home' },
+  { href: '/ueber-uns', label: 'Über uns' },
   { href: '/fragen', label: 'Fragen' },
-  { href: '/ueber-uns', label: 'Über Uns' },
 ]
-
-interface Module {
-  id: string
-  title: string
-  description: string | null
-  hero_image: string | null
-  status: 'draft' | 'published'
-}
 
 interface UserProfile {
   id: string
@@ -34,10 +28,11 @@ export default function Navbar() {
   const [isModulesOpen, setIsModulesOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [modules, setModules] = useState<Module[]>([])
+  const [modules, setModules] = useState<ModuleData[]>([])
   const [modulesLoading, setModulesLoading] = useState(false)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [forceShowButton, setForceShowButton] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -48,6 +43,17 @@ export default function Navbar() {
     if (typeof window !== 'undefined') {
       setSupabase(getBrowserClient())
     }
+  }, [])
+
+  // Handle scroll effect for navbar shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      setIsScrolled(scrollTop > 10)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Force show login button after 3 seconds if still loading
@@ -69,7 +75,7 @@ export default function Navbar() {
   // Fetch user profile when user changes
   useEffect(() => {
     if (user) {
-      fetchUserProfile(user.id)
+      void fetchUserProfile(user.id)
     } else {
       setUserProfile(null)
     }
@@ -100,14 +106,14 @@ export default function Navbar() {
   // Fetch modules on component mount (for both mobile and desktop)
   useEffect(() => {
     if (modules.length === 0) {
-      fetchModules()
+      void fetchModules()
     }
   }, [modules.length])
 
   // Also fetch modules when dropdown opens (backup for any edge cases)
   useEffect(() => {
     if (isModulesOpen && modules.length === 0) {
-      fetchModules()
+      void fetchModules()
     }
   }, [isModulesOpen, modules.length])
 
@@ -120,9 +126,9 @@ export default function Navbar() {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setModules(data.modules || [])
+        const data: ModulesResponse = await response.json()
+        if (data.success && data.modules) {
+          setModules(data.modules)
         }
       }
     } catch (error) {
@@ -189,7 +195,21 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-brand-primary" style={{ boxShadow: 'none', border: 'none', outline: 'none' }}>
+      <div className="fixed top-0 left-0 right-0 z-50">
+                                <nav
+          className={`bg-brand-primary transition-all duration-300 ease-in-out ${
+            isScrolled
+              ? 'shadow-xl border-b-2 border-gray-400'
+              : 'shadow-none border-b-0'
+          }`}
+          style={{
+            boxShadow: isScrolled
+              ? '0 6px 16px -3px rgba(0, 0, 0, 0.2), 0 3px 8px -2px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+              : 'none',
+            border: 'none',
+            outline: 'none'
+          }}
+        >
         <div className="w-full px-8">
           <div className="flex justify-between items-center h-24">
             {/* Logo */}
@@ -443,6 +463,7 @@ export default function Navbar() {
           )}
         </div>
       </nav>
+      </div>
 
       {/* Login Modal */}
       <LoginModal

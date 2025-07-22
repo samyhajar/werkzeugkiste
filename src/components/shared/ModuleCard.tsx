@@ -42,7 +42,7 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
           </div>
 
           {/* Progress bar for logged-in users - Fixed height */}
-          <div className="h-[4.5rem] mb-6">
+          <div className="h-[4.5rem]">
             {isLoggedIn && (
               <div className="space-y-3">
                 <div className="flex justify-between text-sm font-medium text-gray-700">
