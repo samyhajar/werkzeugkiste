@@ -12,7 +12,7 @@ interface Lesson {
   title: string
   content: string | null
   duration_minutes: number | null
-  sort_order: number
+  order: number
   course_id: string
   created_at: string
 }
@@ -59,6 +59,8 @@ export default function ModuleDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
   useEffect(() => {
     if (moduleId) {
@@ -79,19 +81,17 @@ export default function ModuleDetailPage() {
       const data = await response.json()
       if (data.success) {
         setModule(data.module)
-        // Automatically redirect to the first lesson of the first course
+        // Automatically select the first lesson of the first course
         if (data.module.courses && data.module.courses.length > 0) {
           const firstCourse = data.module.courses[0]
           if (firstCourse.lessons && firstCourse.lessons.length > 0) {
-            const firstLesson = firstCourse.lessons.sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))[0]
+            const firstLesson = firstCourse.lessons.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))[0]
             if (firstLesson) {
-              router.push(`/lessons/${firstLesson.id}`)
-              return
+              setSelectedLesson(firstLesson)
+              setSelectedCourse(firstCourse)
             }
           }
-        }
-        // If no lessons found, expand the first course for sidebar display
-        if (data.module.courses && data.module.courses.length > 0) {
+          // Expand the first course for sidebar display
           setExpandedCourses(new Set([data.module.courses[0].id]))
         }
       } else {
@@ -109,12 +109,22 @@ export default function ModuleDetailPage() {
     setExpandedCourses(prev => {
       const newSet = new Set(prev)
       if (newSet.has(courseId)) {
+        // If clicking on an already expanded course, close it
         newSet.delete(courseId)
       } else {
+        // If clicking on a collapsed course, close all others and open this one
+        newSet.clear()
         newSet.add(courseId)
       }
       return newSet
     })
+  }
+
+  const selectLesson = (lesson: Lesson) => {
+    setSelectedLesson(lesson)
+    // Find the course using the lesson's course_id
+    const course = module?.courses.find(c => c.id === lesson.course_id)
+    setSelectedCourse(course || null)
   }
 
   const getTotalLessons = () => {
@@ -148,24 +158,22 @@ export default function ModuleDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm">
-        {/* Header */}
+      <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0">
+        {/* Breadcrumb */}
         <div className="p-4 border-b border-gray-200 bg-[#486681] text-white">
-          <Link href="/" className="flex items-center gap-2 text-sm text-blue-100 mb-2 hover:text-white transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-sm text-blue-100 hover:text-white transition-colors">
             <ChevronLeft className="w-4 h-4" />
-            {module.title}
+            Zurück zu Modulen
           </Link>
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="font-bold text-xl">{module.title}</h1>
-          </div>
         </div>
 
-        {/* Progress Info */}
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">{getTotalLessons()} Lektionen</span>
+        {/* Module Name */}
+        <div className="p-4 border-b border-gray-200 bg-white">
+          <h1 className="font-bold text-xl text-gray-800">{module.title}</h1>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-gray-600 text-sm">{getTotalLessons()} Lektionen</span>
           </div>
         </div>
 
@@ -208,19 +216,21 @@ export default function ModuleDetailPage() {
                     <div className="px-4 py-2 space-y-1">
                       {/* Lessons */}
                       {course.lessons
-                        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                        .sort((a, b) => (a.order || 0) - (b.order || 0))
                         .map((lesson, lessonIndex) => (
                           <div key={lesson.id}>
-                            <Link
-                              href={`/lessons/${lesson.id}`}
-                              className="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group"
+                            <button
+                              onClick={() => selectLesson(lesson)}
+                              className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
+                              }`}
                             >
                               <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                               <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                Lektion {lessonIndex + 1}: {lesson.title}
+                                {lesson.title}
                               </span>
                               <CheckCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                            </Link>
+                            </button>
 
                             {/* Quizzes for this lesson */}
                             {course.quizzes
@@ -275,14 +285,72 @@ export default function ModuleDetailPage() {
         </div>
       </aside>
 
-            {/* Main Content Area - Shows loading state only */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-            <p className="text-gray-600">Weiterleitung zum ersten Lektions...</p>
+            {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {selectedLesson ? (
+          <div className="flex-1 overflow-y-auto">
+            {/* Lesson Header */}
+            <div className="bg-white border-b border-gray-200 px-8 py-4">
+                                          {/* Breadcrumb */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                <Link
+                  href="/"
+                  className="hover:text-blue-600 transition-colors font-medium hover:underline"
+                >
+                  {module.title}
+                </Link>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-700 font-medium">
+                  {selectedCourse?.title || 'Kurs'}
+                </span>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-900 font-semibold">
+                  {selectedLesson.title}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    {selectedLesson.title}
+                  </h1>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <span>Lektion {selectedLesson.order}</span>
+                    <span>•</span>
+                    <span>{selectedLesson.duration_minutes || 0} Min</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    Abgeschlossen
+                  </span>
+                </div>
+              </div>
+            </div>
+
+                        {/* Lesson Content */}
+            <div className="px-8 py-6 overflow-y-auto">
+              {selectedLesson.content ? (
+                <div
+                  className="prose prose-lg max-w-none"
+                  dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">Kein Inhalt verfügbar</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-gray-400 text-6xl mb-4">📚</div>
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion aus</h2>
+              <p className="text-gray-500">Klicke auf eine Lektion in der Seitenleiste, um den Inhalt anzuzeigen.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -5,8 +5,7 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { HelpCircle, CheckCircle, AlertCircle } from 'lucide-react'
-// import { ChevronLeft, BookOpen, Clock } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 
 interface Quiz {
   id: string
@@ -27,64 +26,29 @@ interface Course {
   updated_at: string
 }
 
-
-
 export default function QuizDetailPage() {
   const params = useParams()
-  // const router = useRouter()
   const quizId = params.id as string
 
   const [quiz, setQuiz] = useState<Quiz | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: number }>({})
-  const [showResults, setShowResults] = useState(false)
-  const [quizStarted, setQuizStarted] = useState(false)
 
   const fetchQuizDetails = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      // Get quiz details
-      const quizzesResponse = await fetch(`/api/student/quizzes`, {
-        method: 'GET',
-        credentials: 'include',
-      })
+      const response = await fetch(`/api/quizzes/${quizId}`)
 
-      if (!quizzesResponse.ok) {
-        throw new Error(`API error: ${quizzesResponse.status}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch quiz: ${response.status}`)
       }
 
-      const quizzesData = await quizzesResponse.json()
-
-      if (quizzesData.success) {
-        const foundQuiz = quizzesData.quizzes?.find((q: Quiz) => q.id === quizId)
-        if (!foundQuiz) {
-          throw new Error('Quiz not found')
-        }
-        setQuiz(foundQuiz)
-
-        // Get course details
-        const coursesResponse = await fetch(`/api/student/courses`, {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (coursesResponse.ok) {
-          const coursesData = await coursesResponse.json()
-          if (coursesData.success) {
-            const foundCourse = coursesData.courses?.find((c: Course) => c.id === foundQuiz.course_id)
-            if (foundCourse) {
-              setCourse(foundCourse)
-            }
-          }
-        }
-      } else {
-        throw new Error(quizzesData.error || 'Failed to fetch quiz')
-      }
+      const data = await response.json()
+      setQuiz(data.quiz)
+      setCourse(data.course)
     } catch (err) {
       console.error('Error fetching quiz details:', err)
       setError(err instanceof Error ? err.message : 'Failed to load quiz')
@@ -93,53 +57,24 @@ export default function QuizDetailPage() {
     }
   }
 
-  const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [questionIndex]: answerIndex
-    }))
-  }
-
-  const handleNext = () => {
-    if (currentQuestion < sampleQuestions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1)
-    }
-  }
-
-  const handleSubmitQuiz = () => {
-    setShowResults(true)
-  }
-
-  const calculateScore = () => {
-    let correct = 0
-    sampleQuestions.forEach((question, index) => {
-      if (selectedAnswers[index] === question.correctAnswer) {
-        correct++
-      }
-    })
-    return correct
-  }
-
   useEffect(() => {
     if (quizId) {
       fetchQuizDetails()
     }
   }, [quizId])
 
+  useEffect(() => {
+    if (quiz) {
+      document.title = quiz.title || 'Quiz'
+    }
+  }, [quiz])
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-            <span className="text-gray-600">Quiz wird geladen...</span>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Quiz wird geladen...</p>
         </div>
       </div>
     )
@@ -147,286 +82,73 @@ export default function QuizDetailPage() {
 
   if (error || !quiz || !course) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-2">Fehler beim Laden des Quiz</div>
-            <div className="text-gray-500 text-sm mb-4">{error}</div>
-            <Button onClick={() => fetchQuizDetails()}>
-              Erneut versuchen
-            </Button>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <HelpCircle className="h-6 w-6" />
+              Quiz nicht gefunden
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600">
+              {error || 'Das angeforderte Quiz konnte nicht geladen werden.'}
+            </p>
+            <Link href="/dashboard">
+              <Button>Zurück zur Übersicht</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
-
-  if (!quizStarted) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-[#486681] text-white py-6">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="flex items-center gap-2 text-sm text-blue-100 mb-2">
-              <Link href="/modules" className="hover:text-white">Modul 1: Einstieg in die digitale Welt</Link>
-              <span>›</span>
-              <Link href={`/modules/${course.id}`} className="hover:text-white">{course.title}</Link>
-              <span>›</span>
-              <span>{quiz.title}</span>
-            </div>
-            <h1 className="text-2xl font-bold">{quiz.title}</h1>
-          </div>
-        </header>
-
-        {/* Quiz Introduction */}
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <HelpCircle className="w-8 h-8 text-blue-600" />
-              </div>
-              <CardTitle className="text-2xl">{quiz.title}</CardTitle>
-              <CardDescription className="text-lg">
-                {quiz.description || 'Testen Sie Ihr Wissen über die digitale Welt'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-semibold text-gray-800">Fragen</div>
-                  <div className="text-2xl font-bold text-blue-600">{sampleQuestions.length}</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-semibold text-gray-800">Geschätzte Zeit</div>
-                  <div className="text-2xl font-bold text-blue-600">5 Min</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="font-semibold text-gray-800">Mindestpunktzahl</div>
-                  <div className="text-2xl font-bold text-blue-600">70%</div>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg text-left">
-                <h3 className="font-semibold text-blue-800 mb-2">Quiz-Hinweise:</h3>
-                <ul className="text-blue-700 space-y-1 text-sm">
-                  <li>• Lesen Sie jede Frage sorgfältig durch</li>
-                  <li>• Sie können zwischen den Fragen vor und zurück navigieren</li>
-                  <li>• Ihre Antworten werden automatisch gespeichert</li>
-                  <li>• Sie können das Quiz nur einmal absolvieren</li>
-                </ul>
-              </div>
-
-              <Button
-                size="lg"
-                className="px-8 py-3"
-                onClick={() => setQuizStarted(true)}
-              >
-                Quiz starten
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    )
-  }
-
-  if (showResults) {
-    const score = calculateScore()
-    const percentage = Math.round((score / sampleQuestions.length) * 100)
-    const passed = percentage >= 70
-
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-[#486681] text-white py-6">
-          <div className="max-w-4xl mx-auto px-4">
-            <div className="flex items-center gap-2 text-sm text-blue-100 mb-2">
-              <Link href="/modules" className="hover:text-white">Modul 1: Einstieg in die digitale Welt</Link>
-              <span>›</span>
-              <Link href={`/modules/${course.id}`} className="hover:text-white">{course.title}</Link>
-              <span>›</span>
-              <span>{quiz.title} - Ergebnisse</span>
-            </div>
-            <h1 className="text-2xl font-bold">Quiz Ergebnisse</h1>
-          </div>
-        </header>
-
-        {/* Results */}
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                passed ? 'bg-green-100' : 'bg-red-100'
-              }`}>
-                {passed ? (
-                  <CheckCircle className="w-10 h-10 text-green-600" />
-                ) : (
-                  <AlertCircle className="w-10 h-10 text-red-600" />
-                )}
-              </div>
-              <CardTitle className={`text-3xl ${passed ? 'text-green-600' : 'text-red-600'}`}>
-                {passed ? 'Bestanden!' : 'Nicht bestanden'}
-              </CardTitle>
-              <CardDescription className="text-xl">
-                Sie haben {score} von {sampleQuestions.length} Fragen richtig beantwortet ({percentage}%)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Score breakdown */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="font-semibold text-gray-800 mb-4">Antworten im Detail:</h3>
-                <div className="space-y-3">
-                  {sampleQuestions.map((question, index) => {
-                    const userAnswer = selectedAnswers[index]
-                    const isCorrect = userAnswer === question.correctAnswer
-                    return (
-                      <div key={question.id} className="flex items-start gap-3">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                          isCorrect ? 'bg-green-100' : 'bg-red-100'
-                        }`}>
-                          {isCorrect ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 text-red-600" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-800">
-                            Frage {index + 1}: {question.question}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            Ihre Antwort: {question.options[userAnswer] || 'Nicht beantwortet'}
-                          </div>
-                          {!isCorrect && (
-                            <div className="text-sm text-green-600 mt-1">
-                              Richtige Antwort: {question.options[question.correctAnswer]}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Navigation */}
-              <div className="flex justify-center gap-4">
-                <Button variant="outline" asChild>
-                  <Link href={`/modules/${course.id}`}>
-                    Zurück zum Kurs
-                  </Link>
-                </Button>
-                {passed && (
-                  <Button asChild>
-                    <Link href="/modules">
-                      Weiter zu den Modulen
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    )
-  }
-
-  const currentQ = sampleQuestions[currentQuestion]
-  const progress = ((currentQuestion + 1) / sampleQuestions.length) * 100
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-[#486681] text-white py-4">
+      <header className="bg-[#486681] text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold">{quiz.title}</h1>
-              <div className="text-sm text-blue-100">
-                Frage {currentQuestion + 1} von {sampleQuestions.length}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-blue-100">Fortschritt</div>
-              <div className="text-lg font-bold">{Math.round(progress)}%</div>
-            </div>
+          <div className="flex items-center gap-3 mb-2">
+            <Link href="/dashboard" className="text-white hover:text-blue-200">
+              ← Zurück zur Übersicht
+            </Link>
           </div>
-
-          {/* Progress bar */}
-          <div className="w-full bg-blue-700 rounded-full h-2 mt-4">
-            <div
-              className="bg-white h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          <h1 className="text-2xl font-bold">{quiz.title}</h1>
+          <p className="text-blue-100">{course.title}</p>
         </div>
       </header>
 
-      {/* Quiz Content */}
+      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <Card className="shadow-lg">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-xl">
-              {currentQ.question}
+            <CardTitle className="flex items-center gap-2">
+              <HelpCircle className="h-6 w-6 text-blue-600" />
+              Quiz: {quiz.title}
             </CardTitle>
+            <CardDescription>
+              {quiz.description || 'Testen Sie Ihr Wissen mit diesem interaktiven Quiz.'}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {currentQ.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerSelect(currentQuestion, index)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-colors ${
-                    selectedAnswers[currentQuestion] === index
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded-full border-2 ${
-                      selectedAnswers[currentQuestion] === index
-                        ? 'border-blue-500 bg-blue-500'
-                        : 'border-gray-300'
-                    }`}>
-                      {selectedAnswers[currentQuestion] === index && (
-                        <div className="w-full h-full rounded-full bg-white scale-50" />
-                      )}
-                    </div>
-                    <span>{option}</span>
-                  </div>
-                </button>
-              ))}
+          <CardContent className="text-center space-y-6">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <h3 className="font-semibold text-blue-800 mb-2">Quiz wird vorbereitet</h3>
+              <p className="text-blue-700">
+                Dieses Quiz ist derzeit in Entwicklung und wird bald verfügbar sein.
+              </p>
             </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentQuestion === 0}
-              >
-                ← Vorherige
-              </Button>
-
-              <div className="text-sm text-gray-500">
-                {Object.keys(selectedAnswers).length} von {sampleQuestions.length} beantwortet
-              </div>
-
-              {currentQuestion === sampleQuestions.length - 1 ? (
-                <Button
-                  onClick={handleSubmitQuiz}
-                  disabled={Object.keys(selectedAnswers).length !== sampleQuestions.length}
-                >
-                  Quiz abschließen
+            <div className="flex gap-4 justify-center">
+              <Link href="/dashboard">
+                <Button variant="outline">
+                  Zurück zur Übersicht
                 </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  disabled={selectedAnswers[currentQuestion] === undefined}
-                >
-                  Nächste →
+              </Link>
+              <Link href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/dashboard'}>
+                <Button>
+                  Zur Lektion
                 </Button>
-              )}
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -35,7 +35,7 @@ export default async function Home({
     .from('modules')
     .select('*')
     .eq('status', 'published')
-    .order('created_at', { ascending: false })
+    .order('order', { ascending: true })
 
   const modules = fetchedModules ?? []
 

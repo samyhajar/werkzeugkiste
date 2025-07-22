@@ -35,7 +35,7 @@ export async function GET(
       .select('*')
       .eq('module_id', id)
       .eq('status', 'published')
-      .order('created_at', { ascending: true })
+      .order('order', { ascending: true })
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
@@ -53,7 +53,7 @@ export async function GET(
           .from('lessons')
           .select('*')
           .eq('course_id', course.id)
-          .order('sort_order', { ascending: true })
+          .order('order', { ascending: true })
 
         // Fetch course-level quizzes
         const { data: courseQuizzes, error: _courseQuizzesError } =

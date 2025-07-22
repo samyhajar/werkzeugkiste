@@ -51,7 +51,7 @@ export default function FragenPage() {
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-[#de0449] mb-6">Ungeklärte Fragen?</h1>
         <p className="text-gray-700">
-          Schreib' eine E-Mail an <a href="mailto:digiplus@arbeitplus.at" className="text-blue-600 underline">digiplus@arbeitplus.at</a>!
+          Schreib&apos; eine E-Mail an <a href="mailto:digiplus@arbeitplus.at" className="text-blue-600 underline">digiplus@arbeitplus.at</a>!
         </p>
       </div>
 
@@ -110,10 +110,10 @@ export default function FragenPage() {
               <div>
                 <p className="mb-2">Es gibt Module, Kurse und Lektionen:</p>
                 <ul className="list-disc ml-6 space-y-1">
-                  <li>Module (z. B. "Modul 1 – Einstieg in die digitale Welt")</li>
-                  <li>Kurse (z. B. "Kurs 1 – Digitalisierung Basis")</li>
-                  <li>Lektion 1 (z. B. "Lektion 1 – Digital | Analog")</li>
-                  <li>Lektion 2 (z. B. "Lektion 2 – Dein digitaler Nutzen")</li>
+                  <li>Module (z. B. &quot;Modul 1 – Einstieg in die digitale Welt&quot;)</li>
+                  <li>Kurse (z. B. &quot;Kurs 1 – Digitalisierung Basis&quot;)</li>
+                  <li>Lektion 1 (z. B. &quot;Lektion 1 – Digital | Analog&quot;)</li>
+                  <li>Lektion 2 (z. B. &quot;Lektion 2 – Dein digitaler Nutzen&quot;)</li>
                   <li>…</li>
                 </ul>
               </div>
@@ -156,7 +156,7 @@ export default function FragenPage() {
             answer={
               <div>
                 <p className="mb-2">Computer: Bewege den Mauszeiger im oberen Bereich auf <span className="bg-blue-100 px-2 py-1 rounded text-sm">Lernmodule</span> und klicke auf ein Modul.</p>
-                <p>Smartphone: Tippe rechts oben auf die drei Punkte <span className="text-xl">⋮</span> und dann auf "Lernmodule".</p>
+                <p>Smartphone: Tippe rechts oben auf die drei Punkte <span className="text-xl">⋮</span> und dann auf &quot;Lernmodule&quot;.</p>
               </div>
             }
           />
@@ -165,8 +165,8 @@ export default function FragenPage() {
             question="Wie komme ich zur nächsten Lektion oder zu einem anderen Kurs?"
             answer={
               <div>
-                <p className="mb-2">Computer: Auf der linken Seite siehst du alle Kurse/Lektionen. Klick' einfach auf den gewünschten Inhalt.</p>
-                <p>Smartphone: wischst du von links nach rechts. Damit erscheinen alle Kurse/Lektionen. Tipp' einfach auf den gewünschten Inhalt.</p>
+                <p className="mb-2">Computer: Auf der linken Seite siehst du alle Kurse/Lektionen. Klick&apos; einfach auf den gewünschten Inhalt.</p>
+                <p>Smartphone: wischst du von links nach rechts. Damit erscheinen alle Kurse/Lektionen. Tipp&apos; einfach auf den gewünschten Inhalt.</p>
               </div>
             }
           />
@@ -182,7 +182,7 @@ export default function FragenPage() {
             question="Wo bekomme ich didaktische Tips?"
             answer={
               <div>
-                <p className="mb-4">Am Beginn jeder Modulseite gibt es einen Reiter "Unterlagen für Vortragende":</p>
+                <p className="mb-4">Am Beginn jeder Modulseite gibt es einen Reiter &quot;Unterlagen für Vortragende&quot;:</p>
 
                                  <div className="mb-4">
                    <Image

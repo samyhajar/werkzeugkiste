@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Navbar from './Navbar'
 import Footer from './Footer'
@@ -13,19 +14,23 @@ interface ConditionalLayoutProps {
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const [isClient, setIsClient] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     setIsClient(true)
   }, [])
 
+  // Check if we're on a module page
+  const isModulePage = pathname?.startsWith('/modules/')
+
   // During SSR or before hydration, render without AuthProvider
   if (!isClient) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {!isModulePage && <Navbar />}
         <main className="flex-1">{children}</main>
-        <Footer />
-        <ScrollToTopButton />
+        {!isModulePage && <Footer />}
+        {!isModulePage && <ScrollToTopButton />}
       </div>
     )
   }
@@ -35,10 +40,10 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     <AuthProvider>
       <SessionBootstrap />
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {!isModulePage && <Navbar />}
         <main className="flex-1">{children}</main>
-        <Footer />
-        <ScrollToTopButton />
+        {!isModulePage && <Footer />}
+        {!isModulePage && <ScrollToTopButton />}
       </div>
     </AuthProvider>
   )
