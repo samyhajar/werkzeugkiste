@@ -8,11 +8,13 @@ import LoginModal from './LoginModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { ModulesResponse, ModuleData } from '@/types/api'
+import { useRouter } from 'next/navigation'
 
 const links = [
   { href: '/', label: 'Home' },
-  { href: '/ueber-uns', label: 'Über uns' },
+  { href: '/digi-sammlung', label: 'Digi-Sammlung' },
   { href: '/fragen', label: 'Fragen' },
+  { href: '/ueber-uns', label: 'Über uns' },
 ]
 
 interface UserProfile {
@@ -38,6 +40,7 @@ export default function Navbar() {
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+  const router = useRouter()
 
   // Initialize Supabase client only in browser
   useEffect(() => {
@@ -68,41 +71,32 @@ export default function Navbar() {
     return () => clearTimeout(timer)
   }, [loading, user])
 
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/auth/me`, {
+        credentials: 'include'
+      })
+      const data = await response.json()
+
+      if (data.success && data.user) {
+        setUserProfile(data.user)
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
+
   // Debug logging
   useEffect(() => {
-    console.log('Navbar state:', { user: user?.email, loading, userProfile, forceShowButton })
+    // This effect runs on every render to help debug state changes
   }, [user, loading, userProfile, forceShowButton])
 
   // Fetch user profile when user changes
   useEffect(() => {
-    if (user) {
+    if (user && !userProfile) {
       void fetchUserProfile(user.id)
-    } else {
-      setUserProfile(null)
     }
-  }, [user])
-
-  const fetchUserProfile = async (userId: string) => {
-    if (!supabase) return
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, role')
-        .eq('id', userId)
-        .single()
-
-      if (error) {
-        console.error('Error fetching user profile:', error)
-        setUserProfile(null)
-      } else {
-        setUserProfile(data)
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
-      setUserProfile(null)
-    }
-  }
+  }, [user, userProfile, fetchUserProfile])
 
   // Fetch modules on component mount (for both mobile and desktop)
   useEffect(() => {
@@ -121,60 +115,50 @@ export default function Navbar() {
   const fetchModules = async () => {
     // Prevent duplicate requests
     if (fetchInProgress.current) {
-      console.log('[Navbar] Fetch already in progress, skipping...')
       return
     }
 
     // Debounce requests
     const now = Date.now()
     if (now - lastFetchTime.current < 2000) {
-      console.log('[Navbar] Debouncing fetch request...')
       return
     }
 
     fetchInProgress.current = true
     lastFetchTime.current = now
-    setModulesLoading(true)
 
     try {
-      console.log('[Navbar] Fetching modules...')
-      const response = await fetch('/api/modules', {
-        method: 'GET',
-        credentials: 'include',
-      })
-
+      const response = await fetch('/api/modules')
       if (response.ok) {
-        const data: ModulesResponse = await response.json()
-        if (data.success && data.modules) {
-          setModules(data.modules)
+        const data = await response.json()
+        if (data.success) {
+          setModules(data.modules || [])
         }
       }
     } catch (error) {
       console.error('Error fetching modules:', error)
     } finally {
-      setModulesLoading(false)
       fetchInProgress.current = false
     }
   }
 
   const handleLogout = async () => {
     try {
-      console.log('[Navbar] Starting logout process...')
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      })
 
-      // Close user menu immediately for better UX
-      setIsUserMenuOpen(false)
-      setUserProfile(null)
-
-      // Use AuthContext's comprehensive logout
-      await signOut()
-
-      console.log('[Navbar] Redirecting to home...')
-      window.location.href = '/'
-
+      if (response.ok) {
+        router.push('/')
+      } else {
+        // Force redirect even if logout fails
+        router.push('/')
+      }
     } catch (error) {
       console.error('[Navbar] Error during logout:', error)
-      // Force redirect even if logout fails
-      window.location.href = '/'
+      // Force redirect on error
+      router.push('/')
     }
   }
 
@@ -244,11 +228,11 @@ export default function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              {links.map((link) => (
+              {links.slice(0, 1).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-white hover:text-blue-100 transition-colors duration-200"
+                  className="text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
                 >
                   {link.label}
                 </Link>
@@ -258,17 +242,22 @@ export default function Navbar() {
               <div className="relative" ref={modulesRef}>
                 <button
                   onClick={() => setIsModulesOpen(!isModulesOpen)}
-                  className="flex items-center text-white hover:text-blue-100 transition-colors duration-200"
+                  onMouseEnter={() => setIsModulesOpen(true)}
+                  className="flex items-center text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
                 >
                   Lernmodule
                   <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isModulesOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isModulesOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                    <div className="py-2">
+                  <div
+                    className="absolute top-full left-0 mt-2 w-96 bg-brand-primary rounded-lg shadow-xl border border-brand-primary-hover z-50"
+                    onMouseEnter={() => setIsModulesOpen(true)}
+                    onMouseLeave={() => setIsModulesOpen(false)}
+                  >
+                    <div className="py-3">
                       {modulesLoading ? (
-                        <div className="px-4 py-3 text-gray-500 text-sm">
+                        <div className="px-6 py-4 text-blue-100 text-sm">
                           Module werden geladen...
                         </div>
                       ) : modules.length > 0 ? (
@@ -276,19 +265,14 @@ export default function Navbar() {
                           <Link
                             key={module.id}
                             href={`/modules/${module.id}`}
-                            className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
+                            className="block px-6 py-4 text-white hover:text-blue-100 hover:bg-brand-primary-hover transition-colors text-lg font-semibold"
                             onClick={() => setIsModulesOpen(false)}
                           >
-                            <div className="font-medium">{module.title}</div>
-                            {module.description && (
-                              <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                {module.description}
-                              </div>
-                            )}
+                            {module.title}
                           </Link>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-gray-500 text-sm">
+                        <div className="px-6 py-4 text-blue-200 text-sm">
                           Keine Module verfügbar
                         </div>
                       )}
@@ -296,6 +280,16 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+
+              {links.slice(1).map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
+                >
+                  {link.label}
+                </Link>
+              ))}
 
               {/* User Menu or Login Button */}
               {loading && !forceShowButton ? (
@@ -347,25 +341,26 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={() => {
-                    console.log('Login button clicked!')
-                    setIsLoginModalOpen(true)
-                  }}
-                  className="text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 cursor-pointer"
-                  style={{
-                    backgroundColor: '#de0449',
-                    borderColor: '#de0449'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#c5043e'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#de0449'
-                  }}
-                >
-                  Anmelden / Registrieren
-                </button>
+                <div className="flex items-center space-x-8">
+                  <button
+                    onClick={() => {
+                      setIsLoginModalOpen(true)
+                    }}
+                    className="text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 cursor-pointer text-lg"
+                    style={{
+                      backgroundColor: '#de0446',
+                      borderColor: '#de0446'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#c5043e'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#de0446'
+                    }}
+                  >
+                    Einloggen
+                  </button>
+                </div>
               )}
             </div>
 
@@ -391,11 +386,11 @@ export default function Navbar() {
           {isOpen && (
             <div ref={menuRef} className="md:hidden">
               <div className="px-2 pt-2 pb-3 space-y-1 bg-brand-primary border-t border-brand-primary-hover">
-                {links.map((link) => (
+                {links.slice(0, 1).map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200"
+                    className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-xl font-semibold"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
@@ -404,13 +399,13 @@ export default function Navbar() {
 
                 {/* Mobile Lernmodule Section */}
                 <div className="border-t border-brand-primary-hover pt-2 mt-2">
-                  <div className="px-3 py-2 text-blue-100 text-sm font-medium">Lernmodule</div>
+                  <div className="px-3 py-2 text-blue-100 text-xl font-semibold">Lernmodule</div>
                   {modules.length > 0 ? (
                     modules.map((module) => (
                       <Link
                         key={module.id}
                         href={`/modules/${module.id}`}
-                        className="block px-6 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-sm"
+                        className="block px-6 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-lg font-semibold"
                         onClick={() => setIsOpen(false)}
                       >
                         {module.title}
@@ -422,6 +417,17 @@ export default function Navbar() {
                     </div>
                   )}
                 </div>
+
+                {links.slice(1).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-xl font-semibold"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
 
                 {/* Mobile User Section */}
                 {user ? (
@@ -459,22 +465,21 @@ export default function Navbar() {
                 ) : (
                   <button
                     onClick={() => {
-                      console.log('Mobile login button clicked!')
                       setIsOpen(false)
                       setIsLoginModalOpen(true)
                     }}
-                    className="block w-full text-left px-3 py-2 text-white font-medium rounded-lg transition-colors duration-200 mt-2"
+                    className="block w-full text-left px-3 py-2 text-white font-semibold rounded-lg transition-colors duration-200 mt-2 text-lg"
                     style={{
-                      backgroundColor: '#de0449'
+                      backgroundColor: '#de0446'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = '#c5043e'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#de0449'
+                      e.currentTarget.style.backgroundColor = '#de0446'
                     }}
                   >
-                    Anmelden / Registrieren
+                    Einloggen
                   </button>
                 )}
               </div>

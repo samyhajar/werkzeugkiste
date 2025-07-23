@@ -324,15 +324,6 @@ export default function BuilderPage() {
         if (Array.isArray(elements)) {
           const hierarchicalElements = buildHierarchicalStructure(elements)
           const elementsWithPreservedState = preserveExpansionStates(hierarchicalElements, builderElementsRef.current)
-          console.log('Loaded structure:', elementsWithPreservedState)
-          console.log('Structure details:', elementsWithPreservedState.map(el => ({
-            id: el.id,
-            type: el.type,
-            title: el.title,
-            hasChildren: (el.children?.length || 0) > 0,
-            isExpanded: isBuilderElement(el) ? el.isExpanded : false,
-            childrenCount: el.children?.length || 0
-          })))
           setBuilderElements(elementsWithPreservedState)
         }
       }
@@ -381,12 +372,6 @@ export default function BuilderPage() {
         setUnassignedLessons(lessons)
         setUnassignedQuizzes(quizzes)
 
-        console.log('Loaded available elements:', {
-          courses: courses.length,
-          lessons: lessons.length,
-          quizzes: quizzes.length,
-          sampleQuiz: quizzes[0]
-        })
       }
     } catch (error) {
       console.error('Error loading available elements:', error)

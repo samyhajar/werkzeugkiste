@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine the parent type and update accordingly
-    let updateData: any = {}
+    const updateData: any = {}
 
     if (scope === 'module') {
       // Assign to module (as a course)

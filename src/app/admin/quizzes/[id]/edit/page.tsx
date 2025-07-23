@@ -176,7 +176,6 @@ export default function EditQuizPage() {
   }
 
     const addQuestion = async () => {
-    console.log('Adding question:', newQuestion)
     try {
       setSaving(true)
 
@@ -191,21 +190,26 @@ export default function EditQuizPage() {
       })
 
       if (questionResponse.ok) {
-        console.log('Question added successfully')
-        setIsAddQuestionDialogOpen(false)
-        setNewQuestion({
-          type: 'single',
-          question_html: '',
-          points: 10,
-          sort_order: 1,
-          category: '',
-          explanation_html: ''
-        })
-        setNewAnswers([
-          { answer_html: '', is_correct: false, sort_order: 1 },
-          { answer_html: '', is_correct: false, sort_order: 2 }
-        ])
-        fetchQuizData() // Refresh data
+        const data = await questionResponse.json()
+        if (data.success) {
+          setQuestions([...questions, data.question])
+          setNewQuestion({
+            type: 'single',
+            question_html: '',
+            points: 10,
+            sort_order: 1,
+            category: '',
+            explanation_html: ''
+          })
+          setNewAnswers([
+            { answer_html: '', is_correct: false, sort_order: 1 },
+            { answer_html: '', is_correct: false, sort_order: 2 }
+          ])
+          fetchQuizData() // Refresh data
+        } else {
+          const errorData = data
+          throw new Error(errorData.error || 'Failed to add question')
+        }
       } else {
         const errorData = await questionResponse.json()
         throw new Error(errorData.error || 'Failed to add question')
@@ -219,18 +223,20 @@ export default function EditQuizPage() {
   }
 
   const deleteQuestion = async (questionId: string) => {
-    console.log('Deleting question:', questionId)
-    if (!confirm('Are you sure you want to delete this question?')) return
-
     try {
-      setSaving(true)
       const response = await fetch(`/api/admin/quizzes/${quizId}/questions/${questionId}`, {
         method: 'DELETE'
       })
 
       if (response.ok) {
-        console.log('Question deleted successfully')
-        fetchQuizData() // Refresh data
+        const data = await response.json()
+        if (data.success) {
+          setQuestions(questions.filter(q => q.id !== questionId))
+          fetchQuizData() // Refresh data
+        } else {
+          const errorData = data
+          throw new Error(errorData.error || 'Failed to delete question')
+        }
       } else {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to delete question')

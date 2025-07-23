@@ -9,73 +9,32 @@ interface AssignQuizRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
-    // Check if user is authenticated and is admin
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
-    // Check if user is admin using profiles table
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile || profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      )
-    }
-
-    const { elementId, parentId, scope } =
-      (await request.json()) as AssignQuizRequest
-
-    console.log('Quiz assignment request:', { elementId, parentId, scope })
+    const body = await request.json()
+    const { elementId, parentId, scope } = body
 
     if (!elementId || !parentId) {
-      console.log('Missing elementId or parentId')
       return NextResponse.json(
-        { success: false, error: 'Element ID and Parent ID are required' },
+        { success: false, error: 'Missing elementId or parentId' },
         { status: 400 }
       )
     }
 
+    const supabase = await createClient()
+
     // Determine the parent type and update accordingly
-    let updateData: any = {}
+    const updateData: any = {}
 
     if (scope === 'module') {
-      // Assign to module (as a course)
       updateData.module_id = parentId
     } else if (scope === 'course') {
-      // Assign to course
       updateData.course_id = parentId
     } else if (scope === 'lesson') {
-      // Assign to lesson
       updateData.lesson_id = parentId
     }
 
-    // First, assign the quiz to the parent
-    console.log(
-      'Attempting to update enhanced_quizzes with elementId:',
-      elementId,
-      'parentId:',
-      parentId,
-      'scope:',
-      scope
-    )
+    // Update the quiz
     const { data: quiz, error } = await supabase
-      .from('enhanced_quizzes')
+      .from('quizzes')
       .update(updateData)
       .eq('id', elementId)
       .select()
@@ -89,12 +48,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Successfully assigned quiz:', quiz)
-
-    return NextResponse.json({
-      success: true,
-      quiz,
-    })
+    return NextResponse.json({ success: true, quiz })
   } catch (error) {
     console.error('Error in assign quiz API:', error)
     return NextResponse.json(
@@ -137,10 +91,7 @@ export async function PATCH(request: NextRequest) {
 
     const { quiz_id, course_id } = await request.json()
 
-    console.log('Quiz assignment request:', { quiz_id, course_id })
-
     if (!quiz_id || !course_id) {
-      console.log('Missing quiz_id or course_id')
       return NextResponse.json(
         { success: false, error: 'Quiz ID and Course ID are required' },
         { status: 400 }
@@ -148,12 +99,6 @@ export async function PATCH(request: NextRequest) {
     }
 
     // First, assign the quiz to the course
-    console.log(
-      'Attempting to update enhanced_quizzes with quiz_id:',
-      quiz_id,
-      'course_id:',
-      course_id
-    )
     const { data: quiz, error } = await supabase
       .from('enhanced_quizzes')
       .update({ course_id } as any)
@@ -168,8 +113,6 @@ export async function PATCH(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('Successfully assigned quiz:', quiz)
 
     // For now, skip the reordering to simplify debugging
     // TODO: Re-enable reordering once basic assignment works

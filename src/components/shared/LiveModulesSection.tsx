@@ -21,17 +21,15 @@ export default function LiveModulesSection({
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
 
-  const fetchModules = useCallback(async () => {
+  const _fetchModules = useCallback(async () => {
     // Prevent duplicate requests
     if (fetchInProgress.current) {
-      console.log('[LiveModulesSection] Fetch already in progress, skipping...')
       return
     }
 
     // Debounce requests
     const now = Date.now()
     if (now - lastFetchTime.current < 2000) {
-      console.log('[LiveModulesSection] Debouncing fetch request...')
       return
     }
 
@@ -39,7 +37,6 @@ export default function LiveModulesSection({
     lastFetchTime.current = now
 
     try {
-      console.log('[LiveModulesSection] Fetching modules...')
       const response = await fetch('/api/modules')
       if (response.ok) {
         const data = await response.json()

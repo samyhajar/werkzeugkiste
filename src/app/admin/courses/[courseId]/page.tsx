@@ -294,7 +294,9 @@ export default function CourseDetailsPage() {
                       Cancel
                     </Button>
                     <Button
-                      onClick={() => void handleSave()}
+                      onClick={() => {
+                        void handleSave()
+                      }}
                       disabled={saving}
                     >
                       {saving ? 'Saving...' : 'Save'}

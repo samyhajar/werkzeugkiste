@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDistanceToNow } from 'date-fns'
-import { Users, BookOpen, Award, HelpCircle, FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { User, Calendar, Activity } from 'lucide-react'
+import { formatDistance } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 interface Student {
   id: string
@@ -122,7 +122,7 @@ export default function StudentsPage() {
                 <p className="text-3xl font-bold text-gray-900">{totalStudents}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
+                <User className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </CardContent>
@@ -136,7 +136,7 @@ export default function StudentsPage() {
                 <p className="text-3xl font-bold text-gray-900">{recentStudents}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-green-600" />
+                <Calendar className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </CardContent>
@@ -150,7 +150,7 @@ export default function StudentsPage() {
                 <p className="text-3xl font-bold text-gray-900">{activeStudents}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Award className="w-6 h-6 text-purple-600" />
+                <Activity className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
@@ -166,7 +166,7 @@ export default function StudentsPage() {
                 <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <Input
+                <input
                   placeholder="Search students by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -270,7 +270,7 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         {student.created_at && !isNaN(new Date(student.created_at).getTime())
-                          ? formatDistanceToNow(new Date(student.created_at), { addSuffix: true })
+                          ? formatDistance(new Date(student.created_at), new Date(), { locale: de })
                           : 'Unknown'
                         }
                       </div>

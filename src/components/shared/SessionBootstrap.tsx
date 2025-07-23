@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 /**
@@ -12,8 +12,48 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
  */
 export default function SessionBootstrap() {
   const syncInProgress = useRef(false)
-  const lastSync = useRef<number>(0)
+  const lastSyncTime = useRef<number>(0)
   const hasRun = useRef(false)
+  const supabase = useRef(getBrowserClient())
+
+  const syncAuthState = useCallback(async () => {
+    // Prevent duplicate sync operations
+    if (syncInProgress.current) {
+      return
+    }
+
+    // Debounce sync operations
+    const now = Date.now()
+    if (now - lastSyncTime.current < 2000) {
+      return
+    }
+
+    syncInProgress.current = true
+    lastSyncTime.current = now
+
+    try {
+      // Check for auth cookies
+      const cookies = document.cookie.split(';')
+      const authCookies = cookies.filter(cookie =>
+        cookie.trim().startsWith('sb-') ||
+        cookie.trim().startsWith('supabase-auth-token')
+      )
+
+      if (authCookies.length > 0) {
+        // Force session refresh if cookies are present
+        const { error: refreshError } = await supabase.current.auth.refreshSession()
+
+        if (refreshError) {
+          // Try getSession as fallback
+          await supabase.current.auth.getSession()
+        }
+      }
+    } catch (error) {
+      console.error('[SessionBootstrap] Error syncing auth state:', error)
+    } finally {
+      syncInProgress.current = false
+    }
+  }, [])
 
   useEffect(() => {
     // Only run in browser environment
@@ -26,54 +66,6 @@ export default function SessionBootstrap() {
       return
     }
 
-    const syncAuthState = async () => {
-      // Prevent duplicate sync operations
-      if (syncInProgress.current) {
-        console.log('[SessionBootstrap] Sync already in progress, skipping...')
-        return
-      }
-
-      // Debounce sync operations
-      const now = Date.now()
-      if (now - lastSync.current < 2000) {
-        console.log('[SessionBootstrap] Debouncing sync operation...')
-        return
-      }
-
-      syncInProgress.current = true
-      lastSync.current = now
-      hasRun.current = true
-
-      try {
-        const supabase = getBrowserClient()
-
-        console.log('[SessionBootstrap] Checking for auth cookies...')
-        const authCookies = document.cookie
-          .split('; ')
-          .filter(cookie => cookie.includes('sb-') && cookie.includes('auth-token'))
-
-        console.log('[SessionBootstrap] Found auth cookies:', authCookies.length)
-
-        if (authCookies.length > 0) {
-          console.log('[SessionBootstrap] Auth cookies present, forcing session refresh...')
-          try {
-            // Force a refresh to pick up cookies
-            await supabase.auth.refreshSession()
-            console.log('[SessionBootstrap] Session refresh completed')
-          } catch (refreshError) {
-            console.log('[SessionBootstrap] Refresh failed, trying getSession:', refreshError)
-            await supabase.auth.getSession()
-          }
-        } else {
-          console.log('[SessionBootstrap] No auth cookies found')
-        }
-      } catch (error) {
-        console.error('[SessionBootstrap] Error syncing auth state:', error)
-      } finally {
-        syncInProgress.current = false
-      }
-    }
-
     // Run sync on mount with a small delay to avoid conflicts
     const initialTimeout = setTimeout(() => {
       void syncAuthState()
@@ -83,7 +75,7 @@ export default function SessionBootstrap() {
       clearTimeout(initialTimeout)
       syncInProgress.current = false
     }
-  }, [])
+  }, [syncAuthState])
 
   return null
 }

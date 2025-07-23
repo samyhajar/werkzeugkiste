@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Assistant } from "next/font/google";
 import "./globals.css";
 import ConditionalLayout from "@/components/shared/ConditionalLayout";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const assistant = Assistant({
+  variable: '--font-assistant',
   subsets: ['latin'],
   display: 'swap',
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-  display: 'swap',
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
@@ -31,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.variable} suppressHydrationWarning>
+    <html lang="en" className={assistant.variable} suppressHydrationWarning>
       <body
-        className={`${geistMono.variable} antialiased`}
+        className={`${assistant.variable} antialiased`}
       >
         <ConditionalLayout>{children}</ConditionalLayout>
       </body>

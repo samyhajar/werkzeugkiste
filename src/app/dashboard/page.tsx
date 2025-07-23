@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { BookOpen, FileText, HelpCircle, CheckCircle, Play } from 'lucide-react'
+import { BookOpen, Play, FileText, HelpCircle } from 'lucide-react'
 
 import { useTableSubscription } from '@/contexts/RealtimeContext'
 
@@ -52,14 +52,12 @@ export default function DashboardPage() {
   const fetchStudentData = useCallback(async () => {
     // Prevent duplicate requests
     if (fetchInProgress.current) {
-      console.log('[Dashboard] Fetch already in progress, skipping...')
       return
     }
 
     // Debounce requests
     const now = Date.now()
     if (now - lastFetchTime.current < 2000) {
-      console.log('[Dashboard] Debouncing fetch request...')
       return
     }
 
@@ -68,7 +66,6 @@ export default function DashboardPage() {
 
     try {
       setLoading(true)
-      console.log('[Dashboard] Fetching student data...')
 
       // Fetch modules with their courses
       const response = await fetch('/api/modules')

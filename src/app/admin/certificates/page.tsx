@@ -91,18 +91,15 @@ export default function CertificatesPage() {
     try {
       const response = await fetch('/api/admin/certificates')
       if (response.ok) {
-        const data = await response.json() as CertificatesResponse
-        console.log('Fetched certificates:', data)
-        console.log('Sample certificate:', data.certificates?.[0])
-        setCertificates(data.certificates || [])
+        const _data = await response.json() as CertificatesResponse
+        setCertificates(_data.certificates || [])
       } else {
         const errorData = await response.json()
         console.error('Error response:', errorData)
+        throw new Error('Failed to fetch certificates')
       }
     } catch (error) {
       console.error('Error fetching certificates:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -110,8 +107,12 @@ export default function CertificatesPage() {
     try {
       const response = await fetch('/api/admin/users')
       if (response.ok) {
-        const data = await response.json() as UsersResponse
-        setUsers(data.users || [])
+        const _data = await response.json()
+        if (_data.success) {
+          setUsers(_data.users || [])
+        } else {
+          throw new Error(_data.error || 'Failed to fetch users')
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -122,8 +123,12 @@ export default function CertificatesPage() {
     try {
       const response = await fetch('/api/admin/modules')
       if (response.ok) {
-        const data = await response.json() as ModulesResponse
-        setModules(data.modules || [])
+        const _data = await response.json()
+        if (_data.success) {
+          setModules(_data.modules || [])
+        } else {
+          throw new Error(_data.error || 'Failed to fetch modules')
+        }
       }
     } catch (error) {
       console.error('Error fetching modules:', error)
@@ -134,8 +139,12 @@ export default function CertificatesPage() {
     try {
       const response = await fetch('/api/admin/storage-templates')
       if (response.ok) {
-        const data = await response.json() as StorageTemplatesResponse
-        setStorageTemplates(data.templates || [])
+        const _data = await response.json() as StorageTemplatesResponse
+        if (_data.success) {
+          setStorageTemplates(_data.templates || [])
+        } else {
+          throw new Error(_data.error || 'Failed to fetch templates')
+        }
       }
     } catch (error) {
       console.error('Error fetching storage templates:', error)
@@ -166,7 +175,6 @@ export default function CertificatesPage() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Certificate generated successfully!')
         void fetchCertificates()
         setSelectedUser('')
         setSelectedModule('')
@@ -212,7 +220,6 @@ export default function CertificatesPage() {
       })
 
       if (response.ok) {
-        console.log('Certificate deleted successfully!')
         void fetchCertificates()
       } else {
         const errorData = await response.json()
@@ -235,7 +242,6 @@ export default function CertificatesPage() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Template uploaded successfully!')
         void fetchStorageTemplates()
       } else {
         const errorData = await response.json()

@@ -71,24 +71,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setSuccess('Anmeldung erfolgreich!')
       setLoading(false)
 
-              console.log('Server login successful, user role:', data.user?.role)
-        console.log('Closing modal and letting AuthContext handle session sync...')
+        if (data.success && data.user) {
+        // Close modal and let AuthContext handle the session
+        onClose()
 
-        // Close modal immediately and let AuthContext handle the rest
-        setTimeout(() => {
-          onClose()
-
-          if (data.user?.role === 'admin') {
-            console.log('Redirecting admin to /admin')
-            router.push('/admin')
-          } else {
-            console.log('Student login complete - AuthContext will detect the session')
-          }
-        }, 1000)
-
+        // Redirect based on user role
+        if (data.user.role === 'admin') {
+          router.push('/admin')
+        }
+      }
     } catch (err) {
       console.error('Login error:', err)
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+      setError('Login failed. Please try again.')
+    } finally {
       setLoading(false)
     }
   }

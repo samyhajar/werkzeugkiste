@@ -1,57 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    console.log('[LogoutAPI] Starting server-side logout...')
     const supabase = await createClient()
 
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      console.error('[LogoutAPI] SignOut error:', error)
-      // Don't return error - we'll still clear cookies manually
-    } else {
-      console.log('[LogoutAPI] ✅ SignOut successful')
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      )
     }
 
-    // Create response and manually clear auth cookies
-    const response = NextResponse.json({
-      message: 'Logged out successfully',
-      success: true,
-    })
+    // Clear all cookies
+    const response = NextResponse.json({ success: true })
 
-    // Clear all possible Supabase auth cookies
-    const cookiesToClear = [
-      `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('://')[1]?.split('.')[0]}-auth-token`,
-      'sb-auth-token',
-      'supabase-auth-token',
-      'sb-access-token',
-      'sb-refresh-token',
-    ]
+    // Clear Supabase cookies
+    response.cookies.delete('sb-access-token')
+    response.cookies.delete('sb-refresh-token')
+    response.cookies.delete('supabase-auth-token')
 
-    cookiesToClear.forEach(cookieName => {
-      // Clear for different path and domain combinations
-      response.cookies.set(cookieName, '', {
-        expires: new Date(0),
-        path: '/',
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+    // Clear any other auth-related cookies
+    const cookieNames = ['sb-', 'supabase-']
+    cookieNames.forEach(prefix => {
+      const cookies = request.cookies.getAll()
+      cookies.forEach(cookie => {
+        if (cookie.name.startsWith(prefix)) {
+          response.cookies.delete(cookie.name)
+        }
       })
     })
 
-    console.log('[LogoutAPI] 🎉 Logout completed, cookies cleared')
     return response
   } catch (error) {
-    console.error('[LogoutAPI] Unexpected error:', error)
-
-    // Even if there's an error, return success and try to clear cookies
-    const response = NextResponse.json({
-      message: 'Logged out (with errors)',
-      success: true,
-    })
-
-    return response
+    return NextResponse.json(
+      { success: false, error: 'Logout failed' },
+      { status: 500 }
+    )
   }
 }

@@ -175,12 +175,12 @@ export default function CoursesPage() {
     }
   }
 
-  const openDeleteDialog = (course: Course) => {
+  const _openDeleteDialog = (course: Course) => {
     setCourseToDelete(course)
     setDeleteDialogOpen(true)
   }
 
-  const openEditDialog = (course: Course) => {
+  const _openEditDialog = (course: Course) => {
     setEditingCourse(course)
     setIsEditDialogOpen(true)
   }

@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { formatDateSafely } from '@/lib/utils'
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -214,7 +213,7 @@ export default function LessonsPage() {
     }
   }, [sortField, sortDirection])
 
-  const getSortedLessons = useCallback(() => {
+  const _getSortedLessons = useCallback(() => {
     const filteredLessons = lessons.filter(lesson => {
       const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (lesson.content && lesson.content.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -491,9 +490,9 @@ export default function LessonsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lessons</h1>
-          <p className="text-gray-600 mt-2">
-            Manage lessons across all courses
+          <h1 className="text-4xl font-bold text-white mb-2">Lektionen</h1>
+          <p className="text-gray-300 text-sm">
+            Lektionen in allen Kursen verwalten
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

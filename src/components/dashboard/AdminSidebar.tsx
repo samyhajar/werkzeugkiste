@@ -30,13 +30,13 @@ function NavItem({ href, icon, children, isActive }: NavItemProps) {
       asChild
       variant="ghost"
       className={cn(
-        "w-full justify-start h-12 px-4 text-left font-normal",
+        "w-full justify-start h-16 px-6 text-left font-normal text-lg",
         isActive
-          ? "bg-white/20 text-white border-r-2 border-white hover:bg-white/20"
+          ? "bg-white/20 text-white border-r-2 border-[#dc0747] hover:bg-white/20"
           : "text-blue-100 hover:bg-white/10 hover:text-white"
       )}
     >
-      <Link href={href} className="flex items-center gap-3">
+      <Link href={href} className="flex items-center gap-4">
         <div className={cn(
           "flex-shrink-0",
           isActive ? "text-white" : "text-blue-100"
@@ -56,7 +56,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v4H8V5z" />
         </svg>
@@ -67,7 +67,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/modules",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
@@ -77,7 +77,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/courses",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
@@ -87,7 +87,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/lessons",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
@@ -97,7 +97,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/quizzes",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
       ),
@@ -107,7 +107,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/students",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
@@ -118,7 +118,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/certificates",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
@@ -128,7 +128,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
     {
       href: "/admin/builder",
       icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
@@ -178,21 +178,21 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
       </nav>
 
       {/* User Info & Logout */}
-      <div className="px-6 py-4 border-t border-[#3e5570] bg-[#3e5570]">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+      <div className="px-6 py-6 border-t border-[#3e5570] bg-[#3e5570]">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 py-2">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
               <span className="text-[#486681] font-medium text-sm">
                 {(profile.full_name || userEmail).charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-white truncate mb-1">
                 {profile.full_name || userEmail.split('@')[0]}
               </p>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/20">
-                  {role}
+                  Admin
                 </Badge>
               </div>
             </div>
@@ -200,7 +200,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
           <Button
             variant="outline"
             size="sm"
-            className="w-full text-white border-white/30 hover:bg-white/10"
+            className="w-full text-white bg-[#dc0747] border-none hover:bg-[#dc0747]/90"
             onClick={() => void onLogout()}
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

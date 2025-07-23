@@ -32,7 +32,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
   const subscriptions = useRef<SubscriptionState>({})
   const supabase = useRef<ReturnType<typeof getBrowserClient> | null>(null)
-  const connectionTimeout = useRef<NodeJS.Timeout | null>(null)
+  const [_connectionTimeout, _setConnectionTimeout] = useState<NodeJS.Timeout | null>(null)
 
   // Initialize Supabase client
   useEffect(() => {
@@ -48,14 +48,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Subscribe to real-time changes
-  const subscribe = useCallback((id: string, config: SubscriptionConfig) => {
+  const subscribe = useCallback((_subscriberId: string, config: SubscriptionConfig) => {
     if (!supabase.current) return
 
     const key = createSubscriptionKey(config)
 
     // If subscription already exists, just add this subscriber
     if (subscriptions.current[key]) {
-      subscriptions.current[key].subscribers.add(id)
+      subscriptions.current[key].subscribers.add(_subscriberId)
       return
     }
 
@@ -74,17 +74,14 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         })
       })
       .subscribe((status) => {
-        console.log(`[RealtimeContext] Subscription ${key} status:`, status)
         setIsConnected(status === 'SUBSCRIBED')
       })
 
     subscriptions.current[key] = {
       channel,
-      subscribers: new Set([id]),
+      subscribers: new Set([_subscriberId]),
       config
     }
-
-    console.log(`[RealtimeContext] Created subscription for ${key} with subscriber ${id}`)
   }, [createSubscriptionKey])
 
   // Unsubscribe from real-time changes
@@ -96,7 +93,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
 
         // If no more subscribers, remove the subscription
         if (subscription.subscribers.size === 0) {
-          console.log(`[RealtimeContext] Removing subscription ${key} - no more subscribers`)
           subscription.channel.unsubscribe()
           delete subscriptions.current[key]
         }

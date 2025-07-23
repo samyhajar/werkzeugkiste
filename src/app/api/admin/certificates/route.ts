@@ -101,7 +101,6 @@ export async function GET(_request: NextRequest) {
         course: courseMap.get(cert.course_id),
       })) || []
 
-    console.log('Fetched certificates:', certificatesWithDetails)
     return NextResponse.json({
       success: true,
       certificates: certificatesWithDetails || [],

@@ -35,9 +35,6 @@ export const useProgressTracking = (): ProgressTrackingHook => {
         const data: BaseApiResponse = await response.json()
 
         if (data.success) {
-          console.log(
-            `[ProgressTracking] Successfully marked lesson ${lessonId} as complete`
-          )
           return true
         } else {
           throw new Error(data.error || 'Failed to mark lesson complete')

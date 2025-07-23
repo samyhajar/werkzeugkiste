@@ -10,19 +10,13 @@ export default function LogoutButton() {
   const { signOut } = useAuth()
 
   const handleLogout = async () => {
-    setLoading(true)
-
     try {
-      console.log('[LogoutButton] Starting logout...')
       await signOut()
-      console.log('[LogoutButton] Logout successful, redirecting...')
       router.push('/')
     } catch (error) {
       console.error('[LogoutButton] Logout error:', error)
       // Force redirect even if logout fails
-    router.push('/')
-    } finally {
-    setLoading(false)
+      router.push('/')
     }
   }
 

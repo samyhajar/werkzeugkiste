@@ -3,9 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { BookOpen, Play, CheckCircle, Clock, FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3 } from 'lucide-react'
+import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3 } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import Link from 'next/link'
 
@@ -69,14 +67,12 @@ export default function ModuleDetailPage() {
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
     if (fetchInProgress.current) {
-      console.log('[ModuleDetail] Fetch already in progress, skipping...')
       return
     }
 
     // Debounce requests
     const now = Date.now()
     if (now - lastFetchTime.current < 2000) {
-      console.log('[ModuleDetail] Debouncing fetch request...')
       return
     }
 
@@ -84,44 +80,22 @@ export default function ModuleDetailPage() {
     lastFetchTime.current = now
 
     try {
-      setLoading(true)
-      console.log('[ModuleDetail] Fetching module:', moduleId)
       const response = await fetch(`/api/modules/${moduleId}`)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch module')
-      }
-
-      const data = await response.json()
-      if (data.success) {
-        setModule(data.module)
-        // Automatically select the first lesson of the first course
-        if (data.module.courses && data.module.courses.length > 0) {
-          const firstCourse = data.module.courses[0]
-          if (firstCourse.lessons && firstCourse.lessons.length > 0) {
-            const firstLesson = firstCourse.lessons.sort((a: any, b: any) => (a.order || 0) - (b.order || 0))[0]
-            if (firstLesson) {
-              setSelectedLesson(firstLesson)
-              setSelectedCourse(firstCourse)
-            }
-          }
-          // Expand the first course for sidebar display
-          setExpandedCourses(new Set([data.module.courses[0].id]))
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setModule(data.module)
         }
-      } else {
-        setError(data.error || 'Failed to load module')
       }
     } catch (err) {
-      setError('Failed to load module')
       console.error('Error fetching module:', err)
     } finally {
-      setLoading(false)
       fetchInProgress.current = false
     }
   }, [moduleId])
 
   // Debounced refetch function to prevent too many API calls
-  const debouncedRefetch = useCallback(() => {
+  const _debouncedRefetch = useCallback(() => {
     const now = Date.now()
     if (now - lastRefetchTime > 1000 && !fetchInProgress.current) { // Only refetch if more than 1 second has passed
       setLastRefetchTime(now)
