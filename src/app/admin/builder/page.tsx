@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ChevronDown, ChevronRight, GripVertical, Plus, Save, Trash2, Edit3, FileText, HelpCircle, BookOpen, FolderOpen, Folder } from 'lucide-react'
 import {
   DndContext,
@@ -18,7 +21,6 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  DragOverEvent,
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -28,11 +30,11 @@ import {
 } from '@dnd-kit/sortable'
 import {
   useSortable,
-  } from '@dnd-kit/sortable'
-  import { CSS } from '@dnd-kit/utilities'
-  import { getBrowserClient } from '@/lib/supabase/browser-client'
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 
-  interface BuilderElement {
+interface BuilderElement {
   id: string
   type: 'module' | 'course' | 'lesson' | 'quiz'
   title: string
@@ -55,15 +57,71 @@ interface AvailableElement {
   db_type?: string
 }
 
+// Helper functions
+const getElementIcon = (type: string) => {
+  switch (type) {
+    case 'module':
+      return <FolderOpen className="w-5 h-5 text-orange-600" />
+    case 'course':
+      return <BookOpen className="w-5 h-5 text-purple-600" />
+    case 'lesson':
+      return <FileText className="w-5 h-5 text-green-600" />
+    case 'quiz':
+      return <HelpCircle className="w-5 h-5 text-blue-600" />
+    default:
+      return <FileText className="w-5 h-5 text-gray-600" />
+  }
+}
+
+const getElementBadgeColor = (type: string) => {
+  switch (type) {
+    case 'module':
+      return 'bg-orange-100 text-orange-800'
+    case 'course':
+      return 'bg-purple-100 text-purple-800'
+    case 'lesson':
+      return 'bg-green-100 text-green-800'
+    case 'quiz':
+      return 'bg-blue-100 text-blue-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+const getElementTypeLabel = (type: string) => {
+  switch (type) {
+    case 'module':
+      return 'Modul'
+    case 'course':
+      return 'Kurs'
+    case 'lesson':
+      return 'Lektion'
+    case 'quiz':
+      return 'Quiz'
+    default:
+      return 'Element'
+  }
+}
+
+const findElementById = (elements: BuilderElement[], id: string): BuilderElement | undefined => {
+  for (const element of elements) {
+    if (element.id === id) {
+      return element
+    }
+    if (element.children) {
+      const found = findElementById(element.children, id)
+      if (found) return found
+    }
+  }
+  return undefined
+}
+
 // Sortable item component for builder elements
-function SortableBuilderElement({ element, onRemove, onToggle, level = 0, isOver = false, hoverPosition = null, overId = null }: {
+function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
   element: BuilderElement
   onRemove: (id: string) => Promise<void>
   onToggle: (id: string) => void
   level?: number
-  isOver?: boolean
-  hoverPosition?: 'before' | 'after' | null
-  overId?: string | null
 }) {
   const {
     attributes,
@@ -79,87 +137,14 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0, isOver
     transition,
   }
 
-  const getElementIcon = (type: string) => {
-    switch (type) {
-      case 'module':
-        return <FolderOpen className="w-4 h-4" />
-      case 'course':
-        return <Folder className="w-4 h-4" />
-      case 'lesson':
-        return <FileText className="w-4 h-4" />
-      case 'quiz':
-        return <HelpCircle className="w-4 h-4" />
-      default:
-        return <FileText className="w-4 h-4" />
-    }
-  }
-
-  const getElementBadgeColor = (type: string) => {
-    switch (type) {
-      case 'module':
-        return 'bg-orange-100 text-orange-800'
-      case 'course':
-        return 'bg-purple-100 text-purple-800'
-      case 'lesson':
-        return 'bg-green-100 text-green-800'
-      case 'quiz':
-        return 'bg-purple-100 text-purple-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getElementTypeLabel = (type: string) => {
-    switch (type) {
-      case 'module':
-        return 'Modul'
-      case 'course':
-        return 'Kurs'
-      case 'lesson':
-        return 'Lektion'
-      case 'quiz':
-        return 'Quiz'
-      default:
-        return 'Element'
-    }
-  }
-
-  const getDraggedElementStyle = (type: string, isDragging: boolean) => {
-    if (!isDragging) return ''
-
-    switch (type) {
-      case 'module':
-        return 'shadow-orange-500/50 bg-orange-50 border-orange-300'
-      case 'course':
-        return 'shadow-purple-500/50 bg-purple-50 border-purple-300'
-      case 'lesson':
-        return 'shadow-green-500/50 bg-green-50 border-green-300'
-      case 'quiz':
-        return 'shadow-blue-500/50 bg-blue-50 border-blue-300'
-      default:
-        return 'shadow-gray-500/50 bg-gray-50 border-gray-300'
-    }
-  }
-
   return (
     <div
-      ref={element.type === 'module' ? undefined : setNodeRef}
-      style={element.type === 'module' ? { marginLeft: `${level * 20}px` } : { ...style, marginLeft: `${level * 20}px` }}
-      className={`relative mb-3 p-6 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ${
-        element.type === 'module' ? '' : (isDragging ? `shadow-lg opacity-50 ${getDraggedElementStyle(element.type, isDragging)}` : '')
-      } ${isOver ? 'border-blue-500 bg-blue-100 shadow-lg scale-105' : ''}`}
+      ref={setNodeRef}
+      style={{ ...style, marginLeft: `${level * 20}px` }}
+      className={`mb-3 p-6 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ${
+        isDragging ? 'shadow-lg opacity-50' : ''
+      }`}
     >
-      {isOver && (
-        <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50 bg-opacity-50 rounded-lg pointer-events-none" />
-      )}
-
-      {/* Spread effect indicators */}
-      {hoverPosition === 'before' && (
-        <div className="absolute -top-2 left-0 right-0 h-1 bg-blue-400 rounded-full opacity-75" />
-      )}
-      {hoverPosition === 'after' && (
-        <div className="absolute -bottom-2 left-0 right-0 h-1 bg-blue-400 rounded-full opacity-75" />
-      )}
       <div className="flex items-center justify-between min-h-[60px]">
         <div className="flex items-center gap-4">
           {element.type === 'module' ? (
@@ -212,9 +197,6 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0, isOver
               onRemove={onRemove}
               onToggle={onToggle}
               level={level + 1}
-              isOver={overId === child.id}
-              hoverPosition={overId === child.id ? hoverPosition : null}
-              overId={overId}
             />
           ))}
         </div>
@@ -246,7 +228,7 @@ function DraggableAvailableElement({ element }: { element: AvailableElement }) {
       {...attributes}
       {...listeners}
       className={`p-6 bg-white border border-gray-200 rounded-lg shadow-sm cursor-move min-h-[80px] ${
-        isDragging ? 'shadow-lg' : 'hover:shadow-md'
+        isDragging ? 'shadow-lg z-[9999]' : 'hover:shadow-md'
       }`}
     >
       <div className="flex items-center gap-4 h-full">
@@ -255,7 +237,9 @@ function DraggableAvailableElement({ element }: { element: AvailableElement }) {
         </div>
         <div className="flex-1">
           <h4 className="font-medium text-base mb-1">{element.title}</h4>
-          <p className="text-sm text-gray-600">{element.description}</p>
+          {element.description && element.description !== 'Keine Beschreibung verfügbar' && (
+            <p className="text-sm text-gray-600 line-clamp-2">{element.description}</p>
+          )}
         </div>
         <div className="flex-shrink-0">
           <Plus className="w-5 h-5 text-gray-400" />
@@ -273,8 +257,7 @@ export default function BuilderPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [overId, setOverId] = useState<string | null>(null)
-  const [hoverPosition, setHoverPosition] = useState<'before' | 'after' | null>(null)
+  const [lastReloadTime, setLastReloadTime] = useState(0)
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -283,79 +266,67 @@ export default function BuilderPage() {
     })
   )
 
-  // Available elements that can be added
-  const defaultAvailableElements: AvailableElement[] = [
-    {
-      id: 'new-lesson',
-      type: 'lesson',
-      title: 'Neue Lektion',
-      description: 'Eine neue Lektion hinzufügen',
-      icon: <FileText className="w-4 h-4" />
-    },
-    {
-      id: 'new-quiz',
-      type: 'quiz',
-      title: 'Neues Quiz',
-      description: 'Ein neues Quiz hinzufügen',
-      icon: <HelpCircle className="w-4 h-4" />
-    }
-  ]
-
-      useEffect(() => {
+  // Debounced reload function to prevent infinite loops
+  const debouncedReload = useCallback(() => {
+    const now = Date.now()
+    if (now - lastReloadTime > 1000) { // Only reload if more than 1 second has passed
+      setLastReloadTime(now)
       loadEntireStructure()
       loadAvailableElements()
+    }
+  }, [lastReloadTime])
 
-      // Set up real-time subscriptions
-      const supabase = getBrowserClient()
+  useEffect(() => {
+    loadEntireStructure()
+    loadAvailableElements()
 
-      // Subscribe to courses table changes
-      const coursesSubscription = supabase
-        .channel('courses-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, () => {
-          console.log('Courses table changed, reloading structure...')
-          loadEntireStructure()
-          loadAvailableElements()
-        })
-        .subscribe()
+    // Set up real-time subscriptions with debouncing
+    const supabase = getBrowserClient()
 
-      // Subscribe to lessons table changes
-      const lessonsSubscription = supabase
-        .channel('lessons-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
-          console.log('Lessons table changed, reloading structure...')
-          loadEntireStructure()
-          loadAvailableElements()
-        })
-        .subscribe()
+    // Subscribe to courses table changes
+    const coursesSubscription = supabase
+      .channel('courses-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, () => {
+        console.log('Courses table changed, reloading structure...')
+        debouncedReload()
+      })
+      .subscribe()
 
-      // Subscribe to modules table changes
-      const modulesSubscription = supabase
-        .channel('modules-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, () => {
-          console.log('Modules table changed, reloading structure...')
-          loadEntireStructure()
-          loadAvailableElements()
-        })
-        .subscribe()
+    // Subscribe to lessons table changes
+    const lessonsSubscription = supabase
+      .channel('lessons-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
+        console.log('Lessons table changed, reloading structure...')
+        debouncedReload()
+      })
+      .subscribe()
 
-      // Subscribe to quizzes table changes
-      const quizzesSubscription = supabase
-        .channel('quizzes-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'quizzes' }, () => {
-          console.log('Quizzes table changed, reloading structure...')
-          loadEntireStructure()
-          loadAvailableElements()
-        })
-        .subscribe()
+    // Subscribe to modules table changes
+    const modulesSubscription = supabase
+      .channel('modules-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, () => {
+        console.log('Modules table changed, reloading structure...')
+        debouncedReload()
+      })
+      .subscribe()
 
-      // Cleanup subscriptions on unmount
-      return () => {
-        coursesSubscription.unsubscribe()
-        lessonsSubscription.unsubscribe()
-        modulesSubscription.unsubscribe()
-        quizzesSubscription.unsubscribe()
-      }
-    }, [])
+    // Subscribe to quizzes table changes
+    const quizzesSubscription = supabase
+      .channel('quizzes-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'quizzes' }, () => {
+        console.log('Quizzes table changed, reloading structure...')
+        debouncedReload()
+      })
+      .subscribe()
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      coursesSubscription.unsubscribe()
+      lessonsSubscription.unsubscribe()
+      modulesSubscription.unsubscribe()
+      quizzesSubscription.unsubscribe()
+    }
+  }, [debouncedReload])
 
   const loadEntireStructure = async () => {
     try {
@@ -369,7 +340,21 @@ export default function BuilderPage() {
         if (data.success) {
           // Transform the flat structure into hierarchical structure
           const hierarchicalElements = buildHierarchicalStructure(data.elements)
-          setBuilderElements(hierarchicalElements)
+
+          // Preserve expansion states from current state
+          const preserveExpansionStates = (newElements: BuilderElement[], currentElements: BuilderElement[]): BuilderElement[] => {
+            return newElements.map(newElement => {
+              const currentElement = findElementById(currentElements, newElement.id)
+              return {
+                ...newElement,
+                isExpanded: currentElement ? currentElement.isExpanded : false, // Only preserve if element exists in current state
+                children: newElement.children ? preserveExpansionStates(newElement.children, currentElements) : []
+              }
+            })
+          }
+
+          const elementsWithPreservedState = preserveExpansionStates(hierarchicalElements, builderElements)
+          setBuilderElements(elementsWithPreservedState)
         }
       }
     } catch (error) {
@@ -394,7 +379,7 @@ export default function BuilderPage() {
             id: `course-${course.id}`,
             type: 'course' as const,
             title: course.title,
-            description: course.description || '',
+            description: course.description || 'Keine Beschreibung verfügbar',
             icon: <Folder className="w-4 h-4" />,
             db_id: course.id,
             db_type: 'courses'
@@ -405,7 +390,7 @@ export default function BuilderPage() {
             id: `lesson-${lesson.id}`,
             type: 'lesson' as const,
             title: lesson.title,
-            description: lesson.content || lesson.markdown || '',
+            description: lesson.description || 'Keine Beschreibung verfügbar',
             icon: <FileText className="w-4 h-4" />,
             db_id: lesson.id,
             db_type: 'lessons'
@@ -416,7 +401,7 @@ export default function BuilderPage() {
             id: `quiz-${quiz.id}`,
             type: 'quiz' as const,
             title: quiz.title,
-            description: quiz.description || '',
+            description: quiz.description || 'Keine Beschreibung verfügbar',
             icon: <HelpCircle className="w-4 h-4" />,
             db_id: quiz.id,
             db_type: 'quizzes'
@@ -441,7 +426,7 @@ export default function BuilderPage() {
       elementsMap.set(element.id, {
         ...element,
         children: [],
-        isExpanded: false // Set default to collapsed state
+        isExpanded: false // Default to collapsed state
       })
     })
 
@@ -466,332 +451,365 @@ export default function BuilderPage() {
     setActiveId(event.active.id as string)
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event
-
-    // Prevent dragging of modules
-    const activeElementInBuilder = findElementById(builderElements, active.id as string)
-    if (activeElementInBuilder && activeElementInBuilder.type === 'module') {
-      setOverId(null)
-      setHoverPosition(null)
-      return
-    }
-
-    // Check if we're dragging from available elements
-    const allAvailableElements = [...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes]
-    const activeElement = allAvailableElements.find((el: any) => el.id === active.id)
-
-    if (activeElement) {
-      // Find the most specific target element (deepest in the tree)
-      const targetElement = findElementById(builderElements, over?.id as string)
-
-      // For lessons, we want to target the specific lesson, not the course
-      if (activeElement.type === 'lesson') {
-        // If hovering over a lesson, target the lesson itself for reordering
-        if (targetElement?.type === 'lesson') {
-          setOverId(over?.id as string || null)
-        } else if (targetElement?.type === 'course') {
-          // If hovering over a course, allow adding to course
-          setOverId(over?.id as string || null)
-        } else {
-          setOverId(null)
-        }
-      } else if (activeElement.type === 'course') {
-        // If hovering over a course, target the course itself for reordering
-        if (targetElement?.type === 'course') {
-          setOverId(over?.id as string || null)
-        } else if (targetElement?.type === 'module') {
-          // If hovering over a module, allow adding to module
-          setOverId(over?.id as string || null)
-        } else {
-          setOverId(null)
-        }
-      } else if (activeElement.type === 'quiz') {
-        // For quizzes, target courses
-        if (targetElement?.type === 'course') {
-          setOverId(over?.id as string || null)
-        } else {
-          setOverId(null)
-        }
-      } else {
-        setOverId(null)
-      }
-    } else {
-      // For reordering within builder, always show indicator
-      setOverId(over?.id as string || null)
-    }
-
-    // Set hover position for spread effect
-    if (over?.id) {
-      const rect = (over as any).rect
-      if (rect) {
-        const centerY = rect.top + rect.height / 2
-        const mouseY = (event.activatorEvent as MouseEvent)?.clientY || 0
-
-        // Determine if we're hovering above or below the center
-        if (mouseY < centerY) {
-          setHoverPosition('before')
-        } else {
-          setHoverPosition('after')
-        }
-      }
-    }
-  }
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
-    // Prevent dragging of modules
+              // Prevent dragging of modules
     const activeElementInBuilder = findElementById(builderElements, active.id as string)
     if (activeElementInBuilder && activeElementInBuilder.type === 'module') {
       setActiveId(null)
-      setOverId(null)
-      setHoverPosition(null)
       return
     }
 
-    if (active.id !== over?.id) {
-      // Check if we're moving from available to builder
-      const allAvailableElements = [...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes]
-      const activeElement = allAvailableElements.find((el: any) => el.id === active.id)
-      if (activeElement) {
-        // Find the target element to determine where to add
-        const targetElement = findElementById(builderElements, over?.id as string)
+        // Check if we're moving from available to builder
+    const allAvailableElements = [...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes]
+    const activeElement = allAvailableElements.find((el: any) => el.id === active.id)
 
-        if (activeElement.type === 'course') {
-          if (targetElement && targetElement.type === 'module') {
-            // Assign course to module in database
-            try {
-              const response = await fetch(`/api/admin/courses/assign`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                  course_id: activeElement.db_id,
-                  module_id: targetElement.db_id
-                }),
-              })
+    console.log('🔍 Drag End Debug:', {
+      activeId: active.id,
+      overId: over?.id,
+      activeElement: active,
+      overElement: over,
+      activeType: activeElement?.type,
+      overType: findElementById(builderElements, over?.id as string)?.type,
+      overElementTitle: findElementById(builderElements, over?.id as string)?.title,
+      isFromAvailable: !!activeElement
+    })
 
-              if (response.ok) {
-                const newElement: BuilderElement = {
-                  id: `${activeElement.type}-${Date.now()}`,
-                  type: activeElement.type,
-                  title: activeElement.title,
-                  description: activeElement.description,
-                  order: targetElement.children?.length || 0,
-                  parent_id: targetElement.id,
-                  children: [],
-                  db_id: activeElement.db_id,
-                  db_type: activeElement.db_type
-                }
+    console.log('🔍 Available Element Found:', activeElement)
 
-                // Add to the module's children at the correct position
-                setBuilderElements(prev =>
-                  prev.map(element =>
-                    element.id === targetElement.id
-                      ? {
-                          ...element,
-                          children: hoverPosition === 'before'
-                            ? [newElement, ...(element.children || [])]
-                            : [...(element.children || []), newElement]
-                        }
-                      : element
-                  )
-                )
+    if (activeElement && over) {
+      // Find the target element to determine where to add
+      let targetElement = findElementById(builderElements, over?.id as string)
 
-                // Remove from unassigned courses
-                setUnassignedCourses(prev => prev.filter(course => course.id !== activeElement.id))
-              } else {
-                console.error('Failed to assign course to module')
+      // If we're dragging over a child element, find its parent course
+      if (targetElement && activeElement.type === 'lesson' && targetElement.type === 'lesson') {
+        // Find the parent course of this lesson
+        const findParentCourse = (elements: BuilderElement[]): BuilderElement | undefined => {
+          for (const element of elements) {
+            if (element.children) {
+              const hasLesson = element.children.some(child => child.id === targetElement?.id)
+              if (hasLesson) {
+                return element
               }
-            } catch (error) {
-              console.error('Error assigning course to module:', error)
+              const found = findParentCourse(element.children)
+              if (found) return found
             }
           }
-        } else if (activeElement.type === 'lesson' || activeElement.type === 'quiz') {
-          // Lessons and quizzes can be added to courses
-          if (targetElement && targetElement.type === 'course') {
-            try {
-              const response = await fetch(`/api/admin/${activeElement.db_type}/assign`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(
-                  activeElement.db_type === 'lessons'
-                    ? { lesson_id: activeElement.db_id, course_id: targetElement.db_id }
-                    : { quiz_id: activeElement.db_id, course_id: targetElement.db_id }
-                ),
-              })
+          return undefined
+        }
 
-              if (response.ok) {
-                const newElement: BuilderElement = {
-                  id: `${activeElement.type}-${Date.now()}`,
-                  type: activeElement.type,
-                  title: activeElement.title,
-                  description: activeElement.description,
-                  order: targetElement.children?.length || 0,
-                  parent_id: targetElement.id,
-                  children: [],
-                  db_id: activeElement.db_id,
-                  db_type: activeElement.db_type
-                }
+        const parentCourse = findParentCourse(builderElements)
+        if (parentCourse) {
+          targetElement = parentCourse
+          console.log('🔍 Found parent course for lesson:', parentCourse.title)
+        }
+      }
 
-                // Add to the course's children at the correct position
-                setBuilderElements(prev =>
-                  prev.map(module =>
-                    module.id === targetElement.parent_id
-                      ? {
-                          ...module,
-                          children: module.children?.map(course =>
-                            course.id === targetElement.id
-                              ? {
-                                  ...course,
-                                  children: hoverPosition === 'before'
-                                    ? [newElement, ...(course.children || [])]
-                                    : [...(course.children || []), newElement]
-                                }
-                              : course
-                          ) || []
-                        }
-                      : module
-                  )
-                )
-
-                // Remove from appropriate unassigned list
-                if (activeElement.type === 'lesson') {
-                  setUnassignedLessons(prev => prev.filter(lesson => lesson.id !== activeElement.id))
-                } else if (activeElement.type === 'quiz') {
-                  setUnassignedQuizzes(prev => prev.filter(quiz => quiz.id !== activeElement.id))
-                }
-              } else {
-                console.error('Failed to assign element to course')
+            // If we're dragging over a child element, find its parent module
+      if (targetElement && activeElement.type === 'course' && targetElement.type === 'course') {
+        // Find the parent module of this course
+        const findParentModule = (elements: BuilderElement[]): BuilderElement | undefined => {
+          for (const element of elements) {
+            if (element.children) {
+              const hasCourse = element.children.some(child => child.id === targetElement?.id)
+              if (hasCourse) {
+                return element
               }
-            } catch (error) {
-              console.error('Error assigning element to course:', error)
+              const found = findParentModule(element.children)
+              if (found) return found
             }
+          }
+          return undefined
+        }
+
+        const parentModule = findParentModule(builderElements)
+        if (parentModule) {
+          targetElement = parentModule
+          console.log('🔍 Found parent module for course:', parentModule.title)
+        } else {
+          console.log('❌ Could not find parent module for course:', targetElement.title)
+        }
+      }
+
+      // Also check if we're dragging over a module directly
+      if (targetElement && activeElement.type === 'course' && targetElement.type === 'module') {
+        console.log('✅ Dragging course directly over module:', targetElement.title)
+      }
+
+      console.log('🔍 Target Element Found:', targetElement)
+
+      if (activeElement.type === 'course') {
+        if (targetElement && targetElement.type === 'module') {
+          console.log('🔍 Assigning course to module:', {
+            courseId: activeElement.db_id,
+            moduleId: targetElement.db_id
+          })
+
+          // Assign course to module in database
+          try {
+            const response = await fetch(`/api/admin/courses/assign`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                course_id: activeElement.db_id,
+                module_id: targetElement.db_id
+              }),
+            })
+
+            console.log('🔍 API Response Status:', response.status)
+
+            if (response.ok) {
+              const newElement: BuilderElement = {
+                id: `${activeElement.type}-${activeElement.db_id}`,
+                type: activeElement.type,
+                title: activeElement.title,
+                description: activeElement.description,
+                order: targetElement.children?.length || 0,
+                parent_id: targetElement.id,
+                children: [],
+                db_id: activeElement.db_id,
+                db_type: activeElement.db_type
+              }
+
+              console.log('🔍 New Element Created:', newElement)
+
+              // Add to the module's children
+              setBuilderElements(prev =>
+                prev.map(element =>
+                  element.id === targetElement.id
+                    ? {
+                        ...element,
+                        children: [...(element.children || []), newElement],
+                        isExpanded: true // Force module to stay expanded when adding courses
+                      }
+                    : element
+                )
+              )
+
+              // Remove from unassigned courses
+              setUnassignedCourses(prev => prev.filter(course => course.id !== activeElement.id))
+
+              console.log('✅ Course successfully assigned to module')
+              console.log('🔍 Course expansion state preserved:', targetElement.isExpanded)
+            } else {
+              const errorData = await response.json()
+              console.error('❌ Failed to assign course to module:', errorData)
+            }
+          } catch (error) {
+            console.error('❌ Error assigning course to module:', error)
+          }
+        } else {
+          console.log('❌ Invalid target for course:', targetElement?.type)
+        }
+      } else if (activeElement.type === 'lesson' || activeElement.type === 'quiz') {
+        // Lessons and quizzes can be added to courses
+        if (targetElement && targetElement.type === 'course') {
+          try {
+            const response = await fetch(`/api/admin/${activeElement.db_type}/assign`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify(
+                activeElement.db_type === 'lessons'
+                  ? { lesson_id: activeElement.db_id, course_id: targetElement.db_id }
+                  : { quiz_id: activeElement.db_id, course_id: targetElement.db_id }
+              ),
+            })
+
+            if (response.ok) {
+              const newElement: BuilderElement = {
+                id: `${activeElement.type}-${activeElement.db_id}`,
+                type: activeElement.type,
+                title: activeElement.title,
+                description: activeElement.description,
+                order: targetElement.children?.length || 0,
+                parent_id: targetElement.id,
+                children: [],
+                db_id: activeElement.db_id,
+                db_type: activeElement.db_type
+              }
+
+              // Add to the course's children
+              setBuilderElements(prev =>
+                prev.map(module =>
+                  module.id === targetElement.parent_id
+                    ? {
+                        ...module,
+                        children: module.children?.map(course =>
+                          course.id === targetElement.id
+                            ? {
+                                ...course,
+                                children: [...(course.children || []), newElement],
+                                isExpanded: course.isExpanded // Preserve expansion state
+                              }
+                            : course
+                        ) || []
+                      }
+                    : module
+                )
+              )
+
+              // Remove from unassigned lists
+              if (activeElement.type === 'lesson') {
+                setUnassignedLessons(prev => prev.filter(lesson => lesson.id !== activeElement.id))
+              } else {
+                setUnassignedQuizzes(prev => prev.filter(quiz => quiz.id !== activeElement.id))
+              }
+
+              console.log('✅ Lesson/Quiz successfully assigned to course')
+              console.log('🔍 Course expansion state preserved:', targetElement.isExpanded)
+            } else {
+              console.error('Failed to assign lesson/quiz to course')
+            }
+          } catch (error) {
+            console.error('Error assigning lesson/quiz to course:', error)
           }
         }
-      } else {
-        // Reordering within builder - handle both top-level and nested elements
-        const activeElementInBuilder = findElementById(builderElements, active.id as string)
-        const targetElementInBuilder = findElementById(builderElements, over?.id as string)
+      }
+    } else {
+      // Handle reordering within the same parent
+      const activeElementInBuilder = findElementById(builderElements, active.id as string)
+      const overElementInBuilder = findElementById(builderElements, over?.id as string)
 
-        if (activeElementInBuilder && targetElementInBuilder) {
-          // Both elements are in the builder structure
-          if (activeElementInBuilder.type === 'course' && targetElementInBuilder.type === 'course') {
-            // Reordering courses within the same module
-            const parentModule = findElementById(builderElements, activeElementInBuilder.parent_id!)
-            if (parentModule && activeElementInBuilder.parent_id === targetElementInBuilder.parent_id) {
-              const oldIndex = parentModule.children?.findIndex(course => course.id === activeElementInBuilder.id) || 0
-              const newIndex = parentModule.children?.findIndex(course => course.id === targetElementInBuilder.id) || 0
+      console.log('🔍 Reorder Check:', {
+        activeElementInBuilder: activeElementInBuilder?.title,
+        overElementInBuilder: overElementInBuilder?.title,
+        activeElementInBuilderType: activeElementInBuilder?.type,
+        overElementInBuilderType: overElementInBuilder?.type,
+        activeId: active.id,
+        overId: over?.id
+      })
 
-              setBuilderElements(prev =>
-                prev.map(module =>
-                  module.id === parentModule.id
-                    ? {
-                        ...module,
-                        children: arrayMove(
-                          module.children || [],
-                          oldIndex,
-                          hoverPosition === 'before' ? newIndex : newIndex + 1
-                        )
-                      }
-                    : module
-                )
-              )
-              // Save the new order to database
-              await saveStructureOrder(builderElements)
+      if (activeElementInBuilder && overElementInBuilder && active.id !== over?.id) {
+        console.log('🔍 Reordering elements:', {
+          active: activeElementInBuilder.title,
+          over: overElementInBuilder.title,
+          activeParent: activeElementInBuilder.parent_id,
+          overParent: overElementInBuilder.parent_id
+        })
+
+        // Only reorder if they have the same parent
+        if (activeElementInBuilder.parent_id === overElementInBuilder.parent_id) {
+          console.log('✅ Same parent, allowing reorder')
+
+          // Find the parent element
+          const findParentElement = (elements: BuilderElement[], parentId: string): BuilderElement | undefined => {
+            for (const element of elements) {
+              if (element.id === parentId) {
+                return element
+              }
+              if (element.children) {
+                const found = findParentElement(element.children, parentId)
+                if (found) return found
+              }
             }
-          } else if (activeElementInBuilder.type === 'lesson' && targetElementInBuilder.type === 'lesson') {
-            // Reordering lessons within the same course
-            const parentCourse = findElementById(builderElements, activeElementInBuilder.parent_id!)
-            if (parentCourse && activeElementInBuilder.parent_id === targetElementInBuilder.parent_id) {
-              const oldIndex = parentCourse.children?.findIndex(lesson => lesson.id === activeElementInBuilder.id) || 0
-              const newIndex = parentCourse.children?.findIndex(lesson => lesson.id === targetElementInBuilder.id) || 0
-
-              setBuilderElements(prev =>
-                prev.map(module =>
-                  module.id === parentCourse.parent_id
-                    ? {
-                        ...module,
-                        children: module.children?.map(course =>
-                          course.id === parentCourse.id
-                            ? {
-                                ...course,
-                                children: arrayMove(
-                                  course.children || [],
-                                  oldIndex,
-                                  hoverPosition === 'before' ? newIndex : newIndex + 1
-                                )
-                              }
-                            : course
-                        ) || []
-                      }
-                    : module
-                )
-              )
-              // Save the new order to database
-              await saveStructureOrder(builderElements)
-            }
-          } else if (activeElementInBuilder.type === 'quiz' && targetElementInBuilder.type === 'quiz') {
-            // Reordering quizzes within the same course
-            const parentCourse = findElementById(builderElements, activeElementInBuilder.parent_id!)
-            if (parentCourse && activeElementInBuilder.parent_id === targetElementInBuilder.parent_id) {
-              const oldIndex = parentCourse.children?.findIndex(quiz => quiz.id === activeElementInBuilder.id) || 0
-              const newIndex = parentCourse.children?.findIndex(quiz => quiz.id === targetElementInBuilder.id) || 0
-
-              setBuilderElements(prev =>
-                prev.map(module =>
-                  module.id === parentCourse.parent_id
-                    ? {
-                        ...module,
-                        children: module.children?.map(course =>
-                          course.id === parentCourse.id
-                            ? {
-                                ...course,
-                                children: arrayMove(
-                                  course.children || [],
-                                  oldIndex,
-                                  hoverPosition === 'before' ? newIndex : newIndex + 1
-                                )
-                              }
-                            : course
-                        ) || []
-                      }
-                    : module
-                )
-              )
-              // Save the new order to database
-              await saveStructureOrder(builderElements)
-            }
-          } else {
-            // Reordering top-level elements (modules)
-            setBuilderElements((items) => {
-              const oldIndex = items.findIndex(item => item.id === active.id)
-              const newIndex = items.findIndex(item => item.id === over?.id)
-
-              const reorderedItems = arrayMove(
-                items,
-                oldIndex,
-                hoverPosition === 'before' ? newIndex : newIndex + 1
-              ).map((element, index) => ({
-                ...element,
-                order: index
-              }))
-
-              // Save the new order immediately
-              saveStructureOrder(reorderedItems)
-
-              return reorderedItems
-            })
+            return undefined
           }
+
+          const parentElement = findParentElement(builderElements, activeElementInBuilder.parent_id!)
+          if (parentElement && parentElement.children) {
+            const oldIndex = parentElement.children.findIndex(child => child.id === active.id)
+            const newIndex = parentElement.children.findIndex(child => child.id === over?.id)
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+              console.log('🔍 Reordering from index', oldIndex, 'to', newIndex)
+
+              // Reorder the children
+              const reorderedChildren = arrayMove(parentElement.children, oldIndex, newIndex)
+
+              // Update the parent's children in UI
+              setBuilderElements(prev => {
+                const updateElement = (elements: BuilderElement[]): BuilderElement[] => {
+                  return elements.map(element => {
+                    if (element.id === parentElement.id) {
+                      return { ...element, children: reorderedChildren }
+                    }
+                    if (element.children) {
+                      return { ...element, children: updateElement(element.children) }
+                    }
+                    return element
+                  })
+                }
+                return updateElement(prev)
+              })
+
+              // Update the database order
+              if (activeElementInBuilder.type === 'lesson' && parentElement.type === 'course') {
+                try {
+                  const lessonIds = reorderedChildren
+                    .filter(child => child.type === 'lesson')
+                    .map(child => child.db_id)
+                    .filter(Boolean)
+
+                  console.log('🔍 Updating lesson order in database:', {
+                    course_id: parentElement.db_id,
+                    lesson_ids: lessonIds
+                  })
+
+                  const response = await fetch('/api/admin/lessons/reorder', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      course_id: parentElement.db_id,
+                      lesson_ids: lessonIds
+                    }),
+                  })
+
+                  if (response.ok) {
+                    console.log('✅ Lesson order updated in database')
+                  } else {
+                    console.error('❌ Failed to update lesson order in database')
+                  }
+                } catch (error) {
+                  console.error('❌ Error updating lesson order:', error)
+                }
+              }
+
+              // Update the database order for courses within modules
+              if (activeElementInBuilder.type === 'course' && parentElement.type === 'module') {
+                try {
+                  const courseIds = reorderedChildren
+                    .filter(child => child.type === 'course')
+                    .map(child => child.db_id)
+                    .filter(Boolean)
+
+                  console.log('🔍 Updating course order in database:', {
+                    module_id: parentElement.db_id,
+                    course_ids: courseIds
+                  })
+
+                  const response = await fetch('/api/admin/courses/reorder', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      module_id: parentElement.db_id,
+                      course_ids: courseIds
+                    }),
+                  })
+
+                  if (response.ok) {
+                    console.log('✅ Course order updated in database')
+                  } else {
+                    console.error('❌ Failed to update course order in database')
+                  }
+                } catch (error) {
+                  console.error('❌ Error updating course order:', error)
+                }
+              }
+            }
+          }
+        } else {
+          console.log('❌ Different parents, cannot reorder')
         }
       }
     }
 
+    // Clear drag states
     setActiveId(null)
-    setOverId(null)
-    setHoverPosition(null)
   }
 
   // Helper function to get all sortable items (excluding modules, only nested children)
@@ -808,20 +826,6 @@ export default function BuilderPage() {
     }
     elements.forEach(addItems)
     return items
-  }
-
-  // Helper function to find element by ID in the tree
-  const findElementById = (elements: BuilderElement[], id: string): BuilderElement | null => {
-    for (const element of elements) {
-      if (element.id === id) {
-        return element
-      }
-      if (element.children) {
-        const found = findElementById(element.children, id)
-        if (found) return found
-      }
-    }
-    return null
   }
 
   const toggleElementExpansion = (elementId: string) => {
@@ -844,8 +848,8 @@ export default function BuilderPage() {
         }
 
         // If this is a module and we're toggling a module, apply accordion behavior
-        if (element.type === 'module' && elementToToggle.type === 'module') {
-          // Close all other modules when one is opened
+        if (element.type === 'module' && elementToToggle.type === 'module' && element.id !== elementId) {
+          // Close all other modules when one is opened, but keep the current one open
           return { ...element, isExpanded: false }
         }
 
@@ -947,39 +951,6 @@ export default function BuilderPage() {
     }
   }
 
-  // Helper function to get element icon
-  const getElementIcon = (type: string) => {
-    switch (type) {
-      case 'course':
-        return <Folder className="w-4 h-4" />
-      case 'lesson':
-        return <FileText className="w-4 h-4" />
-      case 'quiz':
-        return <HelpCircle className="w-4 h-4" />
-      default:
-        return <FileText className="w-4 h-4" />
-    }
-  }
-
-  const saveStructureOrder = async (elements: BuilderElement[]) => {
-    try {
-      const response = await fetch('/api/admin/structure', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ elements }),
-      })
-
-      if (response.ok) {
-        console.log('Order updated successfully')
-      }
-    } catch (error) {
-      console.error('Error updating order:', error)
-    }
-  }
-
   const saveStructure = async () => {
     setSaving(true)
     try {
@@ -1016,7 +987,7 @@ export default function BuilderPage() {
     )
   }
 
-    return (
+  return (
     <div
       style={{ backgroundColor: '#6d859a' }}
       className="h-screen p-8"
@@ -1025,90 +996,118 @@ export default function BuilderPage() {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-          {/* Left: Builder Structure */}
-          <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-            <SortableContext items={getAllSortableItems(builderElements)}>
-              {builderElements.map((element) => (
+          <SortableContext items={[
+            ...getAllSortableItems(builderElements),
+            ...unassignedCourses.map(course => course.id),
+            ...unassignedLessons.map(lesson => lesson.id),
+            ...unassignedQuizzes.map(quiz => quiz.id)
+          ]}>
+            {/* Left: Builder Structure */}
+            <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+              {builderElements.map((element, index) => (
                 <SortableBuilderElement
                   key={element.id}
                   element={element}
                   onRemove={removeElement}
                   onToggle={toggleElementExpansion}
-                  isOver={overId === element.id}
-                  hoverPosition={overId === element.id ? hoverPosition : null}
-                  overId={overId}
                 />
               ))}
-            </SortableContext>
-          </div>
-
-          {/* Right: Available Elements */}
-          <div className="h-full flex flex-col space-y-6">
-            {/* Available Courses */}
-            <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-              <div className="flex items-center gap-3 mb-4">
-                <FolderOpen className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold text-lg">Verfügbare Kurse</h3>
-              </div>
-              {unassignedCourses.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p>Keine unzugewiesenen Kurse</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {unassignedCourses.map((course) => (
-                    <DraggableAvailableElement key={course.id} element={course} />
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Available Lessons */}
-            <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-              <div className="flex items-center gap-3 mb-4">
-                <FileText className="w-5 h-5 text-green-600" />
-                <h3 className="font-semibold text-lg">Verfügbare Lektionen</h3>
+            {/* Right: Available Elements */}
+            <div className="h-full flex flex-col space-y-6">
+              {/* Available Courses */}
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
+                  <FolderOpen className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold text-lg">Verfügbare Kurse</h3>
+                </div>
+                {unassignedCourses.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Kurse</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedCourses.map((course: any) => (
+                      <DraggableAvailableElement key={course.id} element={course} />
+                    ))}
+                  </div>
+                )}
               </div>
-              {unassignedLessons.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p>Keine unzugewiesenen Lektionen</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {unassignedLessons.map((lesson) => (
-                    <DraggableAvailableElement key={lesson.id} element={lesson} />
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Available Quizzes */}
-            <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-              <div className="flex items-center gap-3 mb-4">
-                <HelpCircle className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-lg">Verfügbare Quizze</h3>
+              {/* Available Lessons */}
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="w-5 h-5 text-green-600" />
+                  <h3 className="font-semibold text-lg">Verfügbare Lektionen</h3>
+                </div>
+                {unassignedLessons.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Lektionen</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedLessons.map((lesson: any) => (
+                      <DraggableAvailableElement key={lesson.id} element={lesson} />
+                    ))}
+                  </div>
+                )}
               </div>
-              {unassignedQuizzes.length === 0 ? (
-                <div className="text-center text-gray-500 py-8">
-                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p>Keine unzugewiesenen Quizze</p>
+
+              {/* Available Quizzes */}
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
+                  <HelpCircle className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-lg">Verfügbare Quizze</h3>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {unassignedQuizzes.map((quiz) => (
-                    <DraggableAvailableElement key={quiz.id} element={quiz} />
-                  ))}
-                </div>
-              )}
+                {unassignedQuizzes.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Quizze</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedQuizzes.map((quiz: any) => (
+                      <DraggableAvailableElement key={quiz.id} element={quiz} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </SortableContext>
         </div>
+
+        {/* Drag Overlay - ensures dragged element appears above everything */}
+        <DragOverlay>
+          {activeId && (() => {
+            const allElements = [
+              ...builderElements,
+              ...unassignedCourses,
+              ...unassignedLessons,
+              ...unassignedQuizzes
+            ]
+            const draggingItem = findElementById(allElements as any[], activeId)
+
+            if (!draggingItem) return null
+
+            return (
+              <div className="p-4 bg-white border border-gray-300 rounded-lg shadow-xl">
+                <div className="flex items-center gap-3">
+                  {getElementIcon(draggingItem.type)}
+                  <span className="text-base font-medium">{draggingItem.title}</span>
+                  <Badge className={getElementBadgeColor(draggingItem.type)}>
+                    {getElementTypeLabel(draggingItem.type)}
+                  </Badge>
+                </div>
+              </div>
+            )
+          })()}
+        </DragOverlay>
       </DndContext>
     </div>
   )

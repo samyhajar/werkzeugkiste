@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 // import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -62,7 +62,7 @@ export default function ModuleDetailPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
 
-  const fetchModule = async () => {
+  const fetchModule = useCallback(async () => {
     try {
       setLoading(true)
       console.log('[ModuleDetail] Fetching module:', moduleId)
@@ -97,7 +97,7 @@ export default function ModuleDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [moduleId])
 
   useEffect(() => {
     if (moduleId) {

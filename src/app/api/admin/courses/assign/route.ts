@@ -41,10 +41,30 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update the course to assign it to the module
+    // Get the current maximum order for courses in this module
+    const { data: maxOrderResult, error: maxOrderError } = await supabase
+      .from('courses')
+      .select('order')
+      .eq('module_id', module_id)
+      .not('order', 'is', null)
+      .order('order', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (maxOrderError) {
+      console.error('Error getting max order:', maxOrderError)
+      return NextResponse.json(
+        { success: false, error: maxOrderError.message },
+        { status: 500 }
+      )
+    }
+
+    const newOrder = (maxOrderResult?.order || 0) + 1
+
+    // Update the course to assign it to the module with the new order
     const { data: course, error } = await supabase
       .from('courses')
-      .update({ module_id })
+      .update({ module_id, order: newOrder })
       .eq('id', course_id)
       .select()
       .single()

@@ -10,7 +10,7 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "db-types": "supabase gen types typescript --local > src/types/supabase.ts",
+    "db-types": "npx supabase gen types typescript --project-id bdjluwlwxqdgkulkjozj > src/types/supabase.ts",
     "db-reset": "supabase db reset",
     "db-push": "supabase db push",
     "prepare": "husky"

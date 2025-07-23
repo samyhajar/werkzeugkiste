@@ -32,37 +32,38 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { lesson_id } = await request.json()
+    const { course_id, quiz_ids } = await request.json()
 
-    if (!lesson_id) {
+    if (!course_id || !quiz_ids || !Array.isArray(quiz_ids)) {
       return NextResponse.json(
-        { success: false, error: 'Lesson ID is required' },
+        { success: false, error: 'Course ID and quiz IDs array are required' },
         { status: 400 }
       )
     }
 
-    // Update the lesson to remove course_id and order (make it unassigned)
-    const { data: lesson, error } = await supabase
-      .from('lessons')
-      .update({ course_id: null, order: null })
-      .eq('id', lesson_id)
-      .select()
-      .single()
+    // Update the order of quizzes in the course
+    for (let i = 0; i < quiz_ids.length; i++) {
+      const { error } = await supabase
+        .from('quizzes')
+        .update({ order: i + 1 })
+        .eq('id', quiz_ids[i])
+        .eq('course_id', course_id)
 
-    if (error) {
-      console.error('Error unassigning lesson:', error)
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 500 }
-      )
+      if (error) {
+        console.error('Error updating quiz order:', error)
+        return NextResponse.json(
+          { success: false, error: error.message },
+          { status: 500 }
+        )
+      }
     }
 
     return NextResponse.json({
       success: true,
-      lesson,
+      message: 'Quizzes reordered successfully',
     })
   } catch (error) {
-    console.error('Error in unassign lesson API:', error)
+    console.error('Error in reorder quizzes API:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

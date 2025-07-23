@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const { data: lessons, error: lessonsError } = await supabase
       .from('lessons')
       .select('*')
-      .order('sort_order', { ascending: true })
+      .order('order', { ascending: true })
 
     if (lessonsError) {
       console.error('Error fetching lessons:', lessonsError)
@@ -84,6 +84,89 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching quizzes:', quizzesError)
       return NextResponse.json(
         { success: false, error: 'Failed to fetch quizzes' },
+        { status: 500 }
+      )
+    }
+
+    // Normalize order for courses within each module
+    const normalizeCourseOrder = async (moduleId: string) => {
+      const moduleCourses =
+        courses?.filter((course: any) => course.module_id === moduleId) || []
+      const sortedCourses = moduleCourses.sort(
+        (a: any, b: any) => (a.order || 0) - (b.order || 0)
+      )
+
+      for (let i = 0; i < sortedCourses.length; i++) {
+        const course = sortedCourses[i]
+        if (course.order !== i + 1) {
+          await supabase
+            .from('courses')
+            .update({ order: i + 1 })
+            .eq('id', course.id)
+        }
+      }
+    }
+
+    // Normalize order for lessons within each course
+    const normalizeLessonOrder = async (courseId: string) => {
+      const courseLessons =
+        lessons?.filter((lesson: any) => lesson.course_id === courseId) || []
+      const sortedLessons = courseLessons.sort(
+        (a: any, b: any) => (a.order || 0) - (b.order || 0)
+      )
+
+      for (let i = 0; i < sortedLessons.length; i++) {
+        const lesson = sortedLessons[i]
+        if (lesson.order !== i + 1) {
+          await supabase
+            .from('lessons')
+            .update({ order: i + 1 })
+            .eq('id', lesson.id)
+        }
+      }
+    }
+
+    // Normalize all orders before building structure
+    for (const module of modules || []) {
+      await normalizeCourseOrder(module.id)
+      const moduleCourses =
+        courses?.filter((course: any) => course.module_id === module.id) || []
+      for (const course of moduleCourses) {
+        await normalizeLessonOrder(course.id)
+      }
+    }
+
+    // Refetch data after normalization to get updated order values
+    const { data: normalizedCourses, error: normalizedCoursesError } =
+      await supabase
+        .from('courses')
+        .select('*')
+        .order('order', { ascending: true })
+
+    if (normalizedCoursesError) {
+      console.error(
+        'Error fetching normalized courses:',
+        normalizedCoursesError
+      )
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch normalized courses' },
+        { status: 500 }
+      )
+    }
+
+    const { data: normalizedLessons, error: normalizedLessonsError } =
+      await supabase
+        .from('lessons')
+        .select('*')
+        .order('order', { ascending: true })
+
+    if (normalizedLessonsError) {
+      console.error(
+        'Error fetching normalized lessons:',
+        normalizedLessonsError
+      )
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch normalized lessons' },
         { status: 500 }
       )
     }
@@ -108,14 +191,16 @@ export async function GET(request: NextRequest) {
 
       // Add courses for this module
       const moduleCourses =
-        courses?.filter((course: any) => course.module_id === module.id) || []
+        normalizedCourses?.filter(
+          (course: any) => course.module_id === module.id
+        ) || []
       moduleCourses.forEach((course: any, courseIndex: number) => {
         elements.push({
           id: `course-${course.id}`,
           type: 'course',
           title: course.title,
           description: course.description,
-          order: courseIndex,
+          order: course.order || courseIndex,
           parent_id: `module-${module.id}`,
           children: [],
           isExpanded: true,
@@ -125,14 +210,16 @@ export async function GET(request: NextRequest) {
 
         // Add lessons for this course
         const courseLessons =
-          lessons?.filter((lesson: any) => lesson.course_id === course.id) || []
+          normalizedLessons?.filter(
+            (lesson: any) => lesson.course_id === course.id
+          ) || []
         courseLessons.forEach((lesson: any, lessonIndex: number) => {
           elements.push({
             id: `lesson-${lesson.id}`,
             type: 'lesson',
             title: lesson.title,
             description: lesson.content || lesson.markdown || '', // Use content or markdown as description
-            order: lesson.sort_order || lessonIndex,
+            order: lesson.order || lessonIndex,
             parent_id: `course-${course.id}`,
             children: [],
             isExpanded: false,
@@ -212,14 +299,14 @@ export async function PUT(request: NextRequest) {
       .filter((el: any) => el.db_type === 'lessons')
       .map((el: any, index: number) => ({
         id: el.db_id,
-        sort_order: index,
+        order: index + 1,
       }))
 
     if (lessonUpdates.length > 0) {
       for (const update of lessonUpdates) {
         const { error } = await supabase
           .from('lessons')
-          .update({ sort_order: update.sort_order })
+          .update({ order: update.order })
           .eq('id', update.id)
 
         if (error) {
@@ -233,14 +320,14 @@ export async function PUT(request: NextRequest) {
       .filter((el: any) => el.db_type === 'courses')
       .map((el: any, index: number) => ({
         id: el.db_id,
-        order: index,
+        order: index + 1,
       }))
 
     if (courseUpdates.length > 0) {
       for (const update of courseUpdates) {
         const { error } = await supabase
           .from('courses')
-          .update({ order: update.order } as any)
+          .update({ order: update.order })
           .eq('id', update.id)
 
         if (error) {

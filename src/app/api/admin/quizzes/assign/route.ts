@@ -41,7 +41,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update the quiz to assign it to the course
+    // First, assign the quiz to the course
     const { data: quiz, error } = await supabase
       .from('quizzes')
       .update({ course_id } as any)
@@ -53,6 +53,20 @@ export async function PATCH(request: NextRequest) {
       console.error('Error assigning quiz to course:', error)
       return NextResponse.json(
         { success: false, error: error.message },
+        { status: 500 }
+      )
+    }
+
+    // Now update the order of all quizzes in this course using raw SQL
+    const { error: reorderError } = await supabase.rpc(
+      'reorder_quizzes_in_course',
+      { course_id_param: course_id }
+    )
+
+    if (reorderError) {
+      console.error('Error reordering quizzes in course:', reorderError)
+      return NextResponse.json(
+        { success: false, error: reorderError.message },
         { status: 500 }
       )
     }

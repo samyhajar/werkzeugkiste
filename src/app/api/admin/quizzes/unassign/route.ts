@@ -41,10 +41,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update the quiz to remove course_id (make it unassigned)
+    // Update the quiz to remove course_id and order (make it unassigned)
     const { data: quiz, error } = await supabase
       .from('quizzes')
-      .update({ course_id: null } as any)
+      .update({ course_id: null, order: null } as any)
       .eq('id', quiz_id)
       .select()
       .single()

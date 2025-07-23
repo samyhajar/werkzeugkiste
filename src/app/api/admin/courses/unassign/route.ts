@@ -41,10 +41,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update the course to remove module_id (make it unassigned)
+    // Update the course to remove module_id and order (make it unassigned)
     const { data: course, error } = await supabase
       .from('courses')
-      .update({ module_id: null })
+      .update({ module_id: null, order: null })
       .eq('id', course_id)
       .select()
       .single()

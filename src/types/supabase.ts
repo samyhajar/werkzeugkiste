@@ -7,30 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -117,7 +97,10 @@ export type Database = {
           description: string | null
           hero_image: string | null
           id: string
+          legacy_id: string | null
           module_id: string | null
+          order: number | null
+          slug: string | null
           status: string | null
           title: string
           updated_at: string | null
@@ -128,7 +111,10 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
+          legacy_id?: string | null
           module_id?: string | null
+          order?: number | null
+          slug?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -139,7 +125,10 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
+          legacy_id?: string | null
           module_id?: string | null
+          order?: number | null
+          slug?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -201,8 +190,9 @@ export type Database = {
           created_at: string | null
           id: string
           markdown: string | null
+          order: number | null
           sort_order: number | null
-          title: string
+          title: string | null
           updated_at: string | null
           video_url: string | null
         }
@@ -212,8 +202,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           markdown?: string | null
+          order?: number | null
           sort_order?: number | null
-          title: string
+          title?: string | null
           updated_at?: string | null
           video_url?: string | null
         }
@@ -223,8 +214,9 @@ export type Database = {
           created_at?: string | null
           id?: string
           markdown?: string | null
+          order?: number | null
           sort_order?: number | null
-          title?: string
+          title?: string | null
           updated_at?: string | null
           video_url?: string | null
         }
@@ -242,7 +234,10 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          hero_image: string | null
           id: string
+          legacy_id: number | null
+          order: number | null
           status: string | null
           title: string
           updated_at: string | null
@@ -250,7 +245,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          hero_image?: string | null
           id?: string
+          legacy_id?: number | null
+          order?: number | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -258,7 +256,10 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          hero_image?: string | null
           id?: string
+          legacy_id?: number | null
+          order?: number | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -270,25 +271,25 @@ export type Database = {
           created_at: string | null
           id: string
           is_correct: boolean | null
-          option_text: string
+          option_text: string | null
           question_id: string | null
-          sort_order: number | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           is_correct?: boolean | null
-          option_text: string
+          option_text?: string | null
           question_id?: string | null
-          sort_order?: number | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           is_correct?: boolean | null
-          option_text?: string
+          option_text?: string | null
           question_id?: string | null
-          sort_order?: number | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -303,6 +304,8 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          email: string | null
+          first_name: string | null
           full_name: string | null
           id: string
           role: string | null
@@ -310,13 +313,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          email?: string | null
+          first_name?: string | null
           full_name?: string | null
-          id?: string
+          id: string
           role?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          email?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
           role?: string | null
@@ -328,26 +335,26 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          question: string
+          question: string | null
           quiz_id: string | null
-          sort_order: number | null
-          type: string
+          type: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          question: string
+          question?: string | null
           quiz_id?: string | null
-          sort_order?: number | null
-          type: string
+          type?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          question?: string
+          question?: string | null
           quiz_id?: string | null
-          sort_order?: number | null
-          type?: string
+          type?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -359,101 +366,9 @@ export type Database = {
           },
         ]
       }
-      quiz_answer_options: {
-        Row: {
-          created_at: string | null
-          feedback: string | null
-          id: string
-          is_correct: boolean | null
-          order_index: number
-          question_id: string | null
-          text: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          feedback?: string | null
-          id?: string
-          is_correct?: boolean | null
-          order_index: number
-          question_id?: string | null
-          text: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          feedback?: string | null
-          id?: string
-          is_correct?: boolean | null
-          order_index?: number
-          question_id?: string | null
-          text?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_answer_options_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      quiz_attempt_answers: {
-        Row: {
-          attempt_id: string | null
-          created_at: string | null
-          free_text_answer: string | null
-          id: string
-          is_correct: boolean | null
-          points_awarded: number | null
-          question_id: string | null
-          selected_option_ids: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          attempt_id?: string | null
-          created_at?: string | null
-          free_text_answer?: string | null
-          id?: string
-          is_correct?: boolean | null
-          points_awarded?: number | null
-          question_id?: string | null
-          selected_option_ids?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          attempt_id?: string | null
-          created_at?: string | null
-          free_text_answer?: string | null
-          id?: string
-          is_correct?: boolean | null
-          points_awarded?: number | null
-          question_id?: string | null
-          selected_option_ids?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_attempt_answers_attempt_id_fkey"
-            columns: ["attempt_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_attempts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_attempt_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       quiz_attempts: {
         Row: {
-          attempt_number: number
+          attempt_number: number | null
           completed_at: string | null
           created_at: string | null
           id: string
@@ -462,11 +377,12 @@ export type Database = {
           score_percentage: number | null
           score_raw: number | null
           started_at: string | null
+          student_id: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          attempt_number: number
+          attempt_number?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -475,11 +391,12 @@ export type Database = {
           score_percentage?: number | null
           score_raw?: number | null
           started_at?: string | null
+          student_id?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          attempt_number?: number
+          attempt_number?: number | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
@@ -488,6 +405,7 @@ export type Database = {
           score_percentage?: number | null
           score_raw?: number | null
           started_at?: string | null
+          student_id?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -500,6 +418,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "quiz_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "quiz_attempts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -508,117 +433,72 @@ export type Database = {
           },
         ]
       }
-      quiz_questions: {
+      quizzes: {
         Row: {
+          course_id: string | null
           created_at: string | null
-          explanation: string | null
           id: string
-          order_index: number
-          points: number | null
-          prompt: string
-          question_type: string
-          quiz_id: string | null
-          required: boolean | null
+          lesson_id: string | null
+          pass_pct: number | null
+          title: string | null
           updated_at: string | null
         }
         Insert: {
+          course_id?: string | null
           created_at?: string | null
-          explanation?: string | null
           id?: string
-          order_index: number
-          points?: number | null
-          prompt: string
-          question_type: string
-          quiz_id?: string | null
-          required?: boolean | null
+          lesson_id?: string | null
+          pass_pct?: number | null
+          title?: string | null
           updated_at?: string | null
         }
         Update: {
+          course_id?: string | null
           created_at?: string | null
-          explanation?: string | null
           id?: string
-          order_index?: number
-          points?: number | null
-          prompt?: string
-          question_type?: string
-          quiz_id?: string | null
-          required?: boolean | null
+          lesson_id?: string | null
+          pass_pct?: number | null
+          title?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_questions_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: "quizzes_course_id_fkey"
+            columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "quizzes"
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
         ]
-      }
-      quizzes: {
-        Row: {
-          attempts_allowed: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_published: boolean | null
-          pass_percentage: number
-          quizable_id: string
-          quizable_type: string
-          shuffle_answers: boolean | null
-          shuffle_questions: boolean | null
-          time_limit_seconds: number | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          attempts_allowed?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_published?: boolean | null
-          pass_percentage?: number
-          quizable_id: string
-          quizable_type: string
-          shuffle_answers?: boolean | null
-          shuffle_questions?: boolean | null
-          time_limit_seconds?: number | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          attempts_allowed?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_published?: boolean | null
-          pass_percentage?: number
-          quizable_id?: string
-          quizable_type?: string
-          shuffle_answers?: boolean | null
-          shuffle_questions?: boolean | null
-          time_limit_seconds?: number | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      can_issue_certificate: {
-        Args: { course_id_param: string; student_id_param: string }
-        Returns: boolean
-      }
-      is_admin: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
-      issue_certificate: {
-        Args: { course_id_param: string }
+      create_user_with_profile: {
+        Args: {
+          user_email: string
+          user_password: string
+          user_role?: string
+          confirm_email?: boolean
+        }
         Returns: string
+      }
+      reorder_lessons_in_course: {
+        Args: { course_id_param: string }
+        Returns: undefined
+      }
+      reorder_quizzes_in_course: {
+        Args: { course_id_param: string }
+        Returns: undefined
       }
     }
     Enums: {
@@ -630,21 +510,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -662,14 +546,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -685,14 +571,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -708,14 +596,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -723,24 +613,22 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-
