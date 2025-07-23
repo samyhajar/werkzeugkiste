@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
+import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Course {
   id: string
@@ -44,6 +46,14 @@ export default function LessonsPage() {
     course_id: '',
     sort_order: 0
   })
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
+  const [sortField, setSortField] = useState<'title' | 'content' | 'course' | 'created_at'>('title')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const fetchLessons = useCallback(async () => {
     setLoading(true)
@@ -154,6 +164,142 @@ export default function LessonsPage() {
   const handleCourseFilterChange = useCallback((value: string) => {
     setCourseFilter(value)
   }, [])
+
+  const deleteLesson = useCallback(async () => {
+    if (!lessonToDelete) return
+
+    setDeleting(true)
+
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonToDelete.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        setLessons(lessons.filter(l => l.id !== lessonToDelete.id))
+        setDeleteDialogOpen(false)
+        setLessonToDelete(null)
+      } else {
+        throw new Error(data.error || 'Failed to delete lesson')
+      }
+    } catch (err) {
+      console.error('Error deleting lesson:', err)
+      setError(err instanceof Error ? err.message : 'Failed to delete lesson')
+    } finally {
+      setDeleting(false)
+    }
+  }, [lessonToDelete, lessons])
+
+  const openDeleteDialog = useCallback((lesson: Lesson) => {
+    setLessonToDelete(lesson)
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const openEditDialog = useCallback((lesson: Lesson) => {
+    setEditingLesson(lesson)
+    setIsEditDialogOpen(true)
+  }, [])
+
+  const handleSort = useCallback((field: 'title' | 'content' | 'course' | 'created_at') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }, [sortField, sortDirection])
+
+  const getSortedLessons = useCallback(() => {
+    const filteredLessons = lessons.filter(lesson => {
+      const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (lesson.content && lesson.content.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesCourse = courseFilter === 'all' || lesson.course_id === courseFilter
+      return matchesSearch && matchesCourse
+    })
+
+    return filteredLessons.sort((a, b) => {
+      let aValue: string | number
+      let bValue: string | number
+
+      switch (sortField) {
+        case 'title':
+          aValue = a.title.toLowerCase()
+          bValue = b.title.toLowerCase()
+          break
+        case 'content':
+          aValue = (a.content || '').toLowerCase()
+          bValue = (b.content || '').toLowerCase()
+          break
+        case 'course':
+          aValue = (a.course?.title || '').toLowerCase()
+          bValue = (b.course?.title || '').toLowerCase()
+          break
+
+        case 'created_at':
+          aValue = new Date(a.created_at).getTime()
+          bValue = new Date(b.created_at).getTime()
+          break
+        default:
+          return 0
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+      }
+    })
+  }, [lessons, searchTerm, courseFilter, sortField, sortDirection])
+
+  const updateLesson = useCallback(async () => {
+    if (!editingLesson || !editingLesson.title.trim()) {
+      return
+    }
+
+    setEditing(true)
+
+    try {
+      const response = await fetch(`/api/admin/lessons/${editingLesson.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: editingLesson.title,
+          content: editingLesson.content,
+          course_id: editingLesson.course_id,
+          sort_order: editingLesson.sort_order
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        setLessons(lessons.map(l => l.id === editingLesson.id ? editingLesson : l))
+        setIsEditDialogOpen(false)
+        setEditingLesson(null)
+      } else {
+        throw new Error(data.error || 'Failed to update lesson')
+      }
+    } catch (err) {
+      console.error('Error updating lesson:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update lesson')
+    } finally {
+      setEditing(false)
+    }
+  }, [editingLesson, lessons])
 
   // Memoized dialog content component
   const CreateLessonDialogContent = memo(() => (
@@ -393,7 +539,7 @@ export default function LessonsPage() {
         </div>
       </div>
 
-      {/* Lessons Grid */}
+      {/* Lessons Table */}
       {filteredLessons.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div className="text-gray-500 mb-4 text-lg">
@@ -406,46 +552,302 @@ export default function LessonsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredLessons.map((lesson) => (
-            <Card key={lesson.id} className="shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 bg-white">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{lesson.title}</CardTitle>
-                  <Badge variant="outline">
-                    #{lesson.sort_order}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  Course: {lesson.course?.title || 'Unknown'}
-                </CardDescription>
-                {lesson.content && (
-                  <CardDescription className="line-clamp-2 mt-2">
-                    {lesson.content}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <span>Created {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true })}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">
-                    <Link href={`/admin/courses/${lesson.course_id}/lessons/${lesson.id}`}>
-                      Edit
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
-                    <Link href={`/admin/courses/${lesson.course_id}/lessons/${lesson.id}/quizzes`}>
-                      Quizzes
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-[#486681] to-[#3e5570]">
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
+                    onClick={() => handleSort('title')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Lektion
+                      {sortField === 'title' && (
+                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
+                    onClick={() => handleSort('content')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Inhalt
+                      {sortField === 'content' && (
+                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
+                    onClick={() => handleSort('course')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Kurs
+                      {sortField === 'course' && (
+                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </th>
+
+                  <th
+                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
+                    onClick={() => handleSort('created_at')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Erstellt
+                      {sortField === 'created_at' && (
+                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
+                    Aktionen
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {getSortedLessons().map((lesson) => (
+                  <tr
+                    key={lesson.id}
+                    className="bg-white hover:bg-gray-100 transition-colors duration-200"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-gray-900 max-w-[200px] truncate">
+                          {lesson.title}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {lesson.content || 'Kein Inhalt verfügbar'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {lesson.course?.title || 'Unbekannt'}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true, locale: de })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white"
+                          onClick={() => openEditDialog(lesson)}
+                        >
+                          Verwalten
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openDeleteDialog(lesson)}
+                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Lektion löschen</DialogTitle>
+            <DialogDescription>
+              Sind Sie sicher, dass Sie die Lektion "{lessonToDelete?.title}" löschen möchten?
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setLessonToDelete(null)
+              }}
+              disabled={deleting}
+              className="sm:w-auto w-full"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => void deleteLesson()}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white sm:w-auto w-full"
+            >
+              {deleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Wird gelöscht...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Löschen bestätigen
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Lesson Modal */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
+          <DialogHeader className="text-center pb-4 flex-shrink-0">
+            <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+              <span className="text-white text-lg">✏️</span>
+            </div>
+            <DialogTitle className="text-xl font-bold text-gray-900">Lektion bearbeiten</DialogTitle>
+            <DialogDescription className="text-sm text-gray-600">
+              Bearbeiten Sie die Informationen der Lektion "{editingLesson?.title}"
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingLesson && (
+            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
+              {/* Course Selection Card */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📚</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Kurs Zuweisung</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="edit-course" className="text-xs font-semibold text-gray-700">Kurs auswählen *</Label>
+                  <Select
+                    value={editingLesson.course_id}
+                    onValueChange={(value) => setEditingLesson({ ...editingLesson, course_id: value })}
+                  >
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
+                      <SelectValue placeholder="Wählen Sie einen Kurs für diese Lektion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📚</span>
+                            <span>{course.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Wählen Sie den Kurs, in dem diese Lektion erscheinen soll</p>
+                </div>
+              </div>
+
+              {/* Lesson Info Card */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📝</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Lektion Informationen</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-title" className="text-xs font-semibold text-gray-700">Lektion Titel *</Label>
+                    <Input
+                      id="edit-title"
+                      value={editingLesson.title}
+                      onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
+                      placeholder="e.g., Introduction to Social Media Marketing"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-content" className="text-xs font-semibold text-gray-700">Lektion Inhalt</Label>
+                    <Textarea
+                      id="edit-content"
+                      value={editingLesson.content || ''}
+                      onChange={(e) => setEditingLesson({ ...editingLesson, content: e.target.value })}
+                      placeholder="Schreiben Sie Ihren Lektionsinhalt hier. Sie können Text, Links und Anweisungen einbeziehen..."
+                      rows={3}
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
+                    />
+                    <p className="text-xs text-gray-500">Dieser Inhalt wird den Studenten angezeigt, wenn sie auf die Lektion zugreifen</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Organization Card */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📋</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Organisation</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="edit-order" className="text-xs font-semibold text-gray-700">Sortierreihenfolge</Label>
+                  <Input
+                    id="edit-order"
+                    type="number"
+                    value={editingLesson.sort_order}
+                    onChange={(e) => setEditingLesson({ ...editingLesson, sort_order: parseInt(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                  />
+                  <p className="text-xs text-gray-500">Niedrigere Zahlen erscheinen zuerst (0 = erste Lektion, 1 = zweite, usw.)</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons - Fixed Footer */}
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false)
+                setEditingLesson(null)
+              }}
+              disabled={editing}
+              className="sm:w-auto w-full h-9 text-sm"
+            >
+              <span className="mr-2">❌</span>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={() => void updateLesson()}
+              disabled={editing || !editingLesson?.title.trim() || !editingLesson?.course_id}
+              className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+            >
+              {editing ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  Wird aktualisiert...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">💾</span>
+                  Änderungen speichern
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

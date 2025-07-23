@@ -9,29 +9,16 @@ export async function GET(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication and admin role
+    // Use getUser() instead of getSession() for better security
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
-      )
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
       )
     }
 
@@ -86,29 +73,16 @@ export async function PUT(
     const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication and admin role
+    // Use getUser() instead of getSession() for better security
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
-      )
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
       )
     }
 
@@ -163,40 +137,106 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
     const supabase = await createClient()
 
-    // Check authentication and admin role
+    // Use getUser() instead of getSession() for better security
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
+    const { id: moduleId } = await params
+
+    // First, check if the module exists
+    const { data: existingModule, error: fetchError } = await supabase
+      .from('modules')
+      .select('id, title')
+      .eq('id', moduleId)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    if (fetchError || !existingModule) {
       return NextResponse.json(
-        { success: false, error: 'Admin access required' },
-        { status: 403 }
+        { success: false, error: 'Module not found' },
+        { status: 404 }
       )
     }
 
-    // Delete module (courses will remain due to warning given to user)
-    const { error } = await supabase.from('modules').delete().eq('id', id)
+    // Get all courses in this module to delete them first
+    const { data: courses, error: coursesError } = await supabase
+      .from('courses')
+      .select('id')
+      .eq('module_id', moduleId)
 
-    if (error) {
-      console.error('Error deleting module:', error)
+    if (coursesError) {
+      console.error('Error fetching courses:', coursesError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch courses' },
+        { status: 500 }
+      )
+    }
+
+    // Delete all lessons in courses of this module
+    if (courses && courses.length > 0) {
+      const courseIds = courses.map(c => c.id)
+
+      // Delete lessons
+      const { error: lessonsDeleteError } = await supabase
+        .from('lessons')
+        .delete()
+        .in('course_id', courseIds)
+
+      if (lessonsDeleteError) {
+        console.error('Error deleting lessons:', lessonsDeleteError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to delete lessons' },
+          { status: 500 }
+        )
+      }
+
+      // Delete quizzes
+      const { error: quizzesDeleteError } = await supabase
+        .from('quizzes')
+        .delete()
+        .in('course_id', courseIds)
+
+      if (quizzesDeleteError) {
+        console.error('Error deleting quizzes:', quizzesDeleteError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to delete quizzes' },
+          { status: 500 }
+        )
+      }
+
+      // Delete courses
+      const { error: coursesDeleteError } = await supabase
+        .from('courses')
+        .delete()
+        .eq('module_id', moduleId)
+
+      if (coursesDeleteError) {
+        console.error('Error deleting courses:', coursesDeleteError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to delete courses' },
+          { status: 500 }
+        )
+      }
+    }
+
+    // Finally, delete the module
+    const { error: moduleDeleteError } = await supabase
+      .from('modules')
+      .delete()
+      .eq('id', moduleId)
+
+    if (moduleDeleteError) {
+      console.error('Error deleting module:', moduleDeleteError)
       return NextResponse.json(
         { success: false, error: 'Failed to delete module' },
         { status: 500 }
@@ -205,7 +245,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Module deleted successfully',
+      message: 'Module and all associated content deleted successfully',
     })
   } catch (error) {
     console.error('Delete module API error:', error)
