@@ -74,9 +74,9 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Fetch all quizzes
+    // Fetch all enhanced quizzes
     const { data: quizzes, error: quizzesError } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .select('*')
       .order('created_at', { ascending: true })
 

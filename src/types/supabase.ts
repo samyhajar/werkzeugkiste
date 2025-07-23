@@ -56,36 +56,41 @@ export type Database = {
       }
       certificates: {
         Row: {
-          course_id: string
-          file_url: string | null
+          id: string
           issued_at: string | null
-          student_id: string
+          meta: Json | null
+          module_id: string
+          name_used: string | null
+          pdf_url: string
+          show_name: boolean | null
+          user_id: string
         }
         Insert: {
-          course_id: string
-          file_url?: string | null
+          id?: string
           issued_at?: string | null
-          student_id: string
+          meta?: Json | null
+          module_id: string
+          name_used?: string | null
+          pdf_url: string
+          show_name?: boolean | null
+          user_id: string
         }
         Update: {
-          course_id?: string
-          file_url?: string | null
+          id?: string
           issued_at?: string | null
-          student_id?: string
+          meta?: Json | null
+          module_id?: string
+          name_used?: string | null
+          pdf_url?: string
+          show_name?: boolean | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "certificates_course_id_fkey"
-            columns: ["course_id"]
+            foreignKeyName: "certificates_module_id_fkey"
+            columns: ["module_id"]
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "certificates_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -150,21 +155,205 @@ export type Database = {
           },
         ]
       }
+      enhanced_quiz_attempts: {
+        Row: {
+          finished_at: string | null
+          id: string
+          meta: Json | null
+          passed: boolean | null
+          quiz_id: string
+          raw_answers: Json | null
+          score_percent: number | null
+          score_points: number | null
+          started_at: string | null
+          user_id: string
+        }
+        Insert: {
+          finished_at?: string | null
+          id?: string
+          meta?: Json | null
+          passed?: boolean | null
+          quiz_id: string
+          raw_answers?: Json | null
+          score_percent?: number | null
+          score_points?: number | null
+          started_at?: string | null
+          user_id: string
+        }
+        Update: {
+          finished_at?: string | null
+          id?: string
+          meta?: Json | null
+          passed?: boolean | null
+          quiz_id?: string
+          raw_answers?: Json | null
+          score_percent?: number | null
+          score_points?: number | null
+          started_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "enhanced_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enhanced_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      enhanced_quizzes: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          description: string | null
+          feedback_mode:
+            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | null
+          id: string
+          legacy_id: string | null
+          lesson_id: string | null
+          max_points: number | null
+          pass_percent: number | null
+          scope: Database["public"]["Enums"]["quiz_scope"]
+          settings: Json | null
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          feedback_mode?:
+            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | null
+          id?: string
+          legacy_id?: string | null
+          lesson_id?: string | null
+          max_points?: number | null
+          pass_percent?: number | null
+          scope: Database["public"]["Enums"]["quiz_scope"]
+          settings?: Json | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          feedback_mode?:
+            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | null
+          id?: string
+          legacy_id?: string | null
+          lesson_id?: string | null
+          max_points?: number | null
+          pass_percent?: number | null
+          scope?: Database["public"]["Enums"]["quiz_scope"]
+          settings?: Json | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enhanced_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_course_mapping: {
+        Row: {
+          legacy_id: string
+          new_id: string
+        }
+        Insert: {
+          legacy_id: string
+          new_id: string
+        }
+        Update: {
+          legacy_id?: string
+          new_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_course_mapping_new_id_fkey"
+            columns: ["new_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_lesson_mapping: {
+        Row: {
+          legacy_id: string
+          new_id: string | null
+        }
+        Insert: {
+          legacy_id: string
+          new_id?: string | null
+        }
+        Update: {
+          legacy_id?: string
+          new_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_lesson_mapping_new_id_fkey"
+            columns: ["new_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_progress: {
         Row: {
           completed_at: string | null
+          last_viewed_at: string | null
           lesson_id: string
+          progress_percent: number | null
+          reward_reason: string | null
           student_id: string
+          xp_awarded: number | null
         }
         Insert: {
           completed_at?: string | null
+          last_viewed_at?: string | null
           lesson_id: string
+          progress_percent?: number | null
+          reward_reason?: string | null
           student_id: string
+          xp_awarded?: number | null
         }
         Update: {
           completed_at?: string | null
+          last_viewed_at?: string | null
           lesson_id?: string
+          progress_percent?: number | null
+          reward_reason?: string | null
           student_id?: string
+          xp_awarded?: number | null
         }
         Relationships: [
           {
@@ -366,6 +555,53 @@ export type Database = {
           },
         ]
       }
+      quiz_answers: {
+        Row: {
+          answer_html: string
+          feedback_html: string | null
+          id: string
+          is_correct: boolean | null
+          legacy_id: string | null
+          meta: Json | null
+          question_id: string
+          sort_order: number | null
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          answer_html: string
+          feedback_html?: string | null
+          id?: string
+          is_correct?: boolean | null
+          legacy_id?: string | null
+          meta?: Json | null
+          question_id: string
+          sort_order?: number | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          answer_html?: string
+          feedback_html?: string | null
+          id?: string
+          is_correct?: boolean | null
+          legacy_id?: string | null
+          meta?: Json | null
+          question_id?: string
+          sort_order?: number | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_attempts: {
         Row: {
           attempt_number: number | null
@@ -433,6 +669,60 @@ export type Database = {
           },
         ]
       }
+      quiz_questions: {
+        Row: {
+          category: string | null
+          explanation_html: string | null
+          id: string
+          legacy_id: string | null
+          meta: Json | null
+          points: number | null
+          question_html: string
+          quiz_id: string
+          sort_order: number | null
+          type: Database["public"]["Enums"]["question_type"]
+        }
+        Insert: {
+          category?: string | null
+          explanation_html?: string | null
+          id?: string
+          legacy_id?: string | null
+          meta?: Json | null
+          points?: number | null
+          question_html: string
+          quiz_id: string
+          sort_order?: number | null
+          type: Database["public"]["Enums"]["question_type"]
+        }
+        Update: {
+          category?: string | null
+          explanation_html?: string | null
+          id?: string
+          legacy_id?: string | null
+          meta?: Json | null
+          points?: number | null
+          question_html?: string
+          quiz_id?: string
+          sort_order?: number | null
+          type?: Database["public"]["Enums"]["question_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "enhanced_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_details"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quizzes: {
         Row: {
           course_id: string | null
@@ -478,11 +768,246 @@ export type Database = {
           },
         ]
       }
+      rewards: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          points: number
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          points: number
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          points?: number
+          source_id?: string
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wp_answers_raw: {
+        Row: {
+          answer_html: string | null
+          feedback_html: string | null
+          id: string
+          is_correct: boolean | null
+          meta: Json | null
+          order: number | null
+          question_id: string | null
+          sort_order: number | null
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          answer_html?: string | null
+          feedback_html?: string | null
+          id: string
+          is_correct?: boolean | null
+          meta?: Json | null
+          order?: number | null
+          question_id?: string | null
+          sort_order?: number | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          answer_html?: string | null
+          feedback_html?: string | null
+          id?: string
+          is_correct?: boolean | null
+          meta?: Json | null
+          order?: number | null
+          question_id?: string | null
+          sort_order?: number | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: []
+      }
+      wp_questions_raw: {
+        Row: {
+          category: string | null
+          explanation_html: string | null
+          id: string
+          meta: Json | null
+          order: number | null
+          points: number | null
+          question_html: string | null
+          quiz_id: string | null
+          sort_order: number | null
+          type: string | null
+        }
+        Insert: {
+          category?: string | null
+          explanation_html?: string | null
+          id: string
+          meta?: Json | null
+          order?: number | null
+          points?: number | null
+          question_html?: string | null
+          quiz_id?: string | null
+          sort_order?: number | null
+          type?: string | null
+        }
+        Update: {
+          category?: string | null
+          explanation_html?: string | null
+          id?: string
+          meta?: Json | null
+          order?: number | null
+          points?: number | null
+          question_html?: string | null
+          quiz_id?: string | null
+          sort_order?: number | null
+          type?: string | null
+        }
+        Relationships: []
+      }
+      wp_quizzes_raw: {
+        Row: {
+          course_id: string | null
+          description: string | null
+          feedback_mode: string | null
+          id: string
+          lesson_id: string | null
+          max_points: number | null
+          order: number | null
+          pass_percent: number | null
+          settings: Json | null
+          sort_order: number | null
+          title: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          description?: string | null
+          feedback_mode?: string | null
+          id: string
+          lesson_id?: string | null
+          max_points?: number | null
+          order?: number | null
+          pass_percent?: number | null
+          settings?: Json | null
+          sort_order?: number | null
+          title?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          description?: string | null
+          feedback_mode?: string | null
+          id?: string
+          lesson_id?: string | null
+          max_points?: number | null
+          order?: number | null
+          pass_percent?: number | null
+          settings?: Json | null
+          sort_order?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      quiz_details: {
+        Row: {
+          course_id: string | null
+          course_title: string | null
+          description: string | null
+          feedback_mode:
+            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | null
+          id: string | null
+          lesson_id: string | null
+          lesson_title: string | null
+          max_points: number | null
+          pass_percent: number | null
+          question_count: number | null
+          scope: Database["public"]["Enums"]["quiz_scope"] | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enhanced_quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enhanced_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress_with_rewards: {
+        Row: {
+          completed_at: string | null
+          course_title: string | null
+          last_viewed_at: string | null
+          lesson_id: string | null
+          lesson_title: string | null
+          progress_percent: number | null
+          reward_reason: string | null
+          student_id: string | null
+          total_xp: number | null
+          xp_awarded: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      award_lesson_xp: {
+        Args: {
+          user_uuid: string
+          lesson_uuid: string
+          xp_amount?: number
+          reason?: string
+        }
+        Returns: undefined
+      }
+      award_quiz_xp: {
+        Args: {
+          user_uuid: string
+          quiz_uuid: string
+          xp_amount?: number
+          reason?: string
+        }
+        Returns: undefined
+      }
+      create_legacy_mapping: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_user_with_profile: {
         Args: {
           user_email: string
@@ -492,6 +1017,18 @@ export type Database = {
         }
         Returns: string
       }
+      determine_quiz_scope: {
+        Args: { course_id_text: string; lesson_id_text: string }
+        Returns: Database["public"]["Enums"]["quiz_scope"]
+      }
+      get_user_total_xp: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
+      normalize_question_type: {
+        Args: { ld_type: string }
+        Returns: Database["public"]["Enums"]["question_type"]
+      }
       reorder_lessons_in_course: {
         Args: { course_id_param: string }
         Returns: undefined
@@ -500,9 +1037,44 @@ export type Database = {
         Args: { course_id_param: string }
         Returns: undefined
       }
+      transform_raw_answers: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      transform_raw_questions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      transform_raw_quizzes: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      update_quiz_references: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      validate_quiz_integrity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          issue: string
+          quiz_id: string
+          quiz_legacy: string
+          details: Json
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      question_type:
+        | "single"
+        | "multiple"
+        | "true_false"
+        | "free_text"
+        | "fill_blank"
+        | "sorting"
+        | "matching"
+        | "matrix"
+      quiz_feedback_mode: "per_question" | "at_end" | "none"
+      quiz_scope: "course" | "lesson"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -629,6 +1201,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      question_type: [
+        "single",
+        "multiple",
+        "true_false",
+        "free_text",
+        "fill_blank",
+        "sorting",
+        "matching",
+        "matrix",
+      ],
+      quiz_feedback_mode: ["per_question", "at_end", "none"],
+      quiz_scope: ["course", "lesson"],
+    },
   },
 } as const

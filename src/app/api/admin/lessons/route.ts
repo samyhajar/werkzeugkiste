@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -12,7 +12,10 @@ export async function GET(_request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
 
     // Check if user is admin using profiles table (more reliable)
@@ -23,36 +26,37 @@ export async function GET(_request: NextRequest) {
       .single()
 
     if (profileError || !profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
     }
 
-    // Fetch lessons data with course information
+    // Fetch lessons with course information
     const { data: lessons, error } = await supabase
       .from('lessons')
       .select(
         `
-        *,
-        course:courses(
-          id,
-          title
-        )
+        id,
+        title,
+        course:courses(id, title)
       `
       )
-      .order('created_at', { ascending: false })
+      .order('title', { ascending: true })
 
     if (error) {
       console.error('Error fetching lessons:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch lessons' },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({
-      success: true,
-      lessons: lessons || [],
-    })
+    return NextResponse.json({ success: true, lessons: lessons || [] })
   } catch (error) {
-    console.error('Lessons API error:', error)
+    console.error('Error in lessons API:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

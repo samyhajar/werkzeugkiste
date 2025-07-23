@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest) {
 
     // First, assign the quiz to the course
     const { data: quiz, error } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .update({ course_id } as any)
       .eq('id', quiz_id)
       .select()

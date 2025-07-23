@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function PATCH(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; questionId: string }> }
+) {
   try {
     const supabase = await createClient()
+    const { questionId } = await params
 
     // Check if user is authenticated and is admin
     const {
@@ -18,7 +22,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Check if user is admin using profiles table
+    // Check if user is admin using profiles table (more reliable)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -32,37 +36,26 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { quiz_id } = await request.json()
-
-    if (!quiz_id) {
-      return NextResponse.json(
-        { success: false, error: 'Quiz ID is required' },
-        { status: 400 }
-      )
-    }
-
-    // Update the quiz to remove course_id and order (make it unassigned)
-    const { data: quiz, error } = await supabase
-      .from('enhanced_quizzes')
-      .update({ course_id: null, order: null } as any)
-      .eq('id', quiz_id)
-      .select()
-      .single()
+    // Delete the question (answers will be cascade deleted)
+    const { error } = await supabase
+      .from('quiz_questions')
+      .delete()
+      .eq('id', questionId)
 
     if (error) {
-      console.error('Error unassigning quiz:', error)
+      console.error('Error deleting question:', error)
       return NextResponse.json(
-        { success: false, error: error.message },
+        { success: false, error: 'Failed to delete question' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      quiz,
+      message: 'Question deleted successfully',
     })
   } catch (error) {
-    console.error('Error in unassign quiz API:', error)
+    console.error('Error in delete question API:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

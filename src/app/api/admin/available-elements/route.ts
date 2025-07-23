@@ -62,9 +62,9 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Fetch unassigned quizzes (quizzes without course_id)
+    // Fetch unassigned quizzes (enhanced_quizzes without course_id)
     const { data: unassignedQuizzes, error: quizzesError } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .select('*')
       .is('course_id', null)
       .order('created_at', { ascending: true })
