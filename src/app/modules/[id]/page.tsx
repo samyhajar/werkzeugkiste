@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 // import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, CheckCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, CheckCircle, User, BarChart3 } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 interface Lesson {
@@ -63,6 +63,8 @@ export default function ModuleDetailPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
+  const [user, setUser] = useState<any>(null)
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
 
   const fetchModule = useCallback(async () => {
     try {
@@ -101,6 +103,8 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId])
 
+
+
   // Debounced refetch function to prevent too many API calls
   const debouncedRefetch = useCallback(() => {
     const now = Date.now()
@@ -113,8 +117,48 @@ export default function ModuleDetailPage() {
   useEffect(() => {
     if (moduleId) {
       void fetchModule()
+      void fetchUserAndProgress()
     }
   }, [moduleId, fetchModule])
+
+  // Fetch user and progress data
+  const fetchUserAndProgress = useCallback(async () => {
+    try {
+      const supabase = getBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+
+      if (user && moduleId) {
+        // Fetch completed lessons for this module
+        const { data: progressData } = await supabase
+          .from('lesson_progress')
+          .select('lesson_id, completed_at')
+          .eq('student_id', user.id)
+
+        if (progressData) {
+          const completedIds = new Set(progressData.map(p => p.lesson_id))
+          setCompletedLessons(completedIds)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user and progress:', error)
+    }
+  }, [moduleId])
+
+  // Calculate progress percentage
+  const getProgressPercentage = () => {
+    if (!module) return 0
+    const totalLessons = module.courses.reduce((total, course) => total + course.lessons.length, 0)
+    if (totalLessons === 0) return 0
+    return Math.round((completedLessons.size / totalLessons) * 100)
+  }
+
+  useEffect(() => {
+    if (moduleId) {
+      void fetchModule()
+      void fetchUserAndProgress()
+    }
+  }, [moduleId, fetchModule, fetchUserAndProgress])
 
   // Set up real-time subscriptions for live updates
   useEffect(() => {
@@ -261,15 +305,57 @@ export default function ModuleDetailPage() {
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0">
-        {/* Breadcrumb */}
-        <div className="p-4 border-b border-gray-200 bg-[#486681] text-white">
-          <Link href="/" className="flex items-center gap-2 text-sm text-blue-100 hover:text-white transition-colors">
+                              {/* Continuous Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
+        {/* Right: Progress Bar and User Info */}
+        <div className="flex items-center gap-6 ml-auto">
+                    {/* Progress Bar */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-[#486681]" />
+            </div>
+            <div className="w-32">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-[#486681] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${getProgressPercentage()}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {completedLessons.size} von {module ? module.courses.reduce((total, course) => total + course.lessons.length, 0) : 0} Lektionen
+              </div>
+            </div>
+          </div>
+
+          {/* User Info */}
+          {user && (
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#486681] rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              <div className="text-sm">
+                <div className="font-medium text-gray-900">
+                  {user.user_metadata?.full_name || user.email}
+                </div>
+                <div className="text-gray-500 text-xs">Student</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Back to Modules Link - Above Sidebar */}
+      <div className="fixed top-16 left-0 w-96 bg-white border-b border-gray-200 z-40">
+        <div className="p-4">
+          <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors">
             <ChevronLeft className="w-4 h-4" />
             Zurück zu Modulen
           </Link>
         </div>
+      </div>
+
+      {/* Sidebar */}
+      <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0 mt-28">
 
         {/* Module Name */}
         <div className="p-4 border-b border-gray-200 bg-white">
@@ -298,11 +384,6 @@ export default function ModuleDetailPage() {
                       <h3 className="font-semibold text-gray-800 text-sm leading-tight">
                         {course.title}
                       </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="inline-block px-2 py-1 bg-[#de0449] text-white text-xs rounded">
-                          abgeschlossen
-                        </span>
-                      </div>
                     </div>
                   </div>
                   {expandedCourses.has(course.id) ? (
@@ -331,7 +412,6 @@ export default function ModuleDetailPage() {
                               <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
                                 {lesson.title}
                               </span>
-                              <CheckCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                             </button>
 
                             {/* Quizzes for this lesson */}
@@ -347,7 +427,6 @@ export default function ModuleDetailPage() {
                                   <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
                                     {quiz.title}
                                   </span>
-                                  <CheckCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                 </Link>
                               ))}
                           </div>
@@ -366,7 +445,6 @@ export default function ModuleDetailPage() {
                             <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
                               {quiz.title}
                             </span>
-                            <CheckCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                           </Link>
                         ))}
 
@@ -388,58 +466,70 @@ export default function ModuleDetailPage() {
       </aside>
 
             {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden mt-32">
         {selectedLesson ? (
           <div className="flex-1 overflow-y-auto">
-            {/* Lesson Header */}
-            <div className="bg-white border-b border-gray-200 px-8 py-4">
-                                          {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+            {/* Enhanced Lesson Header */}
+            <div className="bg-white border-b border-gray-200 px-8 py-8">
+              {/* Centered Breadcrumb */}
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
                 <Link
                   href="/"
-                  className="hover:text-blue-600 transition-colors font-medium hover:underline"
+                  className="hover:text-[#486681] transition-colors font-medium hover:underline"
                 >
                   {module.title}
                 </Link>
                 <span className="text-gray-400">›</span>
-                <span className="text-gray-700 font-medium">
+                <span className="text-gray-600 font-medium">
                   {selectedCourse?.title || 'Kurs'}
                 </span>
                 <span className="text-gray-400">›</span>
-                <span className="text-gray-900 font-semibold">
+                <span className="text-gray-800 font-semibold">
                   {selectedLesson.title}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                    {selectedLesson.title}
-                  </h1>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>Lektion {selectedLesson.order}</span>
-                    <span>•</span>
-                    <span>{selectedLesson.duration_minutes || 0} Min</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
-                    Abgeschlossen
+              {/* Centered Lesson Title */}
+              <div className="text-center mb-6">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                  {selectedLesson.title}
+                </h1>
+                <div className="flex items-center justify-center gap-4 text-gray-600">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
+                    Lektion {selectedLesson.order}
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
+                    {selectedLesson.duration_minutes || 0} Min
                   </span>
                 </div>
               </div>
+
+
             </div>
 
-                        {/* Lesson Content */}
-            <div className="px-8 py-6 overflow-y-auto">
+            {/* Enhanced Lesson Content */}
+            <div className="px-8 py-8 overflow-y-auto bg-gray-50">
               {selectedLesson.content ? (
-                <div
-                  className="prose prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
-                />
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                    <div className="p-8 prose prose-lg max-w-none">
+                      <div
+                        className="text-gray-800 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+                      />
+                    </div>
+                  </div>
+                </div>
               ) : (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Kein Inhalt verfügbar</p>
+                <div className="max-w-4xl mx-auto">
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+                    <div className="text-gray-400 text-6xl mb-4">📚</div>
+                    <h2 className="text-xl font-semibold text-gray-600 mb-2">Kein Inhalt verfügbar</h2>
+                    <p className="text-gray-500">Diese Lektion hat noch keinen Inhalt.</p>
+                  </div>
                 </div>
               )}
             </div>
