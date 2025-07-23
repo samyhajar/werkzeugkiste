@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { formatDateSafely } from '@/lib/utils'
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 interface Course {
   id: string
@@ -550,7 +552,7 @@ export default function LessonsPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -588,7 +590,6 @@ export default function LessonsPage() {
                       )}
                     </div>
                   </th>
-
                   <th
                     className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
                     onClick={() => handleSort('created_at')}
@@ -606,16 +607,14 @@ export default function LessonsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {getSortedLessons().map((lesson) => (
+                {filteredLessons.map((lesson) => (
                   <tr
                     key={lesson.id}
                     className="bg-white hover:bg-gray-100 transition-colors duration-200"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900 max-w-[200px] truncate">
-                          {lesson.title}
-                        </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {lesson.title}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -625,29 +624,36 @@ export default function LessonsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {lesson.course?.title || 'Unbekannt'}
+                        {(() => {
+                          const courseItem = courses.find(c => c.id === lesson.course_id)
+                          return courseItem?.title || 'Nicht zugewiesen'
+                        })()}
                       </div>
                     </td>
-
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDateSafely(lesson.created_at, { locale: 'de' })}
+                        {lesson.created_at
+                          ? formatDistanceToNow(new Date(lesson.created_at), {
+                              addSuffix: true,
+                              locale: de,
+                            })
+                          : 'Unbekannt'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           size="sm"
-                          className="bg-[#486681] hover:bg-[#3e5570] text-white"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
                           onClick={() => openEditDialog(lesson)}
                         >
-                          Verwalten
+                          Bearbeiten
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => openDeleteDialog(lesson)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

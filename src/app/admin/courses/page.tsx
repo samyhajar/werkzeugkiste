@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import type { Database } from '@/types/supabase'
+import { useRouter } from 'next/navigation'
 
 type Course = Database['public']['Tables']['courses']['Row']
 type Module = Database['public']['Tables']['modules']['Row']
@@ -46,6 +47,7 @@ export default function CoursesPage() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const router = useRouter()
 
   const fetchCourses = async () => {
     try {
@@ -317,12 +319,12 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8">
+    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Kurse</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Kurse</h1>
+          <p className="text-white mt-2">
             Verwalten Sie Ihre Lernkurse
           </p>
         </div>
@@ -506,7 +508,7 @@ export default function CoursesPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -623,18 +625,23 @@ export default function CoursesPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           size="sm"
-                          className="bg-[#486681] hover:bg-[#3e5570] text-white"
-                          onClick={() => openEditDialog(course)}
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
+                          onClick={() => {
+                            router.push(`/admin/courses/${course.id}`)
+                          }}
                         >
-                          Verwalten
+                          Bearbeiten
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => openDeleteDialog(course)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
+                          onClick={() => {
+                            setCourseToDelete(course)
+                            setDeleteDialogOpen(true)
+                          }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          Löschen
                         </Button>
                       </div>
                     </td>

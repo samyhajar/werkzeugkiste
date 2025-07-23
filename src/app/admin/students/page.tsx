@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDistanceToNow } from 'date-fns'
+import { Users, BookOpen, Award, HelpCircle, FileText } from 'lucide-react'
 
 interface Student {
   id: string
@@ -13,7 +14,6 @@ interface Student {
   full_name: string | null
   role: string
   created_at: string
-  updated_at: string
 }
 
 export default function StudentsPage() {
@@ -22,67 +22,60 @@ export default function StudentsPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const fetchStudents = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch('/api/admin/students', {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.success) {
-        setStudents(data.students || [])
-      } else {
-        throw new Error(data.error || 'Failed to fetch students')
-      }
-    } catch (err) {
-      console.error('Error fetching students:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load students')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const filteredStudents = students.filter(student => {
-    const matchesSearch =
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesSearch
-  })
-
-  // Calculate statistics
-  const totalStudents = students.length
-  const recentStudents = students.filter(s => {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return new Date(s.created_at) > weekAgo
-  }).length
-  const activeStudents = students.filter(s => {
-    const monthAgo = new Date()
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
-    return new Date(s.updated_at || s.created_at) > monthAgo
-  }).length
-
   useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await fetch('/api/admin/users')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success) {
+            setStudents(data.users || [])
+          } else {
+            setError(data.error || 'Failed to fetch students')
+          }
+        } else {
+          setError('Failed to fetch students')
+        }
+      } catch (err) {
+        setError('Failed to fetch students')
+        console.error('Error fetching students:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     void fetchStudents()
   }, [])
 
+  const filteredStudents = students.filter(student =>
+    student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalStudents = students.length
+  const recentStudents = students.filter(student => {
+    if (!student.created_at) return false
+    const createdDate = new Date(student.created_at)
+    if (isNaN(createdDate.getTime())) return false
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return createdDate > weekAgo
+  }).length
+  const activeStudents = students.filter(student => {
+    if (!student.created_at) return false
+    const createdDate = new Date(student.created_at)
+    if (isNaN(createdDate.getTime())) return false
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    return createdDate > monthAgo
+  }).length
+
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
-            <span className="text-gray-600">Loading students...</span>
-          </div>
+      <div className="min-h-screen bg-[#6e859a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading students...</p>
         </div>
       </div>
     )
@@ -90,31 +83,25 @@ export default function StudentsPage() {
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-red-600 mb-2">Failed to load students</div>
-            <div className="text-gray-500 text-sm">{error}</div>
-            <Button
-              onClick={() => void fetchStudents()}
-              className="mt-4"
-              variant="outline"
-            >
-              Retry
-            </Button>
-          </div>
+      <div className="min-h-screen bg-[#6e859a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-400 text-xl mb-4">⚠️ Error</div>
+          <p className="text-white mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} className="bg-white text-[#486681] hover:bg-gray-100">
+            Retry
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8">
+    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Students</h1>
+          <p className="text-white mt-2">
             Manage student accounts and progress
           </p>
         </div>
@@ -127,54 +114,51 @@ export default function StudentsPage() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              Total Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{totalStudents}</div>
-            <p className="text-sm text-gray-500 mt-1">All registered students</p>
+        <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Students</p>
+                <p className="text-3xl font-bold text-gray-900">{totalStudents}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Recent Registrations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{recentStudents}</div>
-            <p className="text-sm text-gray-500 mt-1">This week</p>
+        <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Recent Registrations</p>
+                <p className="text-3xl font-bold text-gray-900">{recentStudents}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Active Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{activeStudents}</div>
-            <p className="text-sm text-gray-500 mt-1">Last 30 days</p>
+        <Card className="bg-white shadow-lg border-0 rounded-xl overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Students</p>
+                <p className="text-3xl font-bold text-gray-900">{activeStudents}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Award className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Search */}
-      <Card className="shadow-lg border border-gray-200 bg-white">
+      <Card className="shadow-lg border-0 bg-white">
         <CardContent className="p-6">
           <div className="flex gap-4">
             <div className="flex-1">
@@ -205,7 +189,7 @@ export default function StudentsPage() {
 
       {/* Students Table */}
       {filteredStudents.length === 0 ? (
-        <Card className="shadow-lg border border-gray-200 bg-white">
+        <Card className="shadow-lg border-0 bg-white">
           <CardContent className="text-center py-12">
             <div className="text-gray-500 mb-4 text-lg">
               {students.length === 0 ? 'No students registered yet' : 'No students match your search'}
@@ -222,7 +206,7 @@ export default function StudentsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -285,10 +269,16 @@ export default function StudentsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDistanceToNow(new Date(student.created_at), { addSuffix: true })}
+                        {student.created_at && !isNaN(new Date(student.created_at).getTime())
+                          ? formatDistanceToNow(new Date(student.created_at), { addSuffix: true })
+                          : 'Unknown'
+                        }
                       </div>
                       <div className="text-sm text-gray-500">
-                        {new Date(student.created_at).toLocaleDateString()}
+                        {student.created_at && !isNaN(new Date(student.created_at).getTime())
+                          ? new Date(student.created_at).toLocaleDateString()
+                          : 'Unknown'
+                        }
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">

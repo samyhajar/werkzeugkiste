@@ -36,6 +36,8 @@ export default function Navbar() {
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
+  const fetchInProgress = useRef(false)
+  const lastFetchTime = useRef<number>(0)
 
   // Initialize Supabase client only in browser
   useEffect(() => {
@@ -117,8 +119,25 @@ export default function Navbar() {
   }, [isModulesOpen, modules.length])
 
   const fetchModules = async () => {
+    // Prevent duplicate requests
+    if (fetchInProgress.current) {
+      console.log('[Navbar] Fetch already in progress, skipping...')
+      return
+    }
+
+    // Debounce requests
+    const now = Date.now()
+    if (now - lastFetchTime.current < 2000) {
+      console.log('[Navbar] Debouncing fetch request...')
+      return
+    }
+
+    fetchInProgress.current = true
+    lastFetchTime.current = now
     setModulesLoading(true)
+
     try {
+      console.log('[Navbar] Fetching modules...')
       const response = await fetch('/api/modules', {
         method: 'GET',
         credentials: 'include',
@@ -134,6 +153,7 @@ export default function Navbar() {
       console.error('Error fetching modules:', error)
     } finally {
       setModulesLoading(false)
+      fetchInProgress.current = false
     }
   }
 

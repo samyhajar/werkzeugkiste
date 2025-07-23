@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { BookOpen, FileText, HelpCircle, CheckCircle, Play } from 'lucide-react'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
+
 import { useTableSubscription } from '@/contexts/RealtimeContext'
 
 interface Course {
@@ -46,10 +46,29 @@ export default function DashboardPage() {
   const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
   const [userProgress, setUserProgress] = useState<Record<string, number>>({})
+  const fetchInProgress = useRef(false)
+  const lastFetchTime = useRef<number>(0)
 
   const fetchStudentData = useCallback(async () => {
+    // Prevent duplicate requests
+    if (fetchInProgress.current) {
+      console.log('[Dashboard] Fetch already in progress, skipping...')
+      return
+    }
+
+    // Debounce requests
+    const now = Date.now()
+    if (now - lastFetchTime.current < 2000) {
+      console.log('[Dashboard] Debouncing fetch request...')
+      return
+    }
+
+    fetchInProgress.current = true
+    lastFetchTime.current = now
+
     try {
       setLoading(true)
+      console.log('[Dashboard] Fetching student data...')
 
       // Fetch modules with their courses
       const response = await fetch('/api/modules')
@@ -72,17 +91,30 @@ export default function DashboardPage() {
       console.error('Error fetching student data:', error)
     } finally {
       setLoading(false)
+      fetchInProgress.current = false
     }
   }, [])
 
   useEffect(() => {
-    fetchStudentData()
+    void fetchStudentData()
   }, [fetchStudentData])
 
-  // Use centralized subscription management
-  useTableSubscription('modules', '*', undefined, fetchStudentData)
-  useTableSubscription('courses', '*', undefined, fetchStudentData)
-  useTableSubscription('lessons', '*', undefined, fetchStudentData)
+  // Use centralized subscription management with debouncing
+  useTableSubscription('modules', '*', undefined, () => {
+    if (!fetchInProgress.current) {
+      void fetchStudentData()
+    }
+  })
+  useTableSubscription('courses', '*', undefined, () => {
+    if (!fetchInProgress.current) {
+      void fetchStudentData()
+    }
+  })
+  useTableSubscription('lessons', '*', undefined, () => {
+    if (!fetchInProgress.current) {
+      void fetchStudentData()
+    }
+  })
 
   const getCourseProgress = (course: Course) => {
     const totalLessons = course.lessons.length
@@ -92,22 +124,15 @@ export default function DashboardPage() {
     return totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
   }
 
-  const getTotalProgress = () => {
-    let totalLessons = 0
-    let completedLessons = 0
+  const getModuleProgress = (module: Module) => {
+    const allCourses = module.courses
+    if (allCourses.length === 0) return 0
 
-    modules.forEach(module => {
-      module.courses.forEach(course => {
-        totalLessons += course.lessons.length
-        course.lessons.forEach(lesson => {
-          if (userProgress[lesson.id] === 100) {
-            completedLessons++
-          }
-        })
-      })
-    })
+    const totalProgress = allCourses.reduce((sum, course) => {
+      return sum + getCourseProgress(course)
+    }, 0)
 
-    return totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+    return Math.round(totalProgress / allCourses.length)
   }
 
   if (loading) {
@@ -123,118 +148,86 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Mein Dashboard</h1>
-          <p className="text-gray-600 mt-2">Verfolge deinen Fortschritt in allen Kursen</p>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overall Progress */}
         <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                Gesamtfortschritt
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Fortschritt</span>
-                  <span className="text-lg font-bold text-green-600">{getTotalProgress()}%</span>
-                </div>
-                <Progress value={getTotalProgress()} className="h-3" />
-              </div>
-            </CardContent>
-          </Card>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mein Dashboard</h1>
+          <p className="text-gray-600">Übersicht über Ihre Lernfortschritte</p>
         </div>
 
-        {/* Modules and Courses */}
-        <div className="space-y-8">
-          {modules.map((module) => (
-            <div key={module.id} className="space-y-4">
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-6 h-6 text-[#486681]" />
-                <h2 className="text-2xl font-bold text-gray-900">{module.title}</h2>
-              </div>
-
-              {module.description && (
-                <p className="text-gray-600 max-w-3xl">{module.description}</p>
-              )}
-
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {module.courses.map((course) => {
-                  const courseProgress = getCourseProgress(course)
-                  return (
-                    <Card key={course.id} className="hover:shadow-lg transition-shadow">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{course.title}</CardTitle>
-                          <Badge variant="outline" className="text-xs">
-                            {course.lessons.length} Lektionen
-                          </Badge>
-                        </div>
-                        {course.description && (
-                          <CardDescription className="line-clamp-2">
-                            {course.description}
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Fortschritt</span>
-                            <span className="font-medium text-green-600">{courseProgress}%</span>
-                          </div>
-                          <Progress value={courseProgress} className="h-2" />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <FileText className="w-4 h-4" />
-                            <span>{course.lessons.length} Lektionen</span>
-                          </div>
-                          {course.quizzes.length > 0 && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <HelpCircle className="w-4 h-4" />
-                              <span>{course.quizzes.length} Quizze</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <Link href={`/modules/${module.id}`}>
-                          <Button className="w-full" variant="outline">
-                            <Play className="w-4 h-4 mr-2" />
-                            Kurs starten
-                          </Button>
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-
-              {module.courses.length === 0 && (
-                <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Noch keine Kurse in diesem Modul verfügbar</p>
-                </div>
-              )}
+        {modules.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <BookOpen className="w-12 h-12 text-gray-400" />
             </div>
-          ))}
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Keine Module verfügbar</h3>
+            <p className="text-gray-600 mb-6">Derzeit sind keine Module für Sie verfügbar.</p>
+            <Link href="/">
+              <Button>Zur Startseite</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {modules.map((module) => (
+              <Card key={module.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{module.title}</CardTitle>
+                    <Badge variant="secondary">
+                      {module.courses.length} Kurse
+                    </Badge>
+                  </div>
+                  <CardDescription className="line-clamp-2">
+                    {module.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Fortschritt</span>
+                        <span>{getModuleProgress(module)}%</span>
+                      </div>
+                      <Progress value={getModuleProgress(module)} className="h-2" />
+                    </div>
 
-          {modules.length === 0 && (
-            <div className="text-center py-12">
-              <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Keine Module verfügbar</h3>
-              <p className="text-gray-500">Schauen Sie später wieder vorbei.</p>
-            </div>
-          )}
-        </div>
+                    <div className="space-y-2">
+                      {module.courses.slice(0, 3).map((course) => (
+                        <div key={course.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-medium">{course.title}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-gray-500">
+                              {course.lessons.length} Lektionen
+                            </span>
+                            {course.quizzes.length > 0 && (
+                              <HelpCircle className="w-3 h-3 text-blue-500" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {module.courses.length > 3 && (
+                        <div className="text-center">
+                          <span className="text-sm text-gray-500">
+                            +{module.courses.length - 3} weitere Kurse
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Link href={`/modules/${module.id}`}>
+                      <Button className="w-full" variant="outline">
+                        <Play className="w-4 h-4 mr-2" />
+                        Weiter lernen
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

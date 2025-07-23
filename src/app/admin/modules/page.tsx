@@ -311,12 +311,12 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8">
+    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Module</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Module</h1>
+          <p className="text-white mt-2">
                           Verwalten Sie Lernmodule und organisieren Sie Ihre Kurse
           </p>
         </div>
@@ -507,7 +507,7 @@ export default function ModulesPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -616,16 +616,16 @@ export default function ModulesPage() {
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           size="sm"
-                          className="bg-[#486681] hover:bg-[#3e5570] text-white"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
                           onClick={() => openEditDialog(module)}
                         >
-                          Verwalten
+                          Bearbeiten
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => openDeleteDialog(module)}
-                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                          className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

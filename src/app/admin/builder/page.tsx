@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ChevronRight, GripVertical, Plus, Trash2, FileText, HelpCircle, BookOpen, FolderOpen } from 'lucide-react'
@@ -288,10 +288,16 @@ export default function BuilderPage() {
   const [lastReloadTime, setLastReloadTime] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
 
-
-
   // Add mounted state to prevent hydration mismatch
   const [isMounted, setIsMounted] = useState(false)
+
+  // Use ref to store current builder elements for preservation
+  const builderElementsRef = useRef<BuilderElement[]>([])
+
+  // Update ref whenever builderElements changes
+  useEffect(() => {
+    builderElementsRef.current = builderElements
+  }, [builderElements])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -301,15 +307,9 @@ export default function BuilderPage() {
     })
   )
 
-
-
-
-
   useEffect(() => {
     setIsMounted(true)
   }, [])
-
-
 
   const loadEntireStructure = useCallback(async () => {
     try {
@@ -323,7 +323,7 @@ export default function BuilderPage() {
         const elements = data.elements || []
         if (Array.isArray(elements)) {
           const hierarchicalElements = buildHierarchicalStructure(elements)
-          const elementsWithPreservedState = preserveExpansionStates(hierarchicalElements, builderElements)
+          const elementsWithPreservedState = preserveExpansionStates(hierarchicalElements, builderElementsRef.current)
           console.log('Loaded structure:', elementsWithPreservedState)
           console.log('Structure details:', elementsWithPreservedState.map(el => ({
             id: el.id,
@@ -339,7 +339,7 @@ export default function BuilderPage() {
     } catch (error) {
       console.error('Error loading structure:', error)
     }
-  }, [builderElements])
+  }, [])
 
   const loadAvailableElements = useCallback(async () => {
     try {
@@ -396,7 +396,7 @@ export default function BuilderPage() {
   // Debounced reload function to prevent infinite loops
   const debouncedReload = useCallback(() => {
     const now = Date.now()
-    if (now - lastReloadTime > 1000) { // Only reload if more than 1 second has passed
+    if (now - lastReloadTime > 2000) { // Increase debounce time to 2 seconds
       setLastReloadTime(now)
       void loadEntireStructure()
       void loadAvailableElements()
@@ -655,15 +655,15 @@ export default function BuilderPage() {
 
 
 
-  // Load data on mount
+  // Load data on mount only
   useEffect(() => {
     if (isMounted) {
       void loadEntireStructure()
       void loadAvailableElements()
     }
-  }, [loadEntireStructure, loadAvailableElements, isMounted])
+  }, [isMounted])
 
-  // Use centralized subscription management
+  // Use centralized subscription management with longer intervals
   useTableSubscription('courses', '*', undefined, debouncedReload)
   useTableSubscription('lessons', '*', undefined, debouncedReload)
   useTableSubscription('modules', '*', undefined, debouncedReload)

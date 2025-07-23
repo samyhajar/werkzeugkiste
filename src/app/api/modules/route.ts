@@ -21,10 +21,18 @@ export async function GET(_request: NextRequest) {
     }
 
     if (!modules || modules.length === 0) {
-      return NextResponse.json({
-        success: true,
-        modules: [],
-      })
+      return NextResponse.json(
+        {
+          success: true,
+          modules: [],
+        },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+            Vary: 'Accept-Encoding',
+          },
+        }
+      )
     }
 
     // Fetch all courses for these modules (show all assigned courses regardless of status)
@@ -99,10 +107,18 @@ export async function GET(_request: NextRequest) {
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      modules: modulesWithCourses,
-    })
+    return NextResponse.json(
+      {
+        success: true,
+        modules: modulesWithCourses,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          Vary: 'Accept-Encoding',
+        },
+      }
+    )
   } catch (error) {
     console.error('Modules API error:', error)
     return NextResponse.json(

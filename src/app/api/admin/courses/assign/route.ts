@@ -2,8 +2,93 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
 interface AssignCourseRequest {
-  course_id: string
-  module_id: string
+  elementId: string
+  parentId: string
+  scope: string
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+
+    // Check if user is authenticated and is admin
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is admin using profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    const { elementId, parentId, scope } =
+      (await request.json()) as AssignCourseRequest
+
+    if (!elementId || !parentId) {
+      return NextResponse.json(
+        { success: false, error: 'Element ID and Parent ID are required' },
+        { status: 400 }
+      )
+    }
+
+    // Determine the parent type and update accordingly
+    let updateData: any = {}
+
+    if (scope === 'module') {
+      // Assign to module
+      updateData.module_id = parentId
+    } else if (scope === 'course') {
+      // Assign to course (as a lesson)
+      updateData.course_id = parentId
+    } else if (scope === 'lesson') {
+      // Assign to lesson (as a quiz)
+      updateData.lesson_id = parentId
+    }
+
+    // Update the course to assign it to the parent
+    const { data: course, error } = await supabase
+      .from('courses')
+      .update(updateData)
+      .eq('id', elementId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error assigning course:', error)
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      course,
+    })
+  } catch (error) {
+    console.error('Error in assign course API:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function PATCH(request: NextRequest) {
@@ -37,8 +122,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { course_id, module_id } =
-      (await request.json()) as AssignCourseRequest
+    const { course_id, module_id } = (await request.json()) as {
+      course_id: string
+      module_id: string
+    }
 
     if (!course_id || !module_id) {
       return NextResponse.json(

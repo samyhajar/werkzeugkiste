@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import ModuleCard from './ModuleCard'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Tables } from '@/types/supabase'
-import { useTableSubscription } from '@/contexts/RealtimeContext'
 
-type Module = Tables<'modules'> & { courses?: any[] }
+type Module = Tables<'modules'> & { courses?: unknown[] }
 
 interface LiveModulesSectionProps {
   initialModules: Module[]
@@ -20,9 +18,28 @@ export default function LiveModulesSection({
   isLoggedIn
 }: LiveModulesSectionProps) {
   const [modules, setModules] = useState<Module[]>(initialModules)
+  const fetchInProgress = useRef(false)
+  const lastFetchTime = useRef<number>(0)
 
   const fetchModules = useCallback(async () => {
+    // Prevent duplicate requests
+    if (fetchInProgress.current) {
+      console.log('[LiveModulesSection] Fetch already in progress, skipping...')
+      return
+    }
+
+    // Debounce requests
+    const now = Date.now()
+    if (now - lastFetchTime.current < 2000) {
+      console.log('[LiveModulesSection] Debouncing fetch request...')
+      return
+    }
+
+    fetchInProgress.current = true
+    lastFetchTime.current = now
+
     try {
+      console.log('[LiveModulesSection] Fetching modules...')
       const response = await fetch('/api/modules')
       if (response.ok) {
         const data = await response.json()
@@ -32,13 +49,10 @@ export default function LiveModulesSection({
       }
     } catch (error) {
       console.error('Error fetching modules:', error)
+    } finally {
+      fetchInProgress.current = false
     }
   }, [])
-
-  // Use centralized subscription management
-  useTableSubscription('modules', '*', undefined, fetchModules)
-  useTableSubscription('courses', '*', undefined, fetchModules)
-  useTableSubscription('lessons', '*', undefined, fetchModules)
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

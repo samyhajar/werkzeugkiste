@@ -269,11 +269,11 @@ export default function CertificatesPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8">
+    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Zertifikate</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-white">Zertifikate</h1>
+        <p className="text-white mt-2">
           Verwalten Sie Zertifikate und Vorlagen für Ihre Kurse.
         </p>
       </div>

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
 interface Course {
   id: string
@@ -75,6 +76,8 @@ export default function QuizzesPage() {
     feedback_mode: 'at_end',
     questions: [] as QuizQuestion[]
   })
+
+  const router = useRouter()
 
   useEffect(() => {
     fetchQuizzes()
@@ -266,12 +269,12 @@ export default function QuizzesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Enhanced Quizzes</h1>
-          <p className="text-gray-600 mt-2">Manage course and lesson quizzes with advanced features</p>
+          <h1 className="text-3xl font-bold text-white">Enhanced Quizzes</h1>
+          <p className="text-white mt-2">Manage course and lesson quizzes with advanced features</p>
         </div>
         <Button
           onClick={() => setIsCreateDialogOpen(true)}
@@ -559,7 +562,7 @@ export default function QuizzesPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -624,29 +627,47 @@ export default function QuizzesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        <div>Pass: {quiz.pass_percent}%</div>
-                        <div>Max: {quiz.max_points} pts</div>
-                </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {quiz.pass_percent}% pass
+                          </span>
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            {quiz.max_points} pts
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {quiz.feedback_mode === 'at_end' ? 'Feedback at end' : 'Immediate feedback'}
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {quiz.created_at
+                          ? formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })
+                          : 'Unknown'}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex gap-2">
-                        <Button asChild size="sm" className="bg-[#486681] hover:bg-[#3e5570] text-white">
-                          <Link href={`/admin/quizzes/${quiz.id}`}>
-                            View
-                    </Link>
-                  </Button>
-                  <Button asChild size="sm" variant="outline" className="border-[#486681] text-[#486681] hover:bg-[#486681]/10">
-                          <Link href={`/admin/quizzes/${quiz.id}/questions`}>
-                      Questions
-                    </Link>
-                  </Button>
-                </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
+                          onClick={() => router.push(`/admin/quizzes/${quiz.id}`)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
+                          onClick={() => router.push(`/admin/quizzes/${quiz.id}/questions`)}
+                        >
+                          Questions
+                        </Button>
+                      </div>
                     </td>
                   </tr>
-          ))}
+                ))}
               </tbody>
             </table>
           </div>

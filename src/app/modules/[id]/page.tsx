@@ -1,13 +1,23 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-// import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, User, BarChart3 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { BookOpen, Play, CheckCircle, Clock, FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3 } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
-import { useTableSubscription } from '@/contexts/RealtimeContext'
+import Link from 'next/link'
+
+interface Course {
+  id: string
+  title: string
+  description: string | null
+  module_id: string
+  order: number
+  lessons: Lesson[]
+  quizzes: Quiz[]
+}
 
 interface Lesson {
   id: string
@@ -26,19 +36,6 @@ interface Quiz {
   lesson_id: string | null
   course_id: string
   created_at: string
-}
-
-interface Course {
-  id: string
-  title: string
-  description: string | null
-  status: 'draft' | 'published'
-  module_id: string
-  admin_id: string | null
-  created_at: string
-  updated_at: string
-  lessons: Lesson[]
-  quizzes: Quiz[]
 }
 
 interface Module {
@@ -66,8 +63,26 @@ export default function ModuleDetailPage() {
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const fetchInProgress = useRef(false)
+  const lastFetchTime = useRef<number>(0)
 
   const fetchModule = useCallback(async () => {
+    // Prevent duplicate requests
+    if (fetchInProgress.current) {
+      console.log('[ModuleDetail] Fetch already in progress, skipping...')
+      return
+    }
+
+    // Debounce requests
+    const now = Date.now()
+    if (now - lastFetchTime.current < 2000) {
+      console.log('[ModuleDetail] Debouncing fetch request...')
+      return
+    }
+
+    fetchInProgress.current = true
+    lastFetchTime.current = now
+
     try {
       setLoading(true)
       console.log('[ModuleDetail] Fetching module:', moduleId)
@@ -101,15 +116,14 @@ export default function ModuleDetailPage() {
       console.error('Error fetching module:', err)
     } finally {
       setLoading(false)
+      fetchInProgress.current = false
     }
   }, [moduleId])
-
-
 
   // Debounced refetch function to prevent too many API calls
   const debouncedRefetch = useCallback(() => {
     const now = Date.now()
-    if (now - lastRefetchTime > 1000) { // Only refetch if more than 1 second has passed
+    if (now - lastRefetchTime > 1000 && !fetchInProgress.current) { // Only refetch if more than 1 second has passed
       setLastRefetchTime(now)
       void fetchModule()
     }
@@ -160,12 +174,6 @@ export default function ModuleDetailPage() {
       void fetchUserAndProgress()
     }
   }, [moduleId, fetchModule, fetchUserAndProgress])
-
-  // Use centralized subscription management
-  useTableSubscription('modules', '*', `id=eq.${moduleId}`, debouncedRefetch)
-  useTableSubscription('courses', '*', `module_id=eq.${moduleId}`, debouncedRefetch)
-  useTableSubscription('lessons', '*', undefined, debouncedRefetch)
-  useTableSubscription('quizzes', '*', undefined, debouncedRefetch)
 
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {
@@ -221,11 +229,11 @@ export default function ModuleDetailPage() {
 
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
-                              {/* Continuous Header */}
+      {/* Continuous Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
         {/* Right: Progress Bar and User Info */}
         <div className="flex items-center gap-6 ml-auto">
-                    {/* Progress Bar */}
+          {/* Progress Bar */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-[#486681]" />
@@ -381,7 +389,7 @@ export default function ModuleDetailPage() {
         </div>
       </aside>
 
-            {/* Main Content Area */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden mt-32">
         {selectedLesson ? (
           <div className="flex-1 overflow-y-auto">

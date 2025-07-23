@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 /**
@@ -11,13 +11,39 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
  * This component runs once in the browser and triggers auth state refresh.
  */
 export default function SessionBootstrap() {
-    useEffect(() => {
+  const syncInProgress = useRef(false)
+  const lastSync = useRef<number>(0)
+  const hasRun = useRef(false)
+
+  useEffect(() => {
     // Only run in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       return
     }
 
+    // Only run once per component mount
+    if (hasRun.current) {
+      return
+    }
+
     const syncAuthState = async () => {
+      // Prevent duplicate sync operations
+      if (syncInProgress.current) {
+        console.log('[SessionBootstrap] Sync already in progress, skipping...')
+        return
+      }
+
+      // Debounce sync operations
+      const now = Date.now()
+      if (now - lastSync.current < 2000) {
+        console.log('[SessionBootstrap] Debouncing sync operation...')
+        return
+      }
+
+      syncInProgress.current = true
+      lastSync.current = now
+      hasRun.current = true
+
       try {
         const supabase = getBrowserClient()
 
@@ -43,27 +69,20 @@ export default function SessionBootstrap() {
         }
       } catch (error) {
         console.error('[SessionBootstrap] Error syncing auth state:', error)
+      } finally {
+        syncInProgress.current = false
       }
     }
 
-    // Run sync on mount
-    void syncAuthState()
+    // Run sync on mount with a small delay to avoid conflicts
+    const initialTimeout = setTimeout(() => {
+      void syncAuthState()
+    }, 100)
 
-    // Also run when cookies change (in case login happens in another tab)
-    const interval = setInterval(() => {
-      if (typeof document === 'undefined') {
-        clearInterval(interval)
-        return
-      }
-
-      const hasAuthCookie = document.cookie.includes('sb-') && document.cookie.includes('auth-token')
-      if (hasAuthCookie) {
-        clearInterval(interval)
-        void syncAuthState()
-      }
-    }, 1000)
-
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(initialTimeout)
+      syncInProgress.current = false
+    }
   }, [])
 
   return null

@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -15,9 +16,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const authCheckInProgress = useRef(false)
+  const lastAuthCheck = useRef<number>(0)
+  const pathname = usePathname()
 
   // Only initialize Supabase client in browser
   const supabase = typeof window !== 'undefined' ? getBrowserClient() : null
+
+  // Check if we're on an admin page
+  const isAdminPage = pathname?.startsWith('/admin')
 
   useEffect(() => {
     // Only run in browser environment
@@ -26,10 +33,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    // Skip auth context initialization for admin pages since they handle their own auth
+    if (isAdminPage) {
+      console.log('[AuthContext] Skipping auth context for admin page')
+      setLoading(false)
+      return
+    }
+
     console.log('[AuthContext] 🚀 Starting AuthContext useEffect...')
 
-    // Get initial session
+    // Get initial session with debouncing
     const getInitialSession = async () => {
+      // Prevent duplicate auth checks
+      if (authCheckInProgress.current) {
+        console.log('[AuthContext] Auth check already in progress, skipping...')
+        return
+      }
+
+      // Debounce auth checks to prevent rapid successive calls
+      const now = Date.now()
+      if (now - lastAuthCheck.current < 1000) {
+        console.log('[AuthContext] Debouncing auth check...')
+        return
+      }
+
+      authCheckInProgress.current = true
+      lastAuthCheck.current = now
+
       try {
         console.log('[AuthContext] Getting initial session...')
 
@@ -51,6 +81,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('[AuthContext] Exception getting session:', error)
         setUser(null)
         setLoading(false)
+      } finally {
+        authCheckInProgress.current = false
       }
 
       console.log('[AuthContext] getInitialSession completed')
@@ -90,14 +122,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadingTimeout = setTimeout(() => {
       console.log('[AuthContext] ⏰ Loading timeout - forcing loading to false')
       setLoading(false)
+      authCheckInProgress.current = false
     }, 5000)
 
     return () => {
       console.log('[AuthContext] Cleaning up auth listener and timeout...')
       subscription?.unsubscribe()
       clearTimeout(loadingTimeout)
+      authCheckInProgress.current = false
     }
-  }, [supabase])
+  }, [supabase, isAdminPage])
 
   const signOut = async () => {
     try {
