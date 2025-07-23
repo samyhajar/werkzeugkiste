@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,23 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import type { Database } from '@/types/supabase'
 
-interface Course {
-  id: string
-  title: string
-  description: string | null
-  status: 'draft' | 'published'
-  created_at: string
+type Course = Database['public']['Tables']['courses']['Row']
+type Module = Database['public']['Tables']['modules']['Row']
+
+interface ModuleWithCourses extends Module {
+  courses?: Course[]
 }
 
-interface Module {
-  id: string
-  title: string
-  description: string | null
-  hero_image: string | null
-  status: 'draft' | 'published'
-  created_at: string
-  updated_at: string
+interface ApiResponse<T> {
+  success: boolean
+  error?: string
+  module?: T
   courses?: Course[]
 }
 
@@ -37,7 +33,7 @@ export default function ModuleManagePage() {
   const router = useRouter()
   const moduleId = params.id as string
 
-  const [module, setModule] = useState<Module | null>(null)
+  const [module, setModule] = useState<ModuleWithCourses | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -52,7 +48,7 @@ export default function ModuleManagePage() {
     status: 'draft' as 'draft' | 'published'
   })
 
-  const fetchModule = async () => {
+  const fetchModule = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/admin/modules/${moduleId}`, {
@@ -64,16 +60,16 @@ export default function ModuleManagePage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<ModuleWithCourses>
 
-      if (data.success) {
+      if (data.success && data.module) {
         setModule(data.module)
         setCourses(data.courses || [])
         setEditForm({
           title: data.module.title,
           description: data.module.description || '',
           hero_image: data.module.hero_image || '',
-          status: data.module.status
+          status: (data.module.status as 'draft' | 'published') || 'draft'
         })
       } else {
         throw new Error(data.error || 'Failed to load module')
@@ -84,7 +80,7 @@ export default function ModuleManagePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [moduleId])
 
   const updateModule = async () => {
     if (!editForm.title.trim()) {
@@ -107,9 +103,9 @@ export default function ModuleManagePage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<ModuleWithCourses>
 
-      if (data.success) {
+      if (data.success && data.module) {
         setModule(data.module)
         setError(null)
       } else {
@@ -136,7 +132,7 @@ export default function ModuleManagePage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<ModuleWithCourses>
 
       if (data.success) {
         // Redirect to modules list
@@ -411,7 +407,7 @@ export default function ModuleManagePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}</span>
+                    <span>Created {formatDistanceToNow(new Date(course.created_at || ''), { addSuffix: true })}</span>
                   </div>
                   <div className="flex gap-2">
                     <Button asChild size="sm" className="flex-1 bg-[#486681] hover:bg-[#3e5570] text-white">

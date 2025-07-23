@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { RealtimeProvider } from '@/contexts/RealtimeContext'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import SessionBootstrap from './SessionBootstrap'
@@ -36,16 +37,18 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     )
   }
 
-  // After hydration, render with AuthProvider
+  // After hydration, render with AuthProvider and RealtimeProvider
   return (
     <AuthProvider>
-      <SessionBootstrap />
-      <div className="min-h-screen">
-        {!isModulePage && !isAdminPage && <Navbar />}
-        <main className={`flex-1 ${!isModulePage && !isAdminPage ? 'pt-24' : ''}`}>{children}</main>
-        {!isModulePage && !isAdminPage && <Footer />}
-        {!isModulePage && !isAdminPage && <ScrollToTopButton />}
-      </div>
+      <RealtimeProvider>
+        <SessionBootstrap />
+        <div className="min-h-screen">
+          {!isModulePage && !isAdminPage && <Navbar />}
+          <main className={`flex-1 ${!isModulePage && !isAdminPage ? 'pt-24' : ''}`}>{children}</main>
+          {!isModulePage && !isAdminPage && <Footer />}
+          {!isModulePage && !isAdminPage && <ScrollToTopButton />}
+        </div>
+      </RealtimeProvider>
     </AuthProvider>
   )
 }

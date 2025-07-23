@@ -40,7 +40,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
         .from('lessons')
         .select('*, quizzes(*)')
         .eq('course_id', courseId)
-        .order('sort_order', { ascending: true })
+        .order('order', { ascending: true })
 
       if (error) {
         setError(error.message)
@@ -61,7 +61,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
       .from('lessons')
       .select('*, quizzes(*)')
       .eq('course_id', courseId)
-      .order('sort_order', { ascending: true })
+      .order('order', { ascending: true })
 
     if (error) {
       setError(error.message)
@@ -80,7 +80,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
       title: payload.title,
       markdown: payload.markdown,
       video_url: payload.video_url || null,
-      sort_order: nextOrder,
+      order: nextOrder,
     })
 
     if (error) {
@@ -118,7 +118,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
     const current = lessons[index]
     const target = lessons[targetIndex]
 
-    // Swap sort_order locally
+    // Swap order locally
     const newCurrentOrder = target.sort_order
     const newTargetOrder = current.sort_order
 

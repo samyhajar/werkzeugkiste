@@ -46,12 +46,21 @@ export async function PATCH(
     }
 
     // Update the lesson to assign it to the course
-    const { data: lesson, error } = await supabase
+    const { data: lesson, error } = (await supabase
       .from('lessons')
       .update({ course_id })
       .eq('id', lessonId)
       .select()
-      .single()
+      .single()) as {
+      data: {
+        id: string
+        title: string
+        description?: string
+        course_id: string
+        order: number
+      } | null
+      error: any
+    }
 
     if (error) {
       console.error('Error assigning lesson to course:', error)

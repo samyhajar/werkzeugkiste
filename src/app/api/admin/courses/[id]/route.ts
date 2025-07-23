@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type CourseUpdate = Database['public']['Tables']['courses']['Update']
+
+interface UpdateCourseRequest {
+  title: string
+  description?: string
+  module_id?: string
+  hero_image?: string
+  status?: string
+}
 
 export async function DELETE(
   request: NextRequest,
@@ -113,7 +124,7 @@ export async function PUT(
       )
     }
 
-    const body = await request.json()
+    const body = (await request.json()) as UpdateCourseRequest
 
     // Validate required fields
     if (!body.title || !body.title.trim()) {
@@ -124,16 +135,18 @@ export async function PUT(
     }
 
     // Update the course
+    const updateData: CourseUpdate = {
+      title: body.title.trim(),
+      description: body.description || null,
+      module_id: body.module_id || null,
+      hero_image: body.hero_image || null,
+      status: body.status || 'draft',
+      updated_at: new Date().toISOString(),
+    }
+
     const { data: updatedCourse, error: updateError } = await supabase
       .from('courses')
-      .update({
-        title: body.title.trim(),
-        description: body.description || null,
-        module_id: body.module_id || null,
-        hero_image: body.hero_image || null,
-        status: body.status || 'draft',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', courseId)
       .select()
       .single()

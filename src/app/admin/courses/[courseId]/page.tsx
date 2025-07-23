@@ -69,7 +69,7 @@ export default function CourseDetailsPage() {
             quizzes(id)
           `)
           .eq('course_id', courseId)
-          .order('sort_order', { ascending: true })
+          .order('order', { ascending: true })
 
         if (lessonsError) throw lessonsError
 

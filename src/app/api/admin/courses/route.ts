@@ -26,10 +26,23 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // Fetch courses data
+    // Fetch courses data with module information
     const { data: courses, error } = await supabase
       .from('courses')
-      .select('id, title, description, status')
+      .select(
+        `
+        id,
+        title,
+        description,
+        status,
+        created_at,
+        module_id,
+        modules (
+          id,
+          title
+        )
+      `
+      )
       .order('created_at', { ascending: false })
 
     if (error) {

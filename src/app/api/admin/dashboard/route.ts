@@ -82,7 +82,7 @@ export async function GET(
         lesson_id,
         student_id,
         completed_at,
-        profiles (
+        profiles!student_id (
           full_name
         ),
         lessons (
@@ -103,7 +103,7 @@ export async function GET(
         user_id,
         completed_at,
         passed,
-        profiles (
+        profiles!user_id (
           full_name
         ),
         quizzes (
@@ -123,7 +123,7 @@ export async function GET(
       id: `lesson-${activity.lesson_id}-${activity.student_id}`,
       timestamp: activity.completed_at || '',
       type: 'lesson_completed' as const,
-      studentName: (activity.profiles as any)?.full_name || 'Unknown Student',
+      studentName: activity.profiles?.full_name || 'Unknown Student',
     }))
 
     // Process quiz activities
@@ -133,7 +133,7 @@ export async function GET(
       id: `quiz-${activity.quiz_id}-${activity.user_id}`,
       timestamp: activity.completed_at || '',
       type: 'quiz_completed' as const,
-      studentName: (activity.profiles as any)?.full_name || 'Unknown Student',
+      studentName: activity.profiles?.full_name || 'Unknown Student',
     }))
 
     // Combine and sort all activities

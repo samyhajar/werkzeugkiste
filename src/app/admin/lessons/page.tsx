@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { formatDistanceToNow } from 'date-fns'
-import { de } from 'date-fns/locale'
+import { formatDateSafely } from '@/lib/utils'
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 
 interface Course {
@@ -632,7 +631,7 @@ export default function LessonsPage() {
 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true, locale: de })}
+                        {formatDateSafely(lesson.created_at, { locale: 'de' })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">

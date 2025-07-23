@@ -8,20 +8,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
-import type {
-  CoursesResponse,
-  CourseResponse,
-  ModulesResponse,
-  CourseData,
-  ModuleData
-} from '@/types/api'
+import type { Database } from '@/types/supabase'
+
+type Course = Database['public']['Tables']['courses']['Row']
+type Module = Database['public']['Tables']['modules']['Row']
+
+interface ApiResponse<T> {
+  success: boolean
+  error?: string
+  courses?: T[]
+  course?: T
+  modules?: T[]
+}
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<CourseData[]>([])
-  const [modules, setModules] = useState<ModuleData[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -33,12 +38,14 @@ export default function CoursesPage() {
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [courseToDelete, setCourseToDelete] = useState<CourseData | null>(null)
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
   const [sortField, setSortField] = useState<'title' | 'description' | 'module' | 'status' | 'created_at'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editing, setEditing] = useState(false)
-  const [editingCourse, setEditingCourse] = useState<CourseData | null>(null)
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
 
   const fetchCourses = async () => {
     try {
@@ -51,7 +58,7 @@ export default function CoursesPage() {
         throw new Error(`Failed to fetch courses: ${response.status}`)
       }
 
-      const result = await response.json() as CoursesResponse
+      const result = await response.json() as ApiResponse<Course>
 
       if (!result.success || !result.courses) {
         throw new Error(result.error || 'Failed to fetch courses')
@@ -76,7 +83,7 @@ export default function CoursesPage() {
         throw new Error(`Failed to fetch modules: ${response.status}`)
       }
 
-      const result = await response.json() as ModulesResponse
+      const result = await response.json() as ApiResponse<Module>
 
       if (!result.success || !result.modules) {
         throw new Error(result.error || 'Failed to fetch modules')
@@ -88,12 +95,19 @@ export default function CoursesPage() {
     }
   }
 
-  const createCourse = async (courseData: {
-    title: string
-    description: string
-    module_id: string
-    hero_image: string
-  }) => {
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([fetchCourses(), fetchModules()])
+      setLoading(false)
+    }
+    void loadData()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!formData.title.trim()) return
+
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'POST',
@@ -101,49 +115,37 @@ export default function CoursesPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(courseData),
+        body: JSON.stringify(formData),
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to create course: ${response.status}`)
+        throw new Error(`API error: ${response.status}`)
       }
 
-      const result = await response.json() as CourseResponse
+      const data = await response.json()
 
-      if (!result.success || !result.course) {
-        throw new Error(result.error || 'Failed to create course')
+      if (data.success) {
+        setCourses([data.course, ...courses])
+        setFormData({
+          title: '',
+          description: '',
+          module_id: '',
+          hero_image: '',
+        })
+        setCreateModalOpen(false)
+      } else {
+        throw new Error(data.error || 'Failed to create course')
       }
-
-      setCreateModalOpen(false)
-      setFormData({ title: '', description: '', module_id: '', hero_image: '' })
-      await Promise.all([fetchCourses(), fetchModules()])
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create course'
       console.error('Error creating course:', err)
-      setError(errorMessage)
+      setError(err instanceof Error ? err.message : 'Failed to create course')
     }
-  }
-
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true)
-      await Promise.all([fetchCourses(), fetchModules()])
-      setLoading(false)
-    }
-
-    void loadData()
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    void createCourse(formData)
   }
 
   const deleteCourse = async () => {
     if (!courseToDelete) return
 
     setDeleting(true)
-
     try {
       const response = await fetch(`/api/admin/courses/${courseToDelete.id}`, {
         method: 'DELETE',
@@ -171,12 +173,12 @@ export default function CoursesPage() {
     }
   }
 
-  const openDeleteDialog = (course: CourseData) => {
+  const openDeleteDialog = (course: Course) => {
     setCourseToDelete(course)
     setDeleteDialogOpen(true)
   }
 
-  const openEditDialog = (course: CourseData) => {
+  const openEditDialog = (course: Course) => {
     setEditingCourse(course)
     setIsEditDialogOpen(true)
   }
@@ -205,8 +207,10 @@ export default function CoursesPage() {
           bValue = (b.description || '').toLowerCase()
           break
         case 'module':
-          aValue = (a.modules?.title || '').toLowerCase()
-          bValue = (b.modules?.title || '').toLowerCase()
+          const moduleA = modules.find(m => m.id === a.module_id)
+          const moduleB = modules.find(m => m.id === b.module_id)
+          aValue = (moduleA?.title || '').toLowerCase()
+          bValue = (moduleB?.title || '').toLowerCase()
           break
         case 'status':
           aValue = a.status || 'draft'
@@ -272,13 +276,40 @@ export default function CoursesPage() {
     }
   }
 
+  const filteredCourses = getSortedCourses().filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    const matchesStatus = statusFilter === 'all' || course.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-8 py-8">
-        <div className="flex items-center justify-center min-h-96">
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
+            <span className="text-gray-600">Loading courses...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading courses...</p>
+            <div className="text-red-600 mb-2">Failed to load courses</div>
+            <div className="text-gray-500 text-sm">{error}</div>
+            <Button
+              onClick={() => void fetchCourses()}
+              className="mt-4"
+              variant="outline"
+            >
+              Retry
+            </Button>
           </div>
         </div>
       </div>
@@ -291,32 +322,188 @@ export default function CoursesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Kurse</h1>
-          <p className="text-gray-600 mt-2">Verwalten Sie Ihre Lernkurse</p>
+          <p className="text-gray-600 mt-2">
+            Verwalten Sie Ihre Lernkurse
+          </p>
         </div>
-        <Button
-          onClick={() => setCreateModalOpen(true)}
-          className="bg-[#486681] hover:bg-[#3e5570] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Kurs erstellen
-        </Button>
+        <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
+              <Plus className="w-4 h-4 mr-2" />
+              + Kurs erstellen
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
+            <DialogHeader className="text-center pb-4 flex-shrink-0">
+              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+                <span className="text-white text-lg">📚</span>
+              </div>
+              <DialogTitle className="text-xl font-bold text-gray-900">Create New Course</DialogTitle>
+              <DialogDescription className="text-sm text-gray-600">
+                Create a new learning course to add to your platform
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
+              {/* Course Info Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📝</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Course Information</h3>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Course Title *</Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="e.g., Digital Marketing Fundamentals"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Describe what this course covers and its learning objectives..."
+                      rows={3}
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Module Assignment Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📦</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Module Assignment</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="module_id" className="text-xs font-semibold text-gray-700">Select Module</Label>
+                  <Select value={formData.module_id} onValueChange={(value) => setFormData({ ...formData, module_id: value })}>
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
+                      <SelectValue placeholder="Choose a module for this course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules.map((module) => (
+                        <SelectItem key={module.id} value={module.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📦</span>
+                            <span>{module.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Choose the module where this course should appear</p>
+                </div>
+              </div>
+
+              {/* Visual Design Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">🎨</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
+                  <Input
+                    id="hero_image"
+                    value={formData.hero_image}
+                    onChange={(e) => setFormData({ ...formData, hero_image: e.target.value })}
+                    placeholder="https://example.com/image.jpg"
+                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                  />
+                  <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
+                </div>
+              </div>
+            </form>
+
+            <DialogFooter className="flex-shrink-0 pt-4 border-t border-gray-200">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateModalOpen(false)}
+                disabled={loading}
+                className="sm:w-auto w-full h-9 text-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={loading || !formData.title.trim()}
+                className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+              >
+                {loading ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">✨</span>
+                    Create Course
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+      {/* Filters */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Kurse suchen..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
+          >
+            <SelectTrigger className="w-[180px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-white border border-gray-200 shadow-lg">
+              <SelectItem value="all">Alle Kurse</SelectItem>
+              <SelectItem value="published">Veröffentlicht</SelectItem>
+              <SelectItem value="draft">Entwurf</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      )}
+      </div>
 
       {/* Courses Table */}
-      {courses.length === 0 ? (
+      {filteredCourses.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div className="text-gray-500 mb-4 text-lg">
-            Noch keine Kurse erstellt
+            {courses.length === 0 ? 'No courses created yet' : 'No courses match your search'}
           </div>
-          <Button onClick={() => setCreateModalOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3">
-            Erstellen Sie Ihren ersten Kurs
-          </Button>
+          {courses.length === 0 && (
+            <Button onClick={() => setCreateModalOpen(true)} className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3">
+              Erstellen Sie Ihren ersten Kurs
+            </Button>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -385,7 +572,7 @@ export default function CoursesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {getSortedCourses().map((course) => (
+                {filteredCourses.map((course) => (
                   <tr
                     key={course.id}
                     className="bg-white hover:bg-gray-100 transition-colors duration-200"
@@ -404,7 +591,10 @@ export default function CoursesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {course.modules?.title || 'Nicht zugewiesen'}
+                        {(() => {
+                          const moduleItem = modules.find(m => m.id === course.module_id)
+                          return moduleItem?.title || 'Nicht zugewiesen'
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -421,7 +611,12 @@ export default function CoursesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {course.created_at ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true, locale: de }) : 'unbekannt'}
+                        {course.created_at
+                          ? formatDistanceToNow(new Date(course.created_at), {
+                              addSuffix: true,
+                              locale: de,
+                            })
+                          : 'Unbekannt'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -451,87 +646,6 @@ export default function CoursesPage() {
         </div>
       )}
 
-      {courses.length === 0 && !loading && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Noch keine Kurse</h3>
-          <p className="text-gray-600 mb-4">Erstellen Sie Ihren ersten Kurs, um zu beginnen.</p>
-                      <Button
-              onClick={() => setCreateModalOpen(true)}
-              className="bg-[#486681] hover:bg-[#3e5570] text-white px-6 py-3"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Kurs erstellen
-            </Button>
-        </div>
-      )}
-
-      {/* Create Course Modal */}
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Neuen Kurs erstellen</DialogTitle>
-            <DialogDescription>
-              Fügen Sie einen neuen Kurs zu Ihrer Lernplattform hinzu.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Titel</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Kurstitel eingeben"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Beschreibung</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Kursbeschreibung eingeben"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="module_id">Modul</Label>
-              <Select value={formData.module_id} onValueChange={(value) => setFormData({ ...formData, module_id: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Modul auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {modules.map((module) => (
-                    <SelectItem key={module.id} value={module.id}>
-                      {module.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="hero_image">Hero-Bild URL</Label>
-              <Input
-                id="hero_image"
-                value={formData.hero_image}
-                onChange={(e) => setFormData({ ...formData, hero_image: e.target.value })}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setCreateModalOpen(false)}>
-                Abbrechen
-              </Button>
-              <Button type="submit" className="bg-[#486681] hover:bg-[#3e5570] text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Kurs erstellen
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Delete Confirmation Modal */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="max-w-md">
@@ -539,7 +653,7 @@ export default function CoursesPage() {
             <DialogTitle className="text-red-600">Kurs löschen</DialogTitle>
             <DialogDescription>
               Sind Sie sicher, dass Sie den Kurs &quot;{courseToDelete?.title}&quot; löschen möchten?
-              Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Lektionen werden ebenfalls gelöscht.
+              Diese Aktion kann nicht rückgängig gemacht werden.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
@@ -577,31 +691,31 @@ export default function CoursesPage() {
 
       {/* Edit Course Modal */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col mx-4">
           <DialogHeader className="text-center pb-4 flex-shrink-0">
             <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
               <span className="text-white text-lg">✏️</span>
             </div>
-            <DialogTitle className="text-xl font-bold text-gray-900">Kurs bearbeiten</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-gray-900">Edit Course</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen des Kurses &quot;{editingCourse?.title}&quot;
+              Update course information and settings
             </DialogDescription>
           </DialogHeader>
 
           {editingCourse && (
-            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
-              {/* Course Info Card */}
+            <div className="space-y-6 overflow-y-auto flex-1 pr-2 -mr-2">
+              {/* Course Information Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Kurs Informationen</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Course Information</h3>
                 </div>
 
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <Label htmlFor="edit-title" className="text-xs font-semibold text-gray-700">Kurs Titel *</Label>
+                    <Label htmlFor="edit-title" className="text-xs font-semibold text-gray-700">Course Title *</Label>
                     <Input
                       id="edit-title"
                       value={editingCourse.title}
@@ -611,12 +725,12 @@ export default function CoursesPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="edit-description" className="text-xs font-semibold text-gray-700">Beschreibung</Label>
+                    <Label htmlFor="edit-description" className="text-xs font-semibold text-gray-700">Description</Label>
                     <Textarea
                       id="edit-description"
                       value={editingCourse.description || ''}
                       onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
-                      placeholder="Beschreiben Sie, was dieser Kurs abdeckt und seine Lernziele..."
+                      placeholder="Describe what this course covers and its learning objectives..."
                       rows={2}
                       className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
                     />
@@ -630,17 +744,17 @@ export default function CoursesPage() {
                   <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📚</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Modul Zuweisung</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Module Assignment</h3>
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="edit-module" className="text-xs font-semibold text-gray-700">Modul auswählen</Label>
+                  <Label htmlFor="edit-module" className="text-xs font-semibold text-gray-700">Select Module</Label>
                   <Select
                     value={editingCourse.module_id || ''}
                     onValueChange={(value) => setEditingCourse({ ...editingCourse, module_id: value })}
                   >
                     <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Wählen Sie ein Modul für diesen Kurs" />
+                      <SelectValue placeholder="Choose a module for this course" />
                     </SelectTrigger>
                     <SelectContent>
                       {modules.map((module) => (
@@ -653,7 +767,7 @@ export default function CoursesPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500">Wählen Sie das Modul, in dem dieser Kurs erscheinen soll</p>
+                  <p className="text-xs text-gray-500">Choose the module where this course should appear</p>
                 </div>
               </div>
 
@@ -663,65 +777,54 @@ export default function CoursesPage() {
                   <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">🎨</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Visuelles Design</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="edit-hero_image" className="text-xs font-semibold text-gray-700">Hero Bild URL</Label>
+                  <Label htmlFor="edit-hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
                   <Input
                     id="edit-hero_image"
                     value={editingCourse.hero_image || ''}
                     onChange={(e) => setEditingCourse({ ...editingCourse, hero_image: e.target.value })}
-                    placeholder="https://example.com/course-image.jpg (optional)"
+                    placeholder="https://example.com/image.jpg"
                     className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                   />
-                  <p className="text-xs text-gray-500">Fügen Sie ein Bild hinzu, um Ihren Kurs ansprechender zu gestalten (800x400px)</p>
+                  <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
                 </div>
               </div>
 
-              {/* Settings Card */}
+              {/* Status Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">⚙️</span>
                   </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Kurs Einstellungen</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Course Status</h3>
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="edit-status" className="text-xs font-semibold text-gray-700">Publikationsstatus</Label>
+                  <Label htmlFor="edit-status" className="text-xs font-semibold text-gray-700">Status</Label>
                   <Select
                     value={editingCourse.status || 'draft'}
-                    onValueChange={(value: 'draft' | 'published') =>
-                      setEditingCourse({ ...editingCourse, status: value })
-                    }
+                    onValueChange={(value: 'draft' | 'published') => setEditingCourse({ ...editingCourse, status: value })}
                   >
                     <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <span>📝</span>
-                          <span>Entwurf - Nicht sichtbar für Studenten</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="published">
-                        <div className="flex items-center gap-2">
-                          <span>🌟</span>
-                          <span>Veröffentlicht - Verfügbar für Studenten</span>
-                        </div>
-                      </SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500">Set the course visibility status</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Action Buttons - Fixed Footer */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
+          <DialogFooter className="flex-shrink-0 pt-4 border-t border-gray-200">
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 setIsEditDialogOpen(false)
@@ -730,8 +833,7 @@ export default function CoursesPage() {
               disabled={editing}
               className="sm:w-auto w-full h-9 text-sm"
             >
-              <span className="mr-2">❌</span>
-              Abbrechen
+              Cancel
             </Button>
             <Button
               onClick={() => void updateCourse()}
@@ -741,16 +843,16 @@ export default function CoursesPage() {
               {editing ? (
                 <>
                   <span className="mr-2 animate-spin">⏳</span>
-                  Wird aktualisiert...
+                  Updating...
                 </>
               ) : (
                 <>
                   <span className="mr-2">💾</span>
-                  Änderungen speichern
+                  Update Course
                 </>
               )}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+interface AssignCourseRequest {
+  course_id: string
+  module_id: string
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -32,7 +37,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { course_id, module_id } = await request.json()
+    const { course_id, module_id } =
+      (await request.json()) as AssignCourseRequest
 
     if (!course_id || !module_id) {
       return NextResponse.json(
@@ -41,29 +47,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Get the current maximum order for courses in this module
-    const { data: maxOrderResult, error: maxOrderError } = await supabase
-      .from('courses')
-      .select('order')
-      .eq('module_id', module_id)
-      .order('order', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (maxOrderError) {
-      console.error('Error getting max order:', maxOrderError)
-      return NextResponse.json(
-        { success: false, error: maxOrderError.message },
-        { status: 500 }
-      )
-    }
-
-    const newOrder = (maxOrderResult?.order || 0) + 1
-
-    // Update the course to assign it to the module with the new order
+    // Update the course to assign it to the module
     const { data: course, error } = await supabase
       .from('courses')
-      .update({ module_id, order: newOrder })
+      .update({ module_id })
       .eq('id', course_id)
       .select()
       .single()

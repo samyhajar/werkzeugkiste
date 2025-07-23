@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type ModuleUpdate = Database['public']['Tables']['modules']['Update']
+
+interface UpdateModuleRequest {
+  title: string
+  description?: string
+  hero_image?: string
+  status?: string
+}
 
 export async function GET(
   request: NextRequest,
@@ -87,7 +97,7 @@ export async function PUT(
     }
 
     // Parse request body
-    const body = await request.json()
+    const body = (await request.json()) as UpdateModuleRequest
     const { title, description, hero_image, status } = body
 
     if (!title || !title.trim()) {
@@ -98,15 +108,17 @@ export async function PUT(
     }
 
     // Update module
+    const updateData: ModuleUpdate = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      hero_image: hero_image?.trim() || null,
+      status: status || 'draft',
+      updated_at: new Date().toISOString(),
+    }
+
     const { data: module, error } = await supabase
       .from('modules')
-      .update({
-        title: title.trim(),
-        description: description?.trim() || null,
-        hero_image: hero_image?.trim() || null,
-        status: status || 'draft',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()
@@ -184,7 +196,7 @@ export async function DELETE(
 
     // Delete all lessons in courses of this module
     if (courses && courses.length > 0) {
-      const courseIds = courses.map(c => c.id)
+      const courseIds = courses.map((c: { id: string }) => c.id)
 
       // Delete lessons
       const { error: lessonsDeleteError } = await supabase

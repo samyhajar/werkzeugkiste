@@ -80,7 +80,7 @@ export default function EditQuizPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isAddQuestionDialogOpen, setIsAddQuestionDialogOpen] = useState(false)
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
+  const [_editingQuestion, setEditingQuestion] = useState<Question | null>(null)
 
   const [newQuestion, setNewQuestion] = useState({
     type: 'single' as string,
@@ -427,7 +427,7 @@ export default function EditQuizPage() {
         <CardContent className="bg-white">
           {questions.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No questions yet. Click "Add Question" to get started.
+              No questions yet. Click &quot;Add Question&quot; to get started.
             </div>
           ) : (
             <div className="space-y-4">

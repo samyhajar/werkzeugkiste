@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { BookOpen, FileText, HelpCircle, CheckCircle, Play } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { useTableSubscription } from '@/contexts/RealtimeContext'
 
 interface Course {
   id: string
@@ -46,7 +47,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [userProgress, setUserProgress] = useState<Record<string, number>>({})
 
-  const fetchStudentData = async () => {
+  const fetchStudentData = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -72,77 +73,16 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchStudentData()
+  }, [fetchStudentData])
 
-    // Set up real-time subscriptions for live updates
-    const supabase = getBrowserClient()
-    let isSubscribed = true
-
-    // Subscribe to module changes
-    const modulesSubscription = supabase
-      .channel('student-modules-changes')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'modules'
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[StudentDashboard] Modules changed, refetching...')
-            void fetchStudentData()
-          }
-        }
-      )
-      .subscribe()
-
-    // Subscribe to course changes
-    const coursesSubscription = supabase
-      .channel('student-courses-changes')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'courses'
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[StudentDashboard] Courses changed, refetching...')
-            void fetchStudentData()
-          }
-        }
-      )
-      .subscribe()
-
-    // Subscribe to lesson changes
-    const lessonsSubscription = supabase
-      .channel('student-lessons-changes')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lessons'
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[StudentDashboard] Lessons changed, refetching...')
-            void fetchStudentData()
-          }
-        }
-      )
-      .subscribe()
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      isSubscribed = false
-      modulesSubscription.unsubscribe()
-      coursesSubscription.unsubscribe()
-      lessonsSubscription.unsubscribe()
-    }
-  }, [])
+  // Use centralized subscription management
+  useTableSubscription('modules', '*', undefined, fetchStudentData)
+  useTableSubscription('courses', '*', undefined, fetchStudentData)
+  useTableSubscription('lessons', '*', undefined, fetchStudentData)
 
   const getCourseProgress = (course: Course) => {
     const totalLessons = course.lessons.length

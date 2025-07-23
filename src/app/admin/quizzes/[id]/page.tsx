@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 
@@ -153,17 +153,17 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Title</label>
+              <div className="text-sm font-medium text-gray-700">Title</div>
               <p className="text-gray-900">{quiz.title}</p>
             </div>
             {quiz.description && (
               <div>
-                <label className="text-sm font-medium text-gray-700">Description</label>
+                <div className="text-sm font-medium text-gray-700">Description</div>
                 <p className="text-gray-900">{quiz.description}</p>
               </div>
             )}
             <div>
-              <label className="text-sm font-medium text-gray-700">Scope</label>
+              <div className="text-sm font-medium text-gray-700">Scope</div>
               <div className="flex items-center gap-2">
                 <Badge variant={quiz.scope === 'course' ? 'default' : 'secondary'}>
                   {quiz.scope === 'course' ? '📚 Course' : '📖 Lesson'}
@@ -172,7 +172,7 @@ export default function QuizDetailPage() {
             </div>
             {quiz.legacy_id && (
               <div>
-                <label className="text-sm font-medium text-gray-700">Legacy ID</label>
+                <div className="text-sm font-medium text-gray-700">Legacy ID</div>
                 <p className="text-gray-900 font-mono text-sm">{quiz.legacy_id}</p>
               </div>
             )}
@@ -187,7 +187,7 @@ export default function QuizDetailPage() {
           <CardContent className="space-y-4">
             {quiz.scope === 'lesson' && quiz.lesson ? (
               <div>
-                <label className="text-sm font-medium text-gray-700">Lesson</label>
+                <div className="text-sm font-medium text-gray-700">Lesson</div>
                 <p className="text-gray-900">{quiz.lesson.title}</p>
                 {quiz.lesson.course && (
                   <p className="text-sm text-gray-500">Course: {quiz.lesson.course.title}</p>
@@ -195,12 +195,12 @@ export default function QuizDetailPage() {
               </div>
             ) : quiz.scope === 'course' && quiz.course ? (
               <div>
-                <label className="text-sm font-medium text-gray-700">Course</label>
+                <div className="text-sm font-medium text-gray-700">Course</div>
                 <p className="text-gray-900">{quiz.course.title}</p>
               </div>
             ) : (
               <div>
-                <label className="text-sm font-medium text-gray-700">Assignment</label>
+                <div className="text-sm font-medium text-gray-700">Assignment</div>
                 <p className="text-gray-500">Not assigned</p>
               </div>
             )}
@@ -215,21 +215,21 @@ export default function QuizDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Pass Percentage</label>
+                <div className="text-sm font-medium text-gray-700">Pass Percentage</div>
                 <p className="text-gray-900">{quiz.pass_percent}%</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Max Points</label>
+                <div className="text-sm font-medium text-gray-700">Max Points</div>
                 <p className="text-gray-900">{quiz.max_points}</p>
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">Feedback Mode</label>
+              <div className="text-sm font-medium text-gray-700">Feedback Mode</div>
               <p className="text-gray-900 capitalize">{quiz.feedback_mode.replace('_', ' ')}</p>
             </div>
             {quiz.sort_order && (
               <div>
-                <label className="text-sm font-medium text-gray-700">Sort Order</label>
+                <div className="text-sm font-medium text-gray-700">Sort Order</div>
                 <p className="text-gray-900">{quiz.sort_order}</p>
               </div>
             )}
@@ -243,19 +243,19 @@ export default function QuizDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Created</label>
+              <div className="text-sm font-medium text-gray-700">Created</div>
               <p className="text-gray-900">
                 {formatDistanceToNow(new Date(quiz.created_at), { addSuffix: true })}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">Last Updated</label>
+              <div className="text-sm font-medium text-gray-700">Last Updated</div>
               <p className="text-gray-900">
                 {formatDistanceToNow(new Date(quiz.updated_at), { addSuffix: true })}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700">Quiz ID</label>
+              <div className="text-sm font-medium text-gray-700">Quiz ID</div>
               <p className="text-gray-900 font-mono text-sm">{quiz.id}</p>
             </div>
           </CardContent>

@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type LessonUpdate = Database['public']['Tables']['lessons']['Update']
+
+interface UpdateLessonRequest {
+  title: string
+  content?: string
+  course_id: string
+  sort_order?: number
+}
 
 export async function PUT(
   request: NextRequest,
@@ -22,7 +32,7 @@ export async function PUT(
       )
     }
 
-    const body = await request.json()
+    const body = (await request.json()) as UpdateLessonRequest
 
     // Validate required fields
     if (!body.title || !body.title.trim()) {
@@ -40,15 +50,17 @@ export async function PUT(
     }
 
     // Update the lesson
+    const updateData: LessonUpdate = {
+      title: body.title.trim(),
+      content: body.content || null,
+      course_id: body.course_id,
+      sort_order: body.sort_order || 0,
+      updated_at: new Date().toISOString(),
+    }
+
     const { data: updatedLesson, error: updateError } = await supabase
       .from('lessons')
-      .update({
-        title: body.title.trim(),
-        content: body.content || null,
-        course_id: body.course_id,
-        sort_order: body.sort_order || 0,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', lessonId)
       .select()
       .single()

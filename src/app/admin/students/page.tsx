@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-// import { CardDescription } from '@/components/ui/card'
 import { formatDistanceToNow } from 'date-fns'
 
 interface Student {
@@ -59,6 +58,19 @@ export default function StudentsPage() {
     return matchesSearch
   })
 
+  // Calculate statistics
+  const totalStudents = students.length
+  const recentStudents = students.filter(s => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return new Date(s.created_at) > weekAgo
+  }).length
+  const activeStudents = students.filter(s => {
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    return new Date(s.updated_at || s.created_at) > monthAgo
+  }).length
+
   useEffect(() => {
     void fetchStudents()
   }, [])
@@ -107,25 +119,89 @@ export default function StudentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline">
+          <Badge variant="outline" className="bg-[#486681]/10 text-[#486681] border-[#486681]/20">
             {filteredStudents.length} students
           </Badge>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search students by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
-            />
-          </div>
-        </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Total Students
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{totalStudents}</div>
+            <p className="text-sm text-gray-500 mt-1">All registered students</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Recent Registrations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{recentStudents}</div>
+            <p className="text-sm text-gray-500 mt-1">This week</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-[#486681] flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Active Students
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900">{activeStudents}</div>
+            <p className="text-sm text-gray-500 mt-1">Last 30 days</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Search */}
+      <Card className="shadow-lg border border-gray-200 bg-white">
+        <CardContent className="p-6">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <Input
+                  placeholder="Search students by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20 pl-10"
+                />
+              </div>
+            </div>
+            {searchTerm && (
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                className="h-12 px-4"
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Students Table */}
       {filteredStudents.length === 0 ? (
@@ -134,10 +210,19 @@ export default function StudentsPage() {
             <div className="text-gray-500 mb-4 text-lg">
               {students.length === 0 ? 'No students registered yet' : 'No students match your search'}
             </div>
+            {searchTerm && (
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                className="mt-2"
+              >
+                Clear search
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
-        <Card className="shadow-lg border border-gray-200 bg-white overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -228,50 +313,8 @@ export default function StudentsPage() {
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
       )}
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader>
-            <CardTitle className="text-base text-[#486681]">Total Students</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{students.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader>
-            <CardTitle className="text-base text-[#486681]">Recent Registrations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {students.filter(s => {
-                const weekAgo = new Date()
-                weekAgo.setDate(weekAgo.getDate() - 7)
-                return new Date(s.created_at) > weekAgo
-              }).length}
-            </div>
-            <p className="text-sm text-gray-500">This week</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-md hover:shadow-lg transition-all duration-200 border-0 bg-gradient-to-br from-white to-gray-50/30">
-          <CardHeader>
-            <CardTitle className="text-base text-[#486681]">Active Students</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-900">
-              {students.filter(s => {
-                const monthAgo = new Date()
-                monthAgo.setMonth(monthAgo.getMonth() - 1)
-                return new Date(s.updated_at || s.created_at) > monthAgo
-              }).length}
-            </div>
-            <p className="text-sm text-gray-500">Last 30 days</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }

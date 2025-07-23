@@ -106,12 +106,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Determine scope and set appropriate IDs
-    let quizData: any = {
+    const quizData: any = {
       title,
       description,
       pass_percent: pass_percentage || 80,
       feedback_mode: 'at_end',
-      max_points: questions?.length || 0,
+      max_points: questions?.length || 0, // Will be updated after questions are created
       sort_order: 0,
       settings: {},
     }
@@ -181,6 +181,17 @@ export async function POST(request: NextRequest) {
       if (questionsError) {
         console.error('Error creating questions:', questionsError)
         // Don't fail the entire request, just log the error
+      } else {
+        // Update max_points based on actual questions created
+        const totalPoints = questions.length
+        const { error: updateError } = await supabase
+          .from('enhanced_quizzes')
+          .update({ max_points: totalPoints })
+          .eq('id', newQuiz.id)
+
+        if (updateError) {
+          console.error('Error updating max_points:', updateError)
+        }
       }
     }
 

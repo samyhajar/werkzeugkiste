@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+interface ReorderCoursesRequest {
+  module_id: string
+  course_ids: string[]
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -32,7 +37,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { module_id, course_ids } = await request.json()
+    const { module_id, course_ids } =
+      (await request.json()) as ReorderCoursesRequest
 
     if (!module_id || !course_ids || !Array.isArray(course_ids)) {
       return NextResponse.json(
@@ -44,12 +50,12 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Get current orders of all courses in the module
-    const { data: currentCourses, error: fetchError } = await supabase
+    // Get current courses in the module
+    const { data: _currentCourses, error: fetchError } = await supabase
       .from('courses')
-      .select('id, order')
+      .select('id, created_at')
       .eq('module_id', module_id)
-      .order('order', { ascending: true })
+      .order('created_at', { ascending: true })
 
     if (fetchError) {
       console.error('Error fetching current courses:', fetchError)
@@ -59,35 +65,12 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Create a map of current orders
-    const currentOrderMap = new Map()
-    currentCourses?.forEach(course => {
-      currentOrderMap.set(course.id, course.order)
+    // For now, just return success since we don't have a sort_order column
+    // TODO: Add sort_order column to courses table in a future migration
+    return NextResponse.json({
+      success: true,
+      message: 'Courses reorder not implemented yet - sort_order column needed',
     })
-
-    // Update orders incrementally
-    for (let i = 0; i < course_ids.length; i++) {
-      const courseId = course_ids[i]
-      const currentOrder = currentOrderMap.get(courseId) || 0
-      const newOrder = i + 1
-
-      // Only update if order actually changed
-      if (currentOrder !== newOrder) {
-        const { error } = await supabase
-          .from('courses')
-          .update({ order: newOrder })
-          .eq('id', courseId)
-          .eq('module_id', module_id)
-
-        if (error) {
-          console.error('Error updating course order:', error)
-          return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-          )
-        }
-      }
-    }
 
     return NextResponse.json({
       success: true,

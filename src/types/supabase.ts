@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -54,43 +74,80 @@ export type Database = {
           },
         ]
       }
-      certificates: {
+      certificate_templates: {
         Row: {
+          background_image_url: string | null
+          created_at: string | null
+          footer_text: string | null
           id: string
-          issued_at: string | null
-          meta: Json | null
-          module_id: string
-          name_used: string | null
-          pdf_url: string
-          show_name: boolean | null
-          user_id: string
+          main_text: string | null
+          name: string
+          show_certificate_number: boolean | null
+          show_date: boolean | null
+          subtitle: string | null
+          title: string
+          updated_at: string | null
         }
         Insert: {
+          background_image_url?: string | null
+          created_at?: string | null
+          footer_text?: string | null
           id?: string
-          issued_at?: string | null
-          meta?: Json | null
-          module_id: string
-          name_used?: string | null
-          pdf_url: string
-          show_name?: boolean | null
-          user_id: string
+          main_text?: string | null
+          name: string
+          show_certificate_number?: boolean | null
+          show_date?: boolean | null
+          subtitle?: string | null
+          title: string
+          updated_at?: string | null
         }
         Update: {
+          background_image_url?: string | null
+          created_at?: string | null
+          footer_text?: string | null
           id?: string
+          main_text?: string | null
+          name?: string
+          show_certificate_number?: boolean | null
+          show_date?: boolean | null
+          subtitle?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      certificates: {
+        Row: {
+          course_id: string
+          file_url: string | null
+          issued_at: string | null
+          student_id: string
+        }
+        Insert: {
+          course_id: string
+          file_url?: string | null
           issued_at?: string | null
-          meta?: Json | null
-          module_id?: string
-          name_used?: string | null
-          pdf_url?: string
-          show_name?: boolean | null
-          user_id?: string
+          student_id: string
+        }
+        Update: {
+          course_id?: string
+          file_url?: string | null
+          issued_at?: string | null
+          student_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "certificates_module_id_fkey"
-            columns: ["module_id"]
+            foreignKeyName: "certificates_course_id_fkey"
+            columns: ["course_id"]
             isOneToOne: false
-            referencedRelation: "modules"
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -102,10 +159,7 @@ export type Database = {
           description: string | null
           hero_image: string | null
           id: string
-          legacy_id: string | null
           module_id: string | null
-          order: number | null
-          slug: string | null
           status: string | null
           title: string
           updated_at: string | null
@@ -116,10 +170,7 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
-          legacy_id?: string | null
           module_id?: string | null
-          order?: number | null
-          slug?: string | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -130,10 +181,7 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
-          legacy_id?: string | null
           module_id?: string | null
-          order?: number | null
-          slug?: string | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -281,52 +329,6 @@ export type Database = {
           },
         ]
       }
-      legacy_course_mapping: {
-        Row: {
-          legacy_id: string
-          new_id: string
-        }
-        Insert: {
-          legacy_id: string
-          new_id: string
-        }
-        Update: {
-          legacy_id?: string
-          new_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "legacy_course_mapping_new_id_fkey"
-            columns: ["new_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      legacy_lesson_mapping: {
-        Row: {
-          legacy_id: string
-          new_id: string | null
-        }
-        Insert: {
-          legacy_id: string
-          new_id?: string | null
-        }
-        Update: {
-          legacy_id?: string
-          new_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "legacy_lesson_mapping_new_id_fkey"
-            columns: ["new_id"]
-            isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       lesson_progress: {
         Row: {
           completed_at: string | null
@@ -379,7 +381,6 @@ export type Database = {
           created_at: string | null
           id: string
           markdown: string | null
-          order: number | null
           sort_order: number | null
           title: string | null
           updated_at: string | null
@@ -391,7 +392,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           markdown?: string | null
-          order?: number | null
           sort_order?: number | null
           title?: string | null
           updated_at?: string | null
@@ -403,7 +403,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           markdown?: string | null
-          order?: number | null
           sort_order?: number | null
           title?: string | null
           updated_at?: string | null
@@ -425,8 +424,6 @@ export type Database = {
           description: string | null
           hero_image: string | null
           id: string
-          legacy_id: number | null
-          order: number | null
           status: string | null
           title: string
           updated_at: string | null
@@ -436,8 +433,6 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
-          legacy_id?: number | null
-          order?: number | null
           status?: string | null
           title: string
           updated_at?: string | null
@@ -447,8 +442,6 @@ export type Database = {
           description?: string | null
           hero_image?: string | null
           id?: string
-          legacy_id?: number | null
-          order?: number | null
           status?: string | null
           title?: string
           updated_at?: string | null
@@ -805,7 +798,6 @@ export type Database = {
           id: string
           is_correct: boolean | null
           meta: Json | null
-          order: number | null
           question_id: string | null
           sort_order: number | null
           value_numeric: number | null
@@ -817,7 +809,6 @@ export type Database = {
           id: string
           is_correct?: boolean | null
           meta?: Json | null
-          order?: number | null
           question_id?: string | null
           sort_order?: number | null
           value_numeric?: number | null
@@ -829,7 +820,6 @@ export type Database = {
           id?: string
           is_correct?: boolean | null
           meta?: Json | null
-          order?: number | null
           question_id?: string | null
           sort_order?: number | null
           value_numeric?: number | null
@@ -843,7 +833,6 @@ export type Database = {
           explanation_html: string | null
           id: string
           meta: Json | null
-          order: number | null
           points: number | null
           question_html: string | null
           quiz_id: string | null
@@ -855,7 +844,6 @@ export type Database = {
           explanation_html?: string | null
           id: string
           meta?: Json | null
-          order?: number | null
           points?: number | null
           question_html?: string | null
           quiz_id?: string | null
@@ -867,7 +855,6 @@ export type Database = {
           explanation_html?: string | null
           id?: string
           meta?: Json | null
-          order?: number | null
           points?: number | null
           question_html?: string | null
           quiz_id?: string | null
@@ -884,7 +871,6 @@ export type Database = {
           id: string
           lesson_id: string | null
           max_points: number | null
-          order: number | null
           pass_percent: number | null
           settings: Json | null
           sort_order: number | null
@@ -897,7 +883,6 @@ export type Database = {
           id: string
           lesson_id?: string | null
           max_points?: number | null
-          order?: number | null
           pass_percent?: number | null
           settings?: Json | null
           sort_order?: number | null
@@ -910,7 +895,6 @@ export type Database = {
           id?: string
           lesson_id?: string | null
           max_points?: number | null
-          order?: number | null
           pass_percent?: number | null
           settings?: Json | null
           sort_order?: number | null
@@ -1008,15 +992,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      create_user_with_profile: {
-        Args: {
-          user_email: string
-          user_password: string
-          user_role?: string
-          confirm_email?: boolean
-        }
-        Returns: string
-      }
       determine_quiz_scope: {
         Args: { course_id_text: string; lesson_id_text: string }
         Returns: Database["public"]["Enums"]["quiz_scope"]
@@ -1028,14 +1003,6 @@ export type Database = {
       normalize_question_type: {
         Args: { ld_type: string }
         Returns: Database["public"]["Enums"]["question_type"]
-      }
-      reorder_lessons_in_course: {
-        Args: { course_id_param: string }
-        Returns: undefined
-      }
-      reorder_quizzes_in_course: {
-        Args: { course_id_param: string }
-        Returns: undefined
       }
       transform_raw_answers: {
         Args: Record<PropertyKey, never>
@@ -1056,10 +1023,12 @@ export type Database = {
       validate_quiz_integrity: {
         Args: Record<PropertyKey, never>
         Returns: {
-          issue: string
           quiz_id: string
-          quiz_legacy: string
-          details: Json
+          quiz_title: string
+          question_count: number
+          answer_count: number
+          has_correct_answers: boolean
+          issues: string[]
         }[]
       }
     }
@@ -1082,25 +1051,21 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
+    | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -1118,16 +1083,14 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -1143,16 +1106,14 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -1168,16 +1129,14 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | { schema: keyof Database },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -1185,21 +1144,22 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof Database
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       question_type: [
@@ -1217,3 +1177,4 @@ export const Constants = {
     },
   },
 } as const
+

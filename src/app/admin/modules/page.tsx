@@ -11,15 +11,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
+import type { Database } from '@/types/supabase'
 
-interface Module {
-  id: string
-  title: string
-  description: string | null
-  hero_image: string | null
-  status: 'draft' | 'published'
-  created_at: string
-  updated_at: string
+type Module = Database['public']['Tables']['modules']['Row']
+
+interface ApiResponse<T> {
+  success: boolean
+  error?: string
+  modules?: T[]
+  module?: T
+}
+
+// Helper function to safely format dates
+const formatDateSafely = (dateString: string | null | undefined) => {
+  if (!dateString) return 'Unknown date'
+
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return 'Invalid date'
+    }
+    return formatDistanceToNow(date, { addSuffix: true, locale: de })
+  } catch (_error) {
+    return 'Invalid date'
+  }
 }
 
 export default function ModulesPage() {
@@ -59,10 +74,10 @@ export default function ModulesPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<Module>
 
-      if (data.success) {
-        setModules(data.modules || [])
+      if (data.success && data.modules) {
+        setModules(data.modules)
       } else {
         throw new Error(data.error || 'Failed to fetch modules')
       }
@@ -95,9 +110,9 @@ export default function ModulesPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<Module>
 
-      if (data.success) {
+      if (data.success && data.module) {
         setModules([data.module, ...modules])
         setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
         setIsCreateDialogOpen(false)
@@ -127,7 +142,7 @@ export default function ModulesPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<Module>
 
       if (data.success) {
         setModules(modules.filter(m => m.id !== moduleToDelete.id))
@@ -185,16 +200,16 @@ export default function ModulesPage() {
           bValue = (b.description || '').toLowerCase()
           break
         case 'status':
-          aValue = a.status
-          bValue = b.status
+          aValue = a.status || ''
+          bValue = b.status || ''
           break
         case 'created_at':
-          aValue = new Date(a.created_at).getTime()
-          bValue = new Date(b.created_at).getTime()
+          aValue = new Date(a.created_at || '').getTime()
+          bValue = new Date(b.created_at || '').getTime()
           break
         case 'updated_at':
-          aValue = new Date(a.updated_at).getTime()
-          bValue = new Date(b.updated_at).getTime()
+          aValue = new Date(a.updated_at || '').getTime()
+          bValue = new Date(b.updated_at || '').getTime()
           break
         default:
           return 0
@@ -234,10 +249,10 @@ export default function ModulesPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
+      const data = await response.json() as ApiResponse<Module>
 
-      if (data.success) {
-        setModules(modules.map(m => m.id === editingModule.id ? editingModule : m))
+      if (data.success && data.module) {
+        setModules(modules.map(m => m.id === editingModule.id ? data.module! : m))
         setIsEditDialogOpen(false)
         setEditingModule(null)
       } else {
@@ -589,12 +604,12 @@ export default function ModulesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDistanceToNow(new Date(module.created_at), { addSuffix: true, locale: de })}
+                        {formatDateSafely(module.created_at)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDistanceToNow(new Date(module.updated_at), { addSuffix: true, locale: de })}
+                        {formatDateSafely(module.updated_at)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -750,7 +765,7 @@ export default function ModulesPage() {
                 <div className="space-y-1">
                   <Label htmlFor="edit-status" className="text-xs font-semibold text-gray-700">Publikationsstatus</Label>
                   <Select
-                    value={editingModule.status}
+                    value={editingModule.status || 'draft'}
                     onValueChange={(value: 'draft' | 'published') =>
                       setEditingModule({ ...editingModule, status: value })
                     }

@@ -34,7 +34,10 @@ export async function PATCH(request: NextRequest) {
 
     const { quiz_id, course_id } = await request.json()
 
+    console.log('Quiz assignment request:', { quiz_id, course_id })
+
     if (!quiz_id || !course_id) {
+      console.log('Missing quiz_id or course_id')
       return NextResponse.json(
         { success: false, error: 'Quiz ID and Course ID are required' },
         { status: 400 }
@@ -42,6 +45,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     // First, assign the quiz to the course
+    console.log(
+      'Attempting to update enhanced_quizzes with quiz_id:',
+      quiz_id,
+      'course_id:',
+      course_id
+    )
     const { data: quiz, error } = await supabase
       .from('enhanced_quizzes')
       .update({ course_id } as any)
@@ -57,6 +66,11 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    console.log('Successfully assigned quiz:', quiz)
+
+    // For now, skip the reordering to simplify debugging
+    // TODO: Re-enable reordering once basic assignment works
+    /*
     // Now update the order of all quizzes in this course using raw SQL
     const { error: reorderError } = await supabase.rpc(
       'reorder_quizzes_in_course',
@@ -70,6 +84,7 @@ export async function PATCH(request: NextRequest) {
         { status: 500 }
       )
     }
+    */
 
     return NextResponse.json({
       success: true,

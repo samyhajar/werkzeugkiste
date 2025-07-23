@@ -34,7 +34,7 @@ export default function AdminLayout({
         credentials: 'include',
       })
 
-      const data: AuthResponse = await response.json()
+      const data = await response.json() as AuthResponse
       console.log('[AdminLayout] Logout API response:', data)
 
       // Always redirect, regardless of API response
@@ -79,7 +79,7 @@ export default function AdminLayout({
           return
         }
 
-        const data: AdminAuthResponse = await response.json()
+        const data = await response.json() as AdminAuthResponse
         console.log('[AdminLayout] API response data:', data)
 
         if (data.authenticated && data.user) {

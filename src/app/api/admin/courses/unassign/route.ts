@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+interface UnassignCourseRequest {
+  course_id: string
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -32,7 +36,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { course_id } = await request.json()
+    const { course_id } = (await request.json()) as UnassignCourseRequest
 
     if (!course_id) {
       return NextResponse.json(

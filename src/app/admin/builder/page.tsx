@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, GripVertical, Plus, Trash2, Edit3, FileText, HelpCircle, BookOpen, FolderOpen } from 'lucide-react'
+import { ChevronRight, GripVertical, Plus, Trash2, FileText, HelpCircle, BookOpen, FolderOpen } from 'lucide-react'
+import { useTableSubscription } from '@/contexts/RealtimeContext'
 import {
   DndContext,
   closestCenter,
@@ -21,7 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
+
 
 interface BuilderElement {
   id: string
@@ -62,6 +63,26 @@ interface Quiz {
   id: string;
   title: string;
   description?: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+interface StructureResponse extends ApiResponse<BuilderElement[]> {
+  elements?: BuilderElement[];
+}
+
+interface AvailableElementsResponse extends ApiResponse<{
+  unassignedCourses: Course[];
+  unassignedLessons: Lesson[];
+  unassignedQuizzes: Quiz[];
+}> {
+  unassignedCourses?: Course[];
+  unassignedLessons?: Lesson[];
+  unassignedQuizzes?: Quiz[];
 }
 
 // Helper functions
@@ -112,8 +133,10 @@ const getElementTypeLabel = (type: string) => {
 
 const findElementById = (elements: (BuilderElement | AvailableElement)[], id: string): BuilderElement | AvailableElement | undefined => {
   for (const element of elements) {
-    if (element.id === id) return element
-    if ('children' in element && element.children && element.children.length > 0) {
+    if (element.id === id) {
+      return element
+    }
+    if ('children' in element && element.children) {
       const found = findElementById(element.children, id)
       if (found) return found
     }
@@ -121,7 +144,6 @@ const findElementById = (elements: (BuilderElement | AvailableElement)[], id: st
   return undefined
 }
 
-// Sortable item component for builder elements
 function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
   element: BuilderElement
   onRemove: (id: string) => Promise<void>
@@ -142,60 +164,76 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
     transition,
   }
 
+  const hasChildren = element.children && element.children.length > 0
+
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, marginLeft: `${level * 20}px` }}
-      className={`mb-3 p-6 bg-white border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ${
-        isDragging ? 'shadow-lg opacity-50' : ''
-      }`}
+      style={style}
+      className={`relative ${isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center justify-between min-h-[60px]">
-        <div className="flex items-center gap-4">
-          {element.type === 'module' ? (
-            <div className="w-5 h-5" />
-          ) : (
-            <div {...attributes} {...listeners}>
-              <GripVertical className="w-5 h-5 text-gray-400 cursor-move" />
+      <div
+        className={`flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+          level > 0 ? 'ml-6' : ''
+        }`}
+      >
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+        >
+          <GripVertical className="w-4 h-4 text-gray-400" />
+        </div>
+
+        <div className="flex items-center gap-2 flex-1">
+          {getElementIcon(element.type)}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900 truncate">
+                {element.title}
+              </span>
+              <Badge className={getElementBadgeColor(element.type)}>
+                {getElementTypeLabel(element.type)}
+              </Badge>
             </div>
-          )}
-          <div className="flex items-center gap-3">
-            {isBuilderElement(element) && element.isExpanded && element.children && element.children.length > 0 || element.type === 'course' || element.type === 'module' ? (
-              <button
-                onClick={() => onToggle(element.id)}
-                className="text-gray-500 hover:text-gray-700 transition-transform duration-200 ease-in-out"
-              >
-                <ChevronRight className={`w-5 h-5 transition-transform duration-200 ease-in-out ${
-                  'isExpanded' in element && element.isExpanded ? 'rotate-90' : 'rotate-0'
-                }`} />
-              </button>
-            ) : (
-              <div className="w-5 h-5" />
+            {element.description && (
+              <p className="text-sm text-gray-600 truncate">
+                {element.description}
+              </p>
             )}
-            {getElementIcon(element.type)}
-            <span className="font-medium text-base">{element.title}</span>
-            <Badge className={getElementBadgeColor(element.type)}>
-              {getElementTypeLabel(element.type)}
-            </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button size="sm" variant="ghost">
-            <Edit3 className="w-5 h-5" />
-          </Button>
+
+        <div className="flex items-center gap-1">
+          {hasChildren && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onToggle(element.id)}
+              className="p-1 h-8 w-8"
+            >
+              <ChevronRight
+                className={`w-4 h-4 transition-transform ${
+                  element.isExpanded ? 'rotate-90' : ''
+                }`}
+              />
+            </Button>
+          )}
+
           <Button
-            size="sm"
             variant="ghost"
-            onClick={() => onRemove(element.id)}
-            className="text-red-600 hover:text-red-700"
+            size="sm"
+            onClick={() => void onRemove(element.id)}
+            className="p-1 h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </div>
-      {isBuilderElement(element) && element.isExpanded && element.children && element.children.length > 0 && (
+
+      {hasChildren && element.isExpanded && (
         <div className="mt-2 space-y-2">
-          {element.children.map((child) => (
+          {element.children!.map((child) => (
             <SortableBuilderElement
               key={child.id}
               element={child}
@@ -210,51 +248,33 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
   )
 }
 
-// Draggable available element
 function DraggableAvailableElement({ element }: { element: AvailableElement }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: element.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={`p-3 bg-white border border-gray-200 rounded-lg shadow-sm cursor-move hover:shadow-md transition-shadow ${
-        isDragging ? 'shadow-lg z-[9999]' : ''
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex-shrink-0">
-          {element.icon}
+    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+      <div className="flex-shrink-0">
+        {element.icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-900 truncate">
+            {element.title}
+          </span>
+          <Badge className={getElementBadgeColor(element.type)}>
+            {getElementTypeLabel(element.type)}
+          </Badge>
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm mb-1 truncate">{element.title}</h4>
-          {element.description && element.description !== 'Keine Beschreibung verfügbar' && (
-            <p className="text-xs text-gray-600 line-clamp-1">{element.description}</p>
-          )}
-        </div>
-        <div className="flex-shrink-0">
-          <Plus className="w-4 h-4 text-gray-400" />
-        </div>
+        <p className="text-sm text-gray-600 truncate">
+          {element.description}
+        </p>
+      </div>
+      <div className="flex-shrink-0">
+        <Plus className="w-4 h-4 text-gray-400" />
       </div>
     </div>
   )
 }
 
-function isBuilderElement(el: any): el is BuilderElement {
+function isBuilderElement(el: BuilderElement | AvailableElement): el is BuilderElement {
   return el && typeof el === 'object' && 'order' in el;
 }
 
@@ -266,6 +286,12 @@ export default function BuilderPage() {
 
   const [activeId, setActiveId] = useState<string | null>(null)
   const [lastReloadTime, setLastReloadTime] = useState(0)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+
+
+  // Add mounted state to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -275,75 +301,23 @@ export default function BuilderPage() {
     })
   )
 
-  // Debounced reload function to prevent infinite loops
-  const debouncedReload = useCallback(() => {
-    const now = Date.now()
-    if (now - lastReloadTime > 1000) { // Only reload if more than 1 second has passed
-      setLastReloadTime(now)
-      loadEntireStructure()
-      loadAvailableElements()
-    }
-  }, [lastReloadTime])
+
+
+
 
   useEffect(() => {
-    loadEntireStructure()
-    loadAvailableElements()
+    setIsMounted(true)
+  }, [])
 
-    // Set up real-time subscriptions with debouncing
-    const supabase = getBrowserClient()
 
-    // Subscribe to courses table changes
-    const coursesSubscription = supabase
-      .channel('courses-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, () => {
-        console.log('Courses table changed, reloading structure...')
-        debouncedReload()
-      })
-      .subscribe()
 
-    // Subscribe to lessons table changes
-    const lessonsSubscription = supabase
-      .channel('lessons-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
-        console.log('Lessons table changed, reloading structure...')
-        debouncedReload()
-      })
-      .subscribe()
-
-    // Subscribe to modules table changes
-    const modulesSubscription = supabase
-      .channel('modules-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, () => {
-        console.log('Modules table changed, reloading structure...')
-        debouncedReload()
-      })
-      .subscribe()
-
-    // Subscribe to enhanced_quizzes table changes
-    const quizzesSubscription = supabase
-      .channel('enhanced-quizzes-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'enhanced_quizzes' }, () => {
-        console.log('Enhanced quizzes table changed, reloading structure...')
-        debouncedReload()
-      })
-      .subscribe()
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      coursesSubscription.unsubscribe()
-      lessonsSubscription.unsubscribe()
-      modulesSubscription.unsubscribe()
-      quizzesSubscription.unsubscribe()
-    }
-  }, [debouncedReload])
-
-  const loadEntireStructure = async () => {
+  const loadEntireStructure = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/structure')
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const data = await response.json()
+      const data = await response.json() as StructureResponse
 
       if (data && typeof data === 'object' && 'success' in data && data.success) {
         const elements = data.elements || []
@@ -365,43 +339,69 @@ export default function BuilderPage() {
     } catch (error) {
       console.error('Error loading structure:', error)
     }
-  }
+  }, [builderElements])
 
-  const loadAvailableElements = async () => {
+  const loadAvailableElements = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/available-elements')
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const data = await response.json()
+      const data = await response.json() as AvailableElementsResponse
 
       if (data && typeof data === 'object') {
         const courses = (data.unassignedCourses || []).map((course: Course) => ({
           ...course,
           type: 'course' as const,
-          id: `course-${course.id}`
+          id: `course-${course.id}`,
+          db_id: course.id,
+          icon: getElementIcon('course'),
+          description: course.description || 'Keine Beschreibung verfügbar'
         }))
 
         const lessons = (data.unassignedLessons || []).map((lesson: Lesson) => ({
           ...lesson,
           type: 'lesson' as const,
-          id: `lesson-${lesson.id}`
+          id: `lesson-${lesson.id}`,
+          db_id: lesson.id,
+          icon: getElementIcon('lesson'),
+          description: lesson.description || 'Keine Beschreibung verfügbar'
         }))
 
         const quizzes = (data.unassignedQuizzes || []).map((quiz: Quiz) => ({
           ...quiz,
           type: 'quiz' as const,
-          id: `quiz-${quiz.id}`
+          id: `quiz-${quiz.id}`,
+          db_id: quiz.id,
+          icon: getElementIcon('quiz'),
+          description: quiz.description || 'Keine Beschreibung verfügbar'
         }))
 
         setUnassignedCourses(courses)
         setUnassignedLessons(lessons)
         setUnassignedQuizzes(quizzes)
+
+        console.log('Loaded available elements:', {
+          courses: courses.length,
+          lessons: lessons.length,
+          quizzes: quizzes.length,
+          sampleQuiz: quizzes[0]
+        })
       }
     } catch (error) {
       console.error('Error loading available elements:', error)
     }
-  }
+  }, [])
+
+  // Debounced reload function to prevent infinite loops
+  const debouncedReload = useCallback(() => {
+    const now = Date.now()
+    if (now - lastReloadTime > 1000) { // Only reload if more than 1 second has passed
+      setLastReloadTime(now)
+      void loadEntireStructure()
+      void loadAvailableElements()
+    }
+  }, [lastReloadTime, loadEntireStructure, loadAvailableElements])
 
   const buildHierarchicalStructure = (flatElements: BuilderElement[]): BuilderElement[] => {
     const elementsMap = new Map<string, BuilderElement>()
@@ -434,7 +434,15 @@ export default function BuilderPage() {
       }
     })
 
-    return rootElements
+    // Sort elements by order
+    const sortElements = (elements: BuilderElement[]): BuilderElement[] => {
+      return elements.sort((a, b) => a.order - b.order).map(element => ({
+        ...element,
+        children: element.children ? sortElements(element.children) : []
+      }))
+    }
+
+    return sortElements(rootElements)
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -443,238 +451,237 @@ export default function BuilderPage() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    setActiveId(null)
 
-    if (!active || !over) return
-
-    const activeId = active.id as string
-    const overId = over.id as string
-
-    if (activeId === overId) return
-
-    const activeElement = findElementById(builderElements, activeId)
-    const overElement = findElementById(builderElements, overId)
-
-    if (!activeElement || !overElement) return
-
-    // Check if the active element is a BuilderElement with parent_id
-    if (isBuilderElement(activeElement) && activeElement.parent_id) {
-      // Handle reassignment logic
-      const newParentId = isBuilderElement(overElement) ? overElement.id : activeElement.parent_id
-
-      if (newParentId !== activeElement.parent_id) {
-        // Reassign the element
-        handleReassignElement(activeElement.id, newParentId)
-      }
+    if (!over || active.id === over.id) {
+      return
     }
 
-    // Clear drag states
-    setActiveId(null)
+    setIsProcessing(true)
+
+    try {
+      // Find the dragged element
+      const draggedElement = findElementById([...builderElements, ...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes], active.id as string)
+      if (!draggedElement) {
+        console.error('Dragged element not found')
+        return
+      }
+
+      // Find the target element
+      const targetElement = findElementById([...builderElements, ...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes], over.id as string)
+      if (!targetElement) {
+        console.error('Target element not found')
+        return
+      }
+
+      // Determine the new parent and scope
+      let newParentId: string | null = null
+      let scope: 'module' | 'course' | 'lesson' = 'module'
+
+      if (isBuilderElement(targetElement)) {
+        // Dropping on a builder element
+        if (targetElement.type === 'module') {
+          newParentId = targetElement.id
+          scope = 'module'
+        } else if (targetElement.type === 'course') {
+          newParentId = targetElement.id
+          scope = 'course'
+        } else if (targetElement.type === 'lesson') {
+          newParentId = targetElement.id
+          scope = 'lesson'
+        }
+      }
+
+      // Determine the element type and ID
+      let elementType: 'course' | 'lesson' | 'quiz'
+      let elementId: string
+
+      if (draggedElement.type === 'course') {
+        elementType = 'course'
+        elementId = draggedElement.db_id || draggedElement.id.replace('course-', '')
+      } else if (draggedElement.type === 'lesson') {
+        elementType = 'lesson'
+        elementId = draggedElement.db_id || draggedElement.id.replace('lesson-', '')
+      } else if (draggedElement.type === 'quiz') {
+        elementType = 'quiz'
+        elementId = draggedElement.db_id || draggedElement.id.replace('quiz-', '')
+      } else {
+        console.error('Invalid element type for assignment')
+        return
+      }
+
+      // Make the API call to assign the element
+      const response = await fetch(`/api/admin/${elementType}s/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          elementId,
+          parentId: newParentId,
+          scope
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to assign ${elementType}: ${response.statusText}`)
+      }
+
+      // Reload the structure and available elements
+      await loadEntireStructure()
+      await loadAvailableElements()
+
+    } catch (error) {
+      console.error('Error assigning element:', error)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  // Helper function to get all sortable items (excluding modules, only nested children)
   const getAllSortableItems = (elements: BuilderElement[]): string[] => {
     const items: string[] = []
+
     const addItems = (el: BuilderElement) => {
-      // Only add non-module elements to sortable items
-      if (el.type !== 'module') {
-        items.push(el.id)
-      }
-      if (isBuilderElement(el) && el.children && el.children.length > 0) {
+      items.push(el.id)
+      if (el.children) {
         el.children.forEach(addItems)
       }
     }
+
     elements.forEach(addItems)
     return items
   }
 
   const toggleElementExpansion = (elementId: string) => {
-    const elementToToggle = findElementById(builderElements, elementId)
-
-    if (!elementToToggle) {
-      console.error('Element not found for toggling:', elementId)
-      return
-    }
-
-    if (!isBuilderElement(elementToToggle)) {
-      console.error('Element is not a BuilderElement:', elementId)
-      return
-    }
-
-    console.log('Toggling element:', elementId, 'Type:', elementToToggle.type, 'Has children:', elementToToggle.children?.length || 0, 'Current expanded:', elementToToggle.isExpanded)
-
-    const updatedElements = builderElements.map(element => {
-      if (element.id === elementId && isBuilderElement(element)) {
-        return { ...element, isExpanded: !element.isExpanded }
+    setBuilderElements(prevElements => {
+      const updateElement = (elements: BuilderElement[]): BuilderElement[] => {
+        return elements.map(element => {
+          if (element.id === elementId) {
+            return { ...element, isExpanded: !element.isExpanded }
+          }
+          if (element.children) {
+            return { ...element, children: updateElement(element.children) }
+          }
+          return element
+        })
       }
-      if (isBuilderElement(element) && element.children && element.children.length > 0) {
-        return {
-          ...element,
-          children: element.children.map(child => {
-            if (child.id === elementId && isBuilderElement(child)) {
-              return { ...child, isExpanded: !child.isExpanded }
-            }
-            return child
-          })
-        }
-      }
-      return element
+      return updateElement(prevElements)
     })
-
-    setBuilderElements(updatedElements)
   }
 
   const removeElement = async (elementId: string) => {
-    // Find the element to get its database info
-    const elementToRemove = findElementById(builderElements, elementId)
-
-    console.log('Attempting to remove element:', elementId)
-    console.log('Found element:', elementToRemove)
-
-    if (!elementToRemove) {
-      console.error('Element not found for removal')
-      return
-    }
-
-    if (!isBuilderElement(elementToRemove) || !elementToRemove.db_type || !elementToRemove.db_id) {
-      console.error('Element missing database info:', {
-        db_type: elementToRemove.db_type,
-        db_id: elementToRemove.db_id,
-        element: elementToRemove
-      })
-      return
-    }
+    setIsProcessing(true)
 
     try {
-      // Update the element to remove its parent assignment (make it unassigned)
-      const response = await fetch(`/api/admin/${elementToRemove.db_type}/unassign`, {
-        method: 'PATCH',
+      // Find the element to remove
+      const element = findElementById(builderElements, elementId)
+      if (!element || !isBuilderElement(element)) {
+        console.error('Element not found or not a builder element')
+        return
+      }
+
+      // Determine the element type and ID
+      let elementType: 'course' | 'lesson' | 'quiz'
+      let elementDbId: string
+
+      if (element.type === 'course') {
+        elementType = 'course'
+        elementDbId = element.db_id || element.id.replace('course-', '')
+      } else if (element.type === 'lesson') {
+        elementType = 'lesson'
+        elementDbId = element.db_id || element.id.replace('lesson-', '')
+      } else if (element.type === 'quiz') {
+        elementType = 'quiz'
+        elementDbId = element.db_id || element.id.replace('quiz-', '')
+      } else {
+        console.error('Invalid element type for removal')
+        return
+      }
+
+      // Make the API call to unassign the element
+      const response = await fetch(`/api/admin/${elementType}s/unassign`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify(
-          elementToRemove.db_type === 'courses'
-            ? { course_id: elementToRemove.db_id }
-            : elementToRemove.db_type === 'lessons'
-            ? { lesson_id: elementToRemove.db_id }
-            : { quiz_id: elementToRemove.db_id }
-        ),
+        body: JSON.stringify({
+          elementId: elementDbId
+        }),
       })
 
-      if (response.ok) {
-        // Remove from builder structure
+      if (!response.ok) {
+        throw new Error(`Failed to unassign ${elementType}: ${response.statusText}`)
+      }
+
+      // Remove the element from the local state
+      setBuilderElements(prevElements => {
         const removeElementFromTree = (elements: BuilderElement[]): BuilderElement[] => {
           return elements
             .filter(element => element.id !== elementId)
             .map(element => ({
               ...element,
-              children: isBuilderElement(element) && element.children ? removeElementFromTree(element.children) : []
+              children: element.children ? removeElementFromTree(element.children) : []
             }))
         }
+        return removeElementFromTree(prevElements)
+      })
 
-        setBuilderElements(prev => removeElementFromTree(prev))
+      // Reload available elements to show the unassigned element
+      await loadAvailableElements()
 
-        // Add back to appropriate available list (only for courses, lessons, quizzes)
-        if (isBuilderElement(elementToRemove) && (elementToRemove.type === 'course' || elementToRemove.type === 'lesson' || elementToRemove.type === 'quiz')) {
-          const availableElement: AvailableElement = {
-            id: `${elementToRemove.type}-${elementToRemove.db_id}`,
-            type: elementToRemove.type,
-            title: elementToRemove.title,
-            description: elementToRemove.description || '',
-            icon: getElementIcon(elementToRemove.type),
-            db_id: elementToRemove.db_id,
-            db_type: elementToRemove.db_type
-          }
-
-          if (elementToRemove.type === 'course') {
-            setUnassignedCourses(prev => [...prev, availableElement])
-          } else if (elementToRemove.type === 'lesson') {
-            setUnassignedLessons(prev => [...prev, availableElement])
-          } else if (elementToRemove.type === 'quiz') {
-            setUnassignedQuizzes(prev => [...prev, availableElement])
-          }
-        }
-
-        console.log('Element moved to available list successfully')
-      } else {
-        const errorData = await response.json()
-        console.error('Error unassigning element:', errorData.error)
-      }
     } catch (error) {
-      console.error('Error unassigning element:', error)
+      console.error('Error removing element:', error)
+    } finally {
+      setIsProcessing(false)
     }
   }
 
-  // Add the missing preserveExpansionStates function
   const preserveExpansionStates = (newElements: BuilderElement[], currentElements: BuilderElement[]): BuilderElement[] => {
-    return newElements.map(newElement => {
-      const currentElement = findElementById(currentElements, newElement.id)
-      return {
-        ...newElement,
-        isExpanded: isBuilderElement(currentElement) ? currentElement.isExpanded : false,
-        children: newElement.children ? preserveExpansionStates(newElement.children, currentElements) : []
-      }
-    })
-  }
+    const updateExpansionStates = (elements: BuilderElement[]): BuilderElement[] => {
+      return elements.map(element => {
+        const currentElement = findElementById(currentElements, element.id) as BuilderElement | undefined
+        const isExpanded = currentElement?.isExpanded ?? (element.type === 'module')
 
-  // Add the missing handleReassignElement function
-  const handleReassignElement = async (elementId: string, newParentId: string) => {
-    try {
-      const element = findElementById(builderElements, elementId)
-      if (!element || !isBuilderElement(element)) return
-
-      // Handle reassignment based on element type
-      if (element.type === 'course') {
-        const response = await fetch('/api/admin/courses/assign', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            course_id: element.db_id,
-            module_id: newParentId
-          }),
-        })
-
-        if (!response.ok) {
-          console.error('Failed to reassign course')
+        return {
+          ...element,
+          isExpanded,
+          children: element.children ? updateExpansionStates(element.children) : []
         }
-      } else if (element.type === 'lesson') {
-        const response = await fetch('/api/admin/lessons/assign', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lesson_id: element.db_id,
-            course_id: newParentId
-          }),
-        })
-
-        if (!response.ok) {
-          console.error('Failed to reassign lesson')
-        }
-      } else if (element.type === 'quiz') {
-        const response = await fetch('/api/admin/quizzes/assign', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            quiz_id: element.db_id,
-            course_id: newParentId
-          }),
-        })
-
-        if (!response.ok) {
-          console.error('Failed to reassign quiz')
-        }
-      }
-    } catch (error) {
-      console.error('Error reassigning element:', error)
+      })
     }
+
+    return updateExpansionStates(newElements)
   }
 
-  if (builderElements.length === 0) {
+
+
+  // Load data on mount
+  useEffect(() => {
+    if (isMounted) {
+      void loadEntireStructure()
+      void loadAvailableElements()
+    }
+  }, [loadEntireStructure, loadAvailableElements, isMounted])
+
+  // Use centralized subscription management
+  useTableSubscription('courses', '*', undefined, debouncedReload)
+  useTableSubscription('lessons', '*', undefined, debouncedReload)
+  useTableSubscription('modules', '*', undefined, debouncedReload)
+  useTableSubscription('enhanced_quizzes', '*', undefined, debouncedReload)
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return null
+  }
+
+  if (isProcessing) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Lade Struktur...</p>
+      <div className="w-full px-8 py-8" style={{ backgroundColor: '#6d859a' }}>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-[#486681] rounded-full animate-spin" />
+            <span className="text-gray-600">Verarbeite Änderungen...</span>
+          </div>
         </div>
       </div>
     )
@@ -683,15 +690,15 @@ export default function BuilderPage() {
   return (
     <div
       style={{ backgroundColor: '#6d859a' }}
-      className="min-h-screen p-4 lg:p-8"
+      className="h-screen p-8"
     >
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
+        onDragEnd={(event) => void handleDragEnd(event)}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 h-full min-h-[calc(100vh-2rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
           <SortableContext items={[
             ...getAllSortableItems(builderElements),
             ...unassignedCourses.map(course => course.id),
@@ -699,7 +706,7 @@ export default function BuilderPage() {
             ...unassignedQuizzes.map(quiz => quiz.id)
           ]}>
             {/* Left: Builder Structure */}
-            <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 overflow-y-auto">
+            <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
               {builderElements.map((element) => (
                 <SortableBuilderElement
                   key={element.id}
@@ -711,71 +718,65 @@ export default function BuilderPage() {
             </div>
 
             {/* Right: Available Elements */}
-            <div className="h-full flex flex-col space-y-4 max-h-full">
+            <div className="h-full flex flex-col space-y-6">
               {/* Available Courses */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex-shrink-0" style={{ height: 'calc(33vh - 1rem)' }}>
-                <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
                   <FolderOpen className="w-5 h-5 text-purple-600" />
                   <h3 className="font-semibold text-lg">Verfügbare Kurse</h3>
                 </div>
-                <div className="h-full overflow-y-auto">
-                  {unassignedCourses.length === 0 ? (
-                    <div className="text-center text-gray-500 py-4">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">Keine unzugewiesenen Kurse</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {unassignedCourses.map((course: AvailableElement) => (
-                        <DraggableAvailableElement key={course.id} element={course} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {unassignedCourses.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Kurse</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedCourses.map((course) => (
+                      <DraggableAvailableElement key={course.id} element={course} />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Available Lessons */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex-shrink-0" style={{ height: 'calc(33vh - 1rem)' }}>
-                <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
                   <FileText className="w-5 h-5 text-green-600" />
                   <h3 className="font-semibold text-lg">Verfügbare Lektionen</h3>
                 </div>
-                <div className="h-full overflow-y-auto">
-                  {unassignedLessons.length === 0 ? (
-                    <div className="text-center text-gray-500 py-4">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">Keine unzugewiesenen Lektionen</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {unassignedLessons.map((lesson: AvailableElement) => (
-                        <DraggableAvailableElement key={lesson.id} element={lesson} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {unassignedLessons.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Lektionen</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedLessons.map((lesson) => (
+                      <DraggableAvailableElement key={lesson.id} element={lesson} />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Available Quizzes */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex-shrink-0" style={{ height: 'calc(33vh - 1rem)' }}>
-                <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+                <div className="flex items-center gap-3 mb-4">
                   <HelpCircle className="w-5 h-5 text-blue-600" />
                   <h3 className="font-semibold text-lg">Verfügbare Quizze</h3>
                 </div>
-                <div className="h-full overflow-y-auto">
-                  {unassignedQuizzes.length === 0 ? (
-                    <div className="text-center text-gray-500 py-4">
-                      <Plus className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm">Keine unzugewiesenen Quizze</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {unassignedQuizzes.map((quiz: AvailableElement) => (
-                        <DraggableAvailableElement key={quiz.id} element={quiz} />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {unassignedQuizzes.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>Keine unzugewiesenen Quizze</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {unassignedQuizzes.map((quiz) => (
+                      <DraggableAvailableElement key={quiz.id} element={quiz} />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </SortableContext>
@@ -784,7 +785,7 @@ export default function BuilderPage() {
         {/* Drag Overlay - ensures dragged element appears above everything */}
         <DragOverlay>
           {activeId && (() => {
-            const allElements: (BuilderElement | AvailableElement)[] = [
+            const allElements = [
               ...builderElements,
               ...unassignedCourses,
               ...unassignedLessons,

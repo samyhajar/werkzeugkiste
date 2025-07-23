@@ -1,56 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type ModuleInsert = Database['public']['Tables']['modules']['Insert']
+
+interface CreateModuleRequest {
+  title: string
+  description?: string
+  hero_image?: string
+  status?: string
+}
 
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check authentication and admin role
+    // Check if user is authenticated and is admin
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required' },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
+    // Check if user is admin using profiles table
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    if (profileError || !profile || profile.role !== 'admin') {
       return NextResponse.json(
-        { success: false, error: 'Admin access required' },
+        { success: false, error: 'Forbidden' },
         { status: 403 }
       )
     }
 
-    // Get all modules (both draft and published) for admin
+    // Fetch all modules
     const { data: modules, error } = await supabase
       .from('modules')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select('id, title, description, status, created_at, updated_at')
+      .order('title', { ascending: true })
 
     if (error) {
-      console.error('Error fetching modules for admin:', error)
+      console.error('Error fetching modules:', error)
       return NextResponse.json(
         { success: false, error: 'Failed to fetch modules' },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({
-      success: true,
-      modules: modules || [],
-    })
+    return NextResponse.json({ success: true, modules: modules || [] })
   } catch (error) {
-    console.error('Admin modules API error:', error)
+    console.error('Error in modules API:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -89,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const body = await request.json()
+    const body = (await request.json()) as CreateModuleRequest
     const { title, description, hero_image, status } = body
 
     if (!title || !title.trim()) {
@@ -100,16 +108,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new module
+    const moduleData: ModuleInsert = {
+      title: title.trim(),
+      description: description?.trim() || null,
+      hero_image: hero_image?.trim() || null,
+      status: status || 'draft',
+    }
+
     const { data: module, error } = await supabase
       .from('modules')
-      .insert([
-        {
-          title: title.trim(),
-          description: description?.trim() || null,
-          hero_image: hero_image?.trim() || null,
-          status: status || 'draft',
-        },
-      ])
+      .insert([moduleData])
       .select()
       .single()
 

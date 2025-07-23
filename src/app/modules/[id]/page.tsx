@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, User, BarChart3 } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { useTableSubscription } from '@/contexts/RealtimeContext'
 
 interface Lesson {
   id: string
@@ -160,96 +161,11 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId, fetchModule, fetchUserAndProgress])
 
-  // Set up real-time subscriptions for live updates
-  useEffect(() => {
-    if (!moduleId) return
-
-    const supabase = getBrowserClient()
-    let isSubscribed = true
-
-    // Subscribe to module changes
-    const moduleSubscription = supabase
-      .channel(`module-${moduleId}`)
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'modules',
-          filter: `id=eq.${moduleId}`
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[ModuleDetail] Module changed, refetching...')
-            debouncedRefetch()
-          }
-        }
-      )
-      .subscribe()
-
-    // Subscribe to course changes for this module
-    const coursesSubscription = supabase
-      .channel(`courses-${moduleId}`)
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'courses',
-          filter: `module_id=eq.${moduleId}`
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[ModuleDetail] Courses changed, refetching...')
-            debouncedRefetch()
-          }
-        }
-      )
-      .subscribe()
-
-    // Subscribe to lesson changes
-    const lessonsSubscription = supabase
-      .channel('lessons-changes')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lessons'
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[ModuleDetail] Lessons changed, refetching...')
-            debouncedRefetch()
-          }
-        }
-      )
-      .subscribe()
-
-    // Subscribe to quiz changes
-    const quizzesSubscription = supabase
-      .channel('quizzes-changes')
-      .on('postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quizzes'
-        },
-        () => {
-          if (isSubscribed) {
-            console.log('[ModuleDetail] Quizzes changed, refetching...')
-            debouncedRefetch()
-          }
-        }
-      )
-      .subscribe()
-
-    // Cleanup subscriptions on unmount
-    return () => {
-      isSubscribed = false
-      moduleSubscription.unsubscribe()
-      coursesSubscription.unsubscribe()
-      lessonsSubscription.unsubscribe()
-      quizzesSubscription.unsubscribe()
-    }
-  }, [moduleId, fetchModule])
+  // Use centralized subscription management
+  useTableSubscription('modules', '*', `id=eq.${moduleId}`, debouncedRefetch)
+  useTableSubscription('courses', '*', `module_id=eq.${moduleId}`, debouncedRefetch)
+  useTableSubscription('lessons', '*', undefined, debouncedRefetch)
+  useTableSubscription('quizzes', '*', undefined, debouncedRefetch)
 
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {

@@ -88,39 +88,20 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Normalize order for courses within each module
-    const normalizeCourseOrder = async (moduleId: string) => {
-      const moduleCourses =
-        courses?.filter((course: any) => course.module_id === moduleId) || []
-      const sortedCourses = moduleCourses.sort(
-        (a: any, b: any) => (a.order || 0) - (b.order || 0)
-      )
-
-      for (let i = 0; i < sortedCourses.length; i++) {
-        const course = sortedCourses[i]
-        if (course.order !== i + 1) {
-          await supabase
-            .from('courses')
-            .update({ order: i + 1 })
-            .eq('id', course.id)
-        }
-      }
-    }
-
     // Normalize order for lessons within each course
     const normalizeLessonOrder = async (courseId: string) => {
       const courseLessons =
         lessons?.filter((lesson: any) => lesson.course_id === courseId) || []
       const sortedLessons = courseLessons.sort(
-        (a: any, b: any) => (a.order || 0) - (b.order || 0)
+        (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
       )
 
       for (let i = 0; i < sortedLessons.length; i++) {
         const lesson = sortedLessons[i]
-        if (lesson.order !== i + 1) {
+        if (lesson.sort_order !== i + 1) {
           await supabase
             .from('lessons')
-            .update({ order: i + 1 })
+            .update({ sort_order: i + 1 })
             .eq('id', lesson.id)
         }
       }
@@ -128,7 +109,6 @@ export async function GET(_request: NextRequest) {
 
     // Normalize all orders before building structure
     for (const moduleItem of modules || []) {
-      await normalizeCourseOrder(moduleItem.id)
       const moduleCourses =
         courses?.filter((course: any) => course.module_id === moduleItem.id) ||
         []
@@ -142,7 +122,7 @@ export async function GET(_request: NextRequest) {
       await supabase
         .from('courses')
         .select('*')
-        .order('order', { ascending: true })
+        .order('created_at', { ascending: true })
 
     if (normalizedCoursesError) {
       console.error(
@@ -159,7 +139,7 @@ export async function GET(_request: NextRequest) {
       await supabase
         .from('lessons')
         .select('*')
-        .order('order', { ascending: true })
+        .order('sort_order', { ascending: true })
 
     if (normalizedLessonsError) {
       console.error(
@@ -182,7 +162,7 @@ export async function GET(_request: NextRequest) {
         type: 'module',
         title: moduleItem.title,
         description: moduleItem.description,
-        order: moduleIndex, // Use index since modules table doesn't have order field
+        order: moduleItem.order || moduleIndex,
         parent_id: null,
         children: [],
         isExpanded: true,
@@ -295,19 +275,19 @@ export async function PUT(request: NextRequest) {
 
     const { elements } = await request.json()
 
-    // Update order for lessons
+    // Update order for lessons only (courses and modules don't have order columns)
     const lessonUpdates = elements
       .filter((el: any) => el.db_type === 'lessons')
       .map((el: any, index: number) => ({
         id: el.db_id,
-        order: index + 1,
+        sort_order: index + 1,
       }))
 
     if (lessonUpdates.length > 0) {
       for (const update of lessonUpdates) {
         const { error } = await supabase
           .from('lessons')
-          .update({ order: update.order })
+          .update({ sort_order: update.sort_order })
           .eq('id', update.id)
 
         if (error) {
@@ -315,30 +295,6 @@ export async function PUT(request: NextRequest) {
         }
       }
     }
-
-    // Update order for courses
-    const courseUpdates = elements
-      .filter((el: any) => el.db_type === 'courses')
-      .map((el: any, index: number) => ({
-        id: el.db_id,
-        order: index + 1,
-      }))
-
-    if (courseUpdates.length > 0) {
-      for (const update of courseUpdates) {
-        const { error } = await supabase
-          .from('courses')
-          .update({ order: update.order })
-          .eq('id', update.id)
-
-        if (error) {
-          console.error('Error updating course order:', error)
-        }
-      }
-    }
-
-    // Note: Modules table doesn't have an order field, so we skip updating module order
-    // The modules will maintain their creation order
 
     return NextResponse.json({ success: true })
   } catch (error) {

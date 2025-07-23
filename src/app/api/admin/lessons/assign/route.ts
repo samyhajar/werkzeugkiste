@@ -42,14 +42,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Get the current maximum order for lessons in this course
-    const { data: maxOrderResult, error: maxOrderError } = await supabase
+    const { data: maxOrderResult, error: maxOrderError } = (await supabase
       .from('lessons')
-      .select('order')
+      .select('sort_order')
       .eq('course_id', course_id)
-      .not('order', 'is', null)
-      .order('order', { ascending: false })
+      .not('sort_order', 'is', null)
+      .order('sort_order', { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .maybeSingle()) as { data: { sort_order: number } | null; error: any }
 
     if (maxOrderError) {
       console.error('Error getting max order:', maxOrderError)
@@ -59,12 +59,12 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const newOrder = (maxOrderResult?.order || 0) + 1
+    const newOrder = (maxOrderResult?.sort_order || 0) + 1
 
     // Assign the lesson to the course with the new order
     const { data: lesson, error } = await supabase
       .from('lessons')
-      .update({ course_id, order: newOrder })
+      .update({ course_id, sort_order: newOrder })
       .eq('id', lesson_id)
       .select()
       .single()

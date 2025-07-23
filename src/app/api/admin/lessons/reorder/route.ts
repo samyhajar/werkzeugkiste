@@ -47,9 +47,9 @@ export async function PATCH(request: NextRequest) {
     // Get current orders of all lessons in the course
     const { data: currentLessons, error: fetchError } = await supabase
       .from('lessons')
-      .select('id, order')
+      .select('id, sort_order')
       .eq('course_id', course_id)
-      .order('order', { ascending: true })
+      .order('sort_order', { ascending: true })
 
     if (fetchError) {
       console.error('Error fetching current lessons:', fetchError)
@@ -62,7 +62,7 @@ export async function PATCH(request: NextRequest) {
     // Create a map of current orders
     const currentOrderMap = new Map()
     currentLessons?.forEach(lesson => {
-      currentOrderMap.set(lesson.id, lesson.order)
+      currentOrderMap.set(lesson.id, lesson.sort_order)
     })
 
     // Update orders incrementally
@@ -75,7 +75,7 @@ export async function PATCH(request: NextRequest) {
       if (currentOrder !== newOrder) {
         const { error } = await supabase
           .from('lessons')
-          .update({ order: newOrder })
+          .update({ sort_order: newOrder })
           .eq('id', lessonId)
           .eq('course_id', course_id)
 

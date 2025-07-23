@@ -100,15 +100,15 @@ const eslintConfig = [
       },
     },
     rules: {
-      // TypeScript type checking rules - relaxed for deployment readiness
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-misused-promises': 'warn',
+      // TypeScript type checking rules - strict for better type safety
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'error',
+      '@typescript-eslint/no-unsafe-call': 'error',
+      '@typescript-eslint/no-unsafe-member-access': 'error',
+      '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/restrict-plus-operands': 'error',
       '@typescript-eslint/restrict-template-expressions': 'error',
       '@typescript-eslint/unbound-method': 'error',

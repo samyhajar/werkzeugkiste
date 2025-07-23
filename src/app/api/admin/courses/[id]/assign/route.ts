@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+interface AssignCourseRequest {
+  module_id: string
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,7 +40,7 @@ export async function PATCH(
     }
 
     const { id: courseId } = await params
-    const { module_id } = await request.json()
+    const { module_id } = (await request.json()) as AssignCourseRequest
 
     if (!module_id) {
       return NextResponse.json(
