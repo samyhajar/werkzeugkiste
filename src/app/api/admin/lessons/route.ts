@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { title, content, course_id, sort_order } = await request.json()
+    const { title, content, course_id } = await request.json()
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -97,8 +97,7 @@ export async function POST(request: NextRequest) {
           title,
           content: content || null,
           course_id: course_id || null, // Allow null for unassigned lessons
-          sort_order: sort_order || 0,
-          admin_id: user.id,
+          order: null, // Start with null order (unassigned)
         },
       ])
       .select(

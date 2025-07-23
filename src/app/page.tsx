@@ -1,10 +1,10 @@
-import ModuleCard from '@/components/shared/ModuleCard'
-// import DummyModuleCard from '@/components/shared/DummyModuleCard'
+import LiveModulesSection from '@/components/shared/LiveModulesSection'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server-client'
 import { Tables } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
+import { Suspense } from 'react'
 // import { cookies } from 'next/headers'
 
 
@@ -17,7 +17,7 @@ interface ProgressData {
   lessons: {
     id: string
     course_id: string | null
-    title: string
+    title: string | null
   }
 }
 
@@ -39,7 +39,7 @@ export default async function Home({
   // const cookieStore = await cookies()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch all published modules
+  // Fetch all published modules with their courses
   const { data: fetchedModules } = await supabase
     .from('modules')
     .select('*')
@@ -47,6 +47,48 @@ export default async function Home({
     .order('order', { ascending: true })
 
   const modules = fetchedModules ?? []
+
+  // Fetch all courses for these modules (show all assigned courses regardless of status)
+  const { data: courses } = await supabase
+    .from('courses')
+    .select('*')
+    .in('module_id', modules.map(m => m.id))
+    .not('module_id', 'is', null) // Only show courses that are assigned to modules
+    .order('order', { ascending: true })
+
+  // Fetch all lessons for these courses
+  const { data: lessons } = await supabase
+    .from('lessons')
+    .select('*')
+    .in('course_id', courses?.map(c => c.id) || [])
+    .order('order', { ascending: true })
+
+  // Fetch all quizzes for these courses
+  const { data: quizzes } = await supabase
+    .from('quizzes')
+    .select('*')
+    .in('course_id', courses?.map(c => c.id) || [])
+
+  // Build the hierarchical structure
+  const modulesWithCourses = modules.map(module => {
+    const moduleCourses = courses?.filter(course => course.module_id === module.id) || []
+
+    const coursesWithContent = moduleCourses.map(course => {
+      const courseLessons = lessons?.filter(lesson => lesson.course_id === course.id) || []
+      const courseQuizzes = quizzes?.filter(quiz => quiz.course_id === course.id) || []
+
+      return {
+        ...course,
+        lessons: courseLessons,
+        quizzes: courseQuizzes
+      }
+    })
+
+    return {
+      ...module,
+      courses: coursesWithContent
+    }
+  })
 
   // Fetch user progress if logged in
   const userProgress: Record<string, number> = {}
@@ -130,28 +172,23 @@ export default async function Home({
         />
       </section>
 
-      {/* Modules */}
-      <section id="modules" className="w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          {modules.length > 0 ? (
-            <div className="grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {modules.map((moduleItem: Module) => (
-                <ModuleCard
-                  key={moduleItem.id}
-                  module={moduleItem}
-                  progress={userProgress[moduleItem.id] || 0}
-                  isLoggedIn={!!user}
-                />
-              ))}
-            </div>
-          ) : (
+            {/* Modules */}
+      <Suspense fallback={
+        <section id="modules" className="w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="text-center py-12 sm:py-16">
-              <p className="text-gray-600 mb-4">Derzeit sind keine Module verfügbar.</p>
-              <p className="text-gray-400 text-sm">Schauen Sie später wieder vorbei.</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#486681] mx-auto mb-4"></div>
+              <p className="text-gray-600">Module werden geladen...</p>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      }>
+        <LiveModulesSection
+          initialModules={modulesWithCourses}
+          userProgress={userProgress}
+          isLoggedIn={!!user}
+        />
+      </Suspense>
 
       <PartnerSection />
 

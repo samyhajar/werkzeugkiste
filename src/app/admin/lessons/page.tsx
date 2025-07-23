@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,7 +45,7 @@ export default function LessonsPage() {
     sort_order: 0
   })
 
-  const fetchLessons = async () => {
+  const fetchLessons = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -72,9 +72,9 @@ export default function LessonsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/courses', {
         method: 'GET',
@@ -90,9 +90,9 @@ export default function LessonsPage() {
     } catch (err) {
       console.error('Error fetching courses:', err)
     }
-  }
+  }, [])
 
-  const createLesson = async () => {
+  const createLesson = useCallback(async () => {
     if (!newLesson.title.trim() || !newLesson.course_id) {
       return
     }
@@ -128,14 +128,179 @@ export default function LessonsPage() {
     } finally {
       setCreating(false)
     }
-  }
+  }, [newLesson, lessons])
 
-  const filteredLessons = lessons.filter(lesson => {
-    const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lesson.content?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCourse = courseFilter === 'all' || lesson.course_id === courseFilter
-    return matchesSearch && matchesCourse
-  })
+  // Optimized input handlers
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewLesson(prev => ({ ...prev, title: e.target.value }))
+  }, [])
+
+  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewLesson(prev => ({ ...prev, content: e.target.value }))
+  }, [])
+
+  const handleCourseChange = useCallback((value: string) => {
+    setNewLesson(prev => ({ ...prev, course_id: value }))
+  }, [])
+
+  const handleSortOrderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewLesson(prev => ({ ...prev, sort_order: parseInt(e.target.value) || 0 }))
+  }, [])
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }, [])
+
+  const handleCourseFilterChange = useCallback((value: string) => {
+    setCourseFilter(value)
+  }, [])
+
+  // Memoized dialog content component
+  const CreateLessonDialogContent = memo(() => (
+    <>
+      <DialogHeader className="text-center pb-4 flex-shrink-0">
+        <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
+          <span className="text-white text-lg">📖</span>
+        </div>
+        <DialogTitle className="text-xl font-bold text-gray-900">Create New Lesson</DialogTitle>
+        <DialogDescription className="text-sm text-gray-600">
+          Add a new learning lesson with content and organize it within a course
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
+        {/* Course Selection Card */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
+              <span className="text-white text-xs">📚</span>
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">Course Assignment</h3>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="course" className="text-xs font-semibold text-gray-700">Select Course *</Label>
+            <Select
+              value={newLesson.course_id}
+              onValueChange={handleCourseChange}
+            >
+              <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
+                <SelectValue placeholder="Choose a course for this lesson" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    <div className="flex items-center gap-2">
+                      <span>📚</span>
+                      <span>{course.title}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">Select the course where this lesson will appear</p>
+          </div>
+        </div>
+
+        {/* Lesson Info Card */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
+              <span className="text-white text-xs">📝</span>
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">Lesson Information</h3>
+          </div>
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Lesson Title *</Label>
+              <Input
+                id="title"
+                value={newLesson.title}
+                onChange={handleTitleChange}
+                placeholder="e.g., Introduction to Social Media Marketing"
+                className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="content" className="text-xs font-semibold text-gray-700">Lesson Content</Label>
+              <Textarea
+                id="content"
+                value={newLesson.content}
+                onChange={handleContentChange}
+                placeholder="Write your lesson content here. You can include text, links, and instructions..."
+                rows={3}
+                className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
+              />
+              <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Organization Card */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+              <span className="text-white text-xs">📋</span>
+            </div>
+            <h3 className="font-semibold text-gray-900 text-sm">Organization</h3>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="order" className="text-xs font-semibold text-gray-700">Sort Order</Label>
+            <Input
+              id="order"
+              type="number"
+              value={newLesson.sort_order}
+              onChange={handleSortOrderChange}
+              placeholder="0"
+              className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+            />
+            <p className="text-xs text-gray-500">Lower numbers appear first (0 = first lesson, 1 = second, etc.)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons - Fixed Footer */}
+      <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
+        <Button
+          variant="outline"
+          onClick={() => setIsCreateDialogOpen(false)}
+          disabled={creating}
+          className="sm:w-auto w-full h-9 text-sm"
+        >
+          <span className="mr-2">❌</span>
+          Cancel
+        </Button>
+        <Button
+          onClick={createLesson}
+          disabled={creating || !newLesson.title.trim() || !newLesson.course_id}
+          className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+        >
+          {creating ? (
+            <>
+              <span className="mr-2 animate-spin">⏳</span>
+              Creating...
+            </>
+          ) : (
+            <>
+              <span className="mr-2">✨</span>
+              Create Lesson
+            </>
+          )}
+        </Button>
+      </div>
+    </>
+  ))
+
+  const filteredLessons = useMemo(() => {
+    return lessons.filter(lesson => {
+      const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           lesson.content?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCourse = courseFilter === 'all' || lesson.course_id === courseFilter
+      return matchesSearch && matchesCourse
+    })
+  }, [lessons, searchTerm, courseFilter])
 
   useEffect(() => {
     void fetchLessons()
@@ -192,139 +357,8 @@ export default function LessonsPage() {
               Create New Lesson
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
-            <DialogHeader className="text-center pb-4 flex-shrink-0">
-              <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
-                <span className="text-white text-lg">📖</span>
-              </div>
-              <DialogTitle className="text-xl font-bold text-gray-900">Create New Lesson</DialogTitle>
-              <DialogDescription className="text-sm text-gray-600">
-                Add a new learning lesson with content and organize it within a course
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
-              {/* Course Selection Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📚</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Assignment</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="course" className="text-xs font-semibold text-gray-700">Select Course *</Label>
-                  <Select
-                    value={newLesson.course_id}
-                    onValueChange={(value) => setNewLesson({ ...newLesson, course_id: value })}
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Choose a course for this lesson" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.id}>
-                          <div className="flex items-center gap-2">
-                            <span>📚</span>
-                            <span>{course.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Select the course where this lesson will appear</p>
-                </div>
-              </div>
-
-              {/* Lesson Info Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📝</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Lesson Information</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Lesson Title *</Label>
-                    <Input
-                      id="title"
-                      value={newLesson.title}
-                      onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                      placeholder="e.g., Introduction to Social Media Marketing"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="content" className="text-xs font-semibold text-gray-700">Lesson Content</Label>
-                    <Textarea
-                      id="content"
-                      value={newLesson.content}
-                      onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
-                      placeholder="Write your lesson content here. You can include text, links, and instructions..."
-                      rows={3}
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
-                    />
-                    <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Organization Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📋</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Organization</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="order" className="text-xs font-semibold text-gray-700">Sort Order</Label>
-                  <Input
-                    id="order"
-                    type="number"
-                    value={newLesson.sort_order}
-                    onChange={(e) => setNewLesson({ ...newLesson, sort_order: parseInt(e.target.value) || 0 })}
-                    placeholder="0"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                  />
-                  <p className="text-xs text-gray-500">Lower numbers appear first (0 = first lesson, 1 = second, etc.)</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons - Fixed Footer */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={creating}
-                className="sm:w-auto w-full h-9 text-sm"
-              >
-                <span className="mr-2">❌</span>
-                Cancel
-              </Button>
-              <Button
-                onClick={createLesson}
-                disabled={creating || !newLesson.title.trim() || !newLesson.course_id}
-                className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
-              >
-                {creating ? (
-                  <>
-                    <span className="mr-2 animate-spin">⏳</span>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-2">✨</span>
-                    Create Lesson
-                  </>
-                )}
-              </Button>
-            </div>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4" showCloseButton={false}>
+            <CreateLessonDialogContent />
           </DialogContent>
         </Dialog>
       </div>
@@ -336,13 +370,13 @@ export default function LessonsPage() {
             <Input
               placeholder="Search lessons..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
             />
           </div>
           <Select
             value={courseFilter}
-            onValueChange={(value: string) => setCourseFilter(value)}
+            onValueChange={handleCourseFilterChange}
           >
             <SelectTrigger className="w-[200px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
               <SelectValue />
