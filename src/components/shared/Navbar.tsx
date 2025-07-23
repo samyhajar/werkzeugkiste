@@ -8,7 +8,6 @@ import LoginModal from './LoginModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { ModulesResponse, ModuleData } from '@/types/api'
-import { Tables } from '@/types/supabase'
 
 const links = [
   { href: '/', label: 'Home' },

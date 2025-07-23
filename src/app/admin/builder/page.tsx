@@ -2,15 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChevronDown, ChevronRight, GripVertical, Plus, Save, Trash2, Edit3, FileText, HelpCircle, BookOpen, FolderOpen, Folder } from 'lucide-react'
+import { ChevronDown, ChevronRight, GripVertical, Plus, Trash2, Edit3, FileText, HelpCircle, BookOpen, FolderOpen, Folder } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -26,7 +19,6 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import {
   useSortable,
@@ -155,7 +147,7 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
             </div>
           )}
           <div className="flex items-center gap-3">
-            {(element.children && element.children.length > 0) || element.type === 'course' ? (
+            {(element.children && element.children.length > 0) || element.type === 'course' || element.type === 'module' ? (
               <button
                 onClick={() => onToggle(element.id)}
                 className="text-gray-500 hover:text-gray-700 transition-transform duration-200 ease-in-out"
@@ -255,7 +247,7 @@ export default function BuilderPage() {
   const [unassignedLessons, setUnassignedLessons] = useState<AvailableElement[]>([])
   const [unassignedQuizzes, setUnassignedQuizzes] = useState<AvailableElement[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+
   const [activeId, setActiveId] = useState<string | null>(null)
   const [lastReloadTime, setLastReloadTime] = useState(0)
 
@@ -354,6 +346,15 @@ export default function BuilderPage() {
           }
 
           const elementsWithPreservedState = preserveExpansionStates(hierarchicalElements, builderElements)
+          console.log('Loaded structure:', elementsWithPreservedState)
+          console.log('Structure details:', elementsWithPreservedState.map(el => ({
+            id: el.id,
+            type: el.type,
+            title: el.title,
+            hasChildren: (el.children?.length || 0) > 0,
+            isExpanded: el.isExpanded,
+            childrenCount: el.children?.length || 0
+          })))
           setBuilderElements(elementsWithPreservedState)
         }
       }
@@ -418,6 +419,8 @@ export default function BuilderPage() {
   }
 
   const buildHierarchicalStructure = (flatElements: any[]): BuilderElement[] => {
+    console.log('🔍 Building hierarchical structure from:', flatElements.length, 'flat elements')
+
     const elementsMap = new Map()
     const rootElements: BuilderElement[] = []
 
@@ -426,7 +429,7 @@ export default function BuilderPage() {
       elementsMap.set(element.id, {
         ...element,
         children: [],
-        isExpanded: false // Default to collapsed state
+        isExpanded: element.type === 'module' // Modules should be expanded by default
       })
     })
 
@@ -438,11 +441,23 @@ export default function BuilderPage() {
         const parent = elementsMap.get(element.parent_id)
         if (parent) {
           parent.children.push(currentElement)
+          console.log(`🔍 Added ${currentElement.type} "${currentElement.title}" to parent ${parent.type} "${parent.title}"`)
+        } else {
+          console.log(`🔍 Warning: Parent ${element.parent_id} not found for ${element.type} "${element.title}"`)
         }
       } else {
         rootElements.push(currentElement)
+        console.log(`🔍 Added root element: ${currentElement.type} "${currentElement.title}"`)
       }
     })
+
+    console.log('🔍 Final hierarchy:', rootElements.map(el => ({
+      id: el.id,
+      type: el.type,
+      title: el.title,
+      childrenCount: el.children?.length || 0,
+      isExpanded: el.isExpanded
+    })))
 
     return rootElements
   }
@@ -837,7 +852,7 @@ export default function BuilderPage() {
       return
     }
 
-    console.log('Toggling element:', elementId, 'Type:', elementToToggle.type, 'Has children:', elementToToggle.children?.length || 0)
+    console.log('Toggling element:', elementId, 'Type:', elementToToggle.type, 'Has children:', elementToToggle.children?.length || 0, 'Current expanded state:', elementToToggle.isExpanded)
 
     const updateElementExpansion = (elements: BuilderElement[]): BuilderElement[] => {
       return elements.map(element => {
@@ -924,7 +939,7 @@ export default function BuilderPage() {
         if (elementToRemove.type === 'course' || elementToRemove.type === 'lesson' || elementToRemove.type === 'quiz') {
           const availableElement: AvailableElement = {
             id: `${elementToRemove.type}-${elementToRemove.db_id}`,
-            type: elementToRemove.type as 'course' | 'lesson' | 'quiz',
+            type: elementToRemove.type,
             title: elementToRemove.title,
             description: elementToRemove.description || '',
             icon: getElementIcon(elementToRemove.type),
@@ -951,28 +966,7 @@ export default function BuilderPage() {
     }
   }
 
-  const saveStructure = async () => {
-    setSaving(true)
-    try {
-      const response = await fetch('/api/admin/structure', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ elements: builderElements }),
-      })
 
-      if (response.ok) {
-        // Show success message
-        console.log('Structure saved successfully')
-      }
-    } catch (error) {
-      console.error('Error saving structure:', error)
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -1007,7 +1001,7 @@ export default function BuilderPage() {
           ]}>
             {/* Left: Builder Structure */}
             <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-              {builderElements.map((element, index) => (
+              {builderElements.map((element) => (
                 <SortableBuilderElement
                   key={element.id}
                   element={element}

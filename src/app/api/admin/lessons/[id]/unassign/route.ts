@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server-client'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -35,7 +35,7 @@ export async function PATCH(
       )
     }
 
-    const lessonId = params.id
+    const { id: lessonId } = await params
 
     // Update the lesson to remove course_id (make it unassigned)
     const { data: lesson, error } = await supabase

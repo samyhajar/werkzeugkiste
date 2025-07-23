@@ -6,11 +6,9 @@ import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -632,7 +630,7 @@ export default function ModulesPage() {
           <DialogHeader>
             <DialogTitle className="text-red-600">Modul löschen</DialogTitle>
             <DialogDescription>
-              Sind Sie sicher, dass Sie das Modul "{moduleToDelete?.title}" löschen möchten?
+              Sind Sie sicher, dass Sie das Modul &quot;{moduleToDelete?.title}&quot; löschen möchten?
               Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Kurse werden ebenfalls gelöscht.
             </DialogDescription>
           </DialogHeader>
@@ -678,7 +676,7 @@ export default function ModulesPage() {
             </div>
             <DialogTitle className="text-xl font-bold text-gray-900">Modul bearbeiten</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen des Moduls "{editingModule?.title}"
+              Bearbeiten Sie die Informationen des Moduls &quot;{editingModule?.title}&quot;
             </DialogDescription>
           </DialogHeader>
 

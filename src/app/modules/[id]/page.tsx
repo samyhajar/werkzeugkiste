@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 // import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, CheckCircle, User, BarChart3 } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronLeft, FileText, HelpCircle, User, BarChart3 } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 interface Lesson {

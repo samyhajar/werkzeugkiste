@@ -441,7 +441,7 @@ export default function LessonDetailsPage() {
                     <div>
                       <h4 className="font-medium text-foreground">{quiz.title}</h4>
                       <p className="text-sm text-foreground/60">
-                        Pass percentage: {quiz.pass_percentage}%
+                        Pass percentage: {quiz.pass_pct}%
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

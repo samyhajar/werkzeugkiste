@@ -41,8 +41,6 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    let error
-
     switch (elementType) {
       case 'courses':
         // Delete course and all its children (lessons, quizzes)

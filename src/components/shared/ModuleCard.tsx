@@ -1,7 +1,6 @@
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 // import { CardHeader } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Tables } from '@/types/supabase'

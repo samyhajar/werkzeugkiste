@@ -195,7 +195,7 @@ export default function CourseBuilder({ courseId }: CourseBuilderProps) {
               {lesson.quizzes.map((quiz) => (
                 <div key={quiz.id} className="border rounded p-4 my-2 bg-background">
                   <p className="font-medium">Quiz: {quiz.title}</p>
-                  <p className="text-sm text-foreground/60">Pass %: {quiz.pass_percentage}</p>
+                  <p className="text-sm text-foreground/60">Pass %: {quiz.pass_pct}</p>
                 </div>
               ))}
             </CardContent>

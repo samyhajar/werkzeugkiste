@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server-client'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -35,7 +35,7 @@ export async function PATCH(
       )
     }
 
-    const courseId = params.id
+    const { id: courseId } = await params
     const { module_id } = await request.json()
 
     if (!module_id) {

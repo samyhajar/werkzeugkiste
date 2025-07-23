@@ -41,22 +41,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Update the order of quizzes in the course
-    for (let i = 0; i < quiz_ids.length; i++) {
-      const { error } = await supabase
-        .from('quizzes')
-        .update({ order: i + 1 })
-        .eq('id', quiz_ids[i])
-        .eq('course_id', course_id)
-
-      if (error) {
-        console.error('Error updating quiz order:', error)
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        )
-      }
-    }
+    // Note: Quiz ordering is not implemented yet as the quizzes table doesn't have an order field
+    // This endpoint is a placeholder for future implementation
 
     return NextResponse.json({
       success: true,

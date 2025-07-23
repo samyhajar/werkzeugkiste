@@ -4,12 +4,9 @@ import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
@@ -439,6 +436,8 @@ export default function LessonsPage() {
     </>
   ))
 
+  CreateLessonDialogContent.displayName = 'CreateLessonDialogContent'
+
   const filteredLessons = useMemo(() => {
     return lessons.filter(lesson => {
       const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -669,7 +668,7 @@ export default function LessonsPage() {
           <DialogHeader>
             <DialogTitle className="text-red-600">Lektion löschen</DialogTitle>
             <DialogDescription>
-              Sind Sie sicher, dass Sie die Lektion "{lessonToDelete?.title}" löschen möchten?
+              Sind Sie sicher, dass Sie die Lektion &quot;{lessonToDelete?.title}&quot; löschen möchten?
               Diese Aktion kann nicht rückgängig gemacht werden.
             </DialogDescription>
           </DialogHeader>
@@ -715,7 +714,7 @@ export default function LessonsPage() {
             </div>
             <DialogTitle className="text-xl font-bold text-gray-900">Lektion bearbeiten</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen der Lektion "{editingLesson?.title}"
+              Bearbeiten Sie die Informationen der Lektion &quot;{editingLesson?.title}&quot;
             </DialogDescription>
           </DialogHeader>
 

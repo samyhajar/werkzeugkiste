@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
@@ -127,10 +127,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Normalize all orders before building structure
-    for (const module of modules || []) {
-      await normalizeCourseOrder(module.id)
+    for (const moduleItem of modules || []) {
+      await normalizeCourseOrder(moduleItem.id)
       const moduleCourses =
-        courses?.filter((course: any) => course.module_id === module.id) || []
+        courses?.filter((course: any) => course.module_id === moduleItem.id) ||
+        []
       for (const course of moduleCourses) {
         await normalizeLessonOrder(course.id)
       }
@@ -175,24 +176,24 @@ export async function GET(request: NextRequest) {
     const elements: any[] = []
 
     // Add modules as top-level elements
-    modules?.forEach((module: any, moduleIndex: number) => {
+    modules?.forEach((moduleItem: any, moduleIndex: number) => {
       elements.push({
-        id: `module-${module.id}`,
+        id: `module-${moduleItem.id}`,
         type: 'module',
-        title: module.title,
-        description: module.description,
+        title: moduleItem.title,
+        description: moduleItem.description,
         order: moduleIndex, // Use index since modules table doesn't have order field
         parent_id: null,
         children: [],
         isExpanded: true,
-        db_id: module.id,
+        db_id: moduleItem.id,
         db_type: 'modules',
       })
 
       // Add courses for this module
       const moduleCourses =
         normalizedCourses?.filter(
-          (course: any) => course.module_id === module.id
+          (course: any) => course.module_id === moduleItem.id
         ) || []
       moduleCourses.forEach((course: any, courseIndex: number) => {
         elements.push({
@@ -201,7 +202,7 @@ export async function GET(request: NextRequest) {
           title: course.title,
           description: course.description,
           order: course.order || courseIndex,
-          parent_id: `module-${module.id}`,
+          parent_id: `module-${moduleItem.id}`,
           children: [],
           isExpanded: true,
           db_id: course.id,

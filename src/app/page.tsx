@@ -8,7 +8,6 @@ import { Suspense } from 'react'
 // import { cookies } from 'next/headers'
 
 
-type Module = Tables<'modules'>
 type Lesson = Tables<'lessons'>
 
 interface ProgressData {

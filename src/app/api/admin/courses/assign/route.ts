@@ -46,7 +46,6 @@ export async function PATCH(request: NextRequest) {
       .from('courses')
       .select('order')
       .eq('module_id', module_id)
-      .not('order', 'is', null)
       .order('order', { ascending: false })
       .limit(1)
       .maybeSingle()

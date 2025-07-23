@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -539,7 +538,7 @@ export default function CoursesPage() {
           <DialogHeader>
             <DialogTitle className="text-red-600">Kurs löschen</DialogTitle>
             <DialogDescription>
-              Sind Sie sicher, dass Sie den Kurs "{courseToDelete?.title}" löschen möchten?
+              Sind Sie sicher, dass Sie den Kurs &quot;{courseToDelete?.title}&quot; löschen möchten?
               Diese Aktion kann nicht rückgängig gemacht werden und alle zugehörigen Lektionen werden ebenfalls gelöscht.
             </DialogDescription>
           </DialogHeader>
@@ -585,7 +584,7 @@ export default function CoursesPage() {
             </div>
             <DialogTitle className="text-xl font-bold text-gray-900">Kurs bearbeiten</DialogTitle>
             <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen des Kurses "{editingCourse?.title}"
+              Bearbeiten Sie die Informationen des Kurses &quot;{editingCourse?.title}&quot;
             </DialogDescription>
           </DialogHeader>
 

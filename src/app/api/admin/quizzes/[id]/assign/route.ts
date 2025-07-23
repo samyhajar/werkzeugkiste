@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server-client'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -35,7 +35,7 @@ export async function PATCH(
       )
     }
 
-    const quizId = params.id
+    const { id: quizId } = await params
     const { course_id } = await request.json()
 
     if (!course_id) {
@@ -48,7 +48,7 @@ export async function PATCH(
     // Update the quiz to assign it to the course
     const { data: quiz, error } = await supabase
       .from('quizzes')
-      .update({ course_id } as any)
+      .update({ course_id })
       .eq('id', quizId)
       .select()
       .single()
