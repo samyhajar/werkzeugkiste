@@ -167,6 +167,7 @@ export default async function Home({
           width={1920}
           height={354}
           priority
+          sizes="100vw"
           className="w-full h-auto object-cover max-h-[50vh] sm:max-h-[60vh] -mt-8"
         />
       </section>

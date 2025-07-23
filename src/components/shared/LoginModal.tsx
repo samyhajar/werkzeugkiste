@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { X } from 'lucide-react'
 import { AuthResponse } from '@/types/api'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -30,6 +31,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const router = useRouter()
+  const { refreshSession } = useAuth()
   // const supabase = getBrowserClient()
 
   // Reset form when modal opens/closes
@@ -72,6 +74,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setLoading(false)
 
         if (data.success && data.user) {
+        // Add a small delay to ensure cookies are properly set
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Refresh the session to update the auth context
+        await refreshSession()
+
         // Close modal and let AuthContext handle the session
         onClose()
 
@@ -197,6 +205,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     onChange={(e) => setSignInEmail(e.target.value)}
                     required
                     disabled={loading}
+                    autoComplete="username"
                     className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
                   />
                 </div>

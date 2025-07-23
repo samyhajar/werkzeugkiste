@@ -144,17 +144,8 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include'
-      })
-
-      if (response.ok) {
-        router.push('/')
-      } else {
-        // Force redirect even if logout fails
-        router.push('/')
-      }
+      await signOut()
+      // The signOut function in AuthContext will handle the redirect
     } catch (error) {
       console.error('[Navbar] Error during logout:', error)
       // Force redirect on error

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server-client'
 interface SignupRequest {
   email: string
   password: string
-  fullName: string
+  role?: string
 }
 
 interface SignupResponse {
@@ -20,18 +20,19 @@ export async function POST(
     const supabase = await createClient()
     const body: SignupRequest = await request.json()
 
-    const { email, password, fullName } = body
+    const { email, password, role = 'student' } = body
 
     // Basic validation
-    if (!email || !password || !fullName) {
+    if (!email || !password) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Extract first name from full name
-    const firstName = fullName.split(' ')[0] || 'User'
+    // Extract name from email for now
+    const fullName = email.split('@')[0] || 'User'
+    const firstName = fullName.split('.')[0] || 'User'
 
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
@@ -40,7 +41,7 @@ export async function POST(
         data: {
           full_name: fullName,
           first_name: firstName,
-          role: 'student',
+          role: role,
         },
       },
     })
@@ -54,13 +55,12 @@ export async function POST(
 
     if (authData.user) {
       // Create profile entry
-      const profileFirstName = fullName.split(' ')[0] || 'User'
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         email,
         full_name: fullName,
-        first_name: profileFirstName,
-        role: 'student',
+        first_name: firstName,
+        role: role,
       })
 
       if (profileError) {

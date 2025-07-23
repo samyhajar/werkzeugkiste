@@ -33,7 +33,8 @@ export async function createClient() {
               }
               cookieStore.set(name, value, cookieOptions)
             })
-          } catch {
+          } catch (error) {
+            console.error('Error setting cookies:', error)
             /* Called from a Server Component – safe to ignore. */
           }
         },

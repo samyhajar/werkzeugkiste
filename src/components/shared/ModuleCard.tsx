@@ -16,11 +16,12 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
   return (
     <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg">
       {/* Hero Image */}
-      <div className="relative w-full h-48 bg-brand-primary">
+      <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
         <Image
-          src="/header-full-computer-final.jpg"
+          src={module.hero_image || '/placeholder.png'}
           alt={module.title}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
         />
       </div>

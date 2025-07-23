@@ -1,9 +1,18 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
-import { AuthUser } from '@/types/api'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+
+interface AuthUser {
+  id: string
+  email: string
+  full_name?: string
+  role?: string
+}
 
 export default function AdminLayout({
   children,
@@ -14,23 +23,17 @@ export default function AdminLayout({
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState<AuthUser | null>(null)
   const router = useRouter()
+  const { signOut } = useAuth()
   const authCheckInProgress = useRef(false)
   const lastAuthCheck = useRef<number>(0)
 
   const handleLogout = async () => {
     try {
-      // Call the improved logout API
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      })
-
-      const data = await response.json()
-
-      // Always redirect, regardless of API response
-      router.replace('/')
+      await signOut()
+      // The signOut function in AuthContext will handle the redirect
     } catch (error) {
-      // Force redirect even if logout API fails
+      console.error('[AdminLayout] Error during logout:', error)
+      // Force redirect on error
       router.replace('/')
     }
   }
@@ -120,14 +123,14 @@ export default function AdminLayout({
       <AdminSidebar
         profile={{
           id: user.id,
-          full_name: user.full_name,
-          role: user.role,
+          full_name: user.full_name || null,
+          role: user.role || null,
           email: user.email,
           first_name: null,
           created_at: null,
           updated_at: null
         }}
-        role={user.role}
+        role={user.role || 'admin'}
         userEmail={user.email}
         onLogout={handleLogout}
       />
