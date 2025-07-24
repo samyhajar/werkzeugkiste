@@ -40,8 +40,7 @@ export default function ModuleDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    status: 'draft' as 'draft' | 'published'
+    description: ''
   })
   const [saving, setSaving] = useState(false)
   const [reordering, setReordering] = useState(false)
@@ -86,8 +85,7 @@ export default function ModuleDetailsPage() {
         setCourses(coursesWithStats)
         setFormData({
           title: moduleData.title || '',
-          description: moduleData.description || '',
-          status: (moduleData.status as 'draft' | 'published') || 'draft'
+          description: moduleData.description || ''
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch module')
@@ -108,8 +106,7 @@ export default function ModuleDetailsPage() {
         .from('modules')
         .update({
           title: formData.title,
-          description: formData.description,
-          status: formData.status
+          description: formData.description
         })
         .eq('id', moduleId)
 
@@ -379,21 +376,7 @@ export default function ModuleDetailsPage() {
                     rows={4}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: 'draft' | 'published') => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
               </div>
             ) : (
               <div className="space-y-4">
@@ -405,19 +388,13 @@ export default function ModuleDetailsPage() {
                   <Label className="text-sm font-medium text-foreground/60">Description</Label>
                   <p className="text-foreground">{module.description || 'No description'}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-foreground/60">Status</Label>
-                    <p className="text-foreground capitalize">{module.status}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-foreground/60">Created</Label>
-                    <p className="text-foreground">
-                      {module.created_at
-                        ? formatDistanceToNow(new Date(module.created_at), { addSuffix: true })
-                        : 'Unknown'}
-                    </p>
-                  </div>
+                <div>
+                  <Label className="text-sm font-medium text-foreground/60">Created</Label>
+                  <p className="text-foreground">
+                    {module.created_at
+                      ? formatDistanceToNow(new Date(module.created_at), { addSuffix: true })
+                      : 'Unknown'}
+                  </p>
                 </div>
               </div>
             )}

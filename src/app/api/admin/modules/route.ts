@@ -45,7 +45,7 @@ export async function GET(_request: NextRequest) {
     // Fetch all modules
     const { data: modules, error } = await supabase
       .from('modules')
-      .select('id, title, description, status, created_at, updated_at')
+      .select('id, title, description, created_at, updated_at')
       .order('title', { ascending: true })
 
     if (error) {
@@ -112,7 +112,6 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
-      status: status || 'draft',
     }
 
     const { data: module, error } = await supabase

@@ -62,7 +62,7 @@ export default function ModulesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null)
-  const [sortField, setSortField] = useState<'title' | 'description' | 'status' | 'created_at' | 'updated_at'>('title')
+  const [sortField, setSortField] = useState<'title' | 'description' | 'created_at' | 'updated_at'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const fetchModules = async () => {
@@ -134,8 +134,7 @@ export default function ModulesPage() {
           body: JSON.stringify({
             title: newModule.title,
             description: newModule.description,
-            hero_image: newModule.hero_image,
-            status: newModule.status
+            hero_image: newModule.hero_image
           }),
         })
 
@@ -172,7 +171,7 @@ export default function ModulesPage() {
 
         if (data.success && data.module) {
           setModules([data.module, ...modules])
-          setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
+          setNewModule({ title: '', description: '', hero_image: '' })
           setIsCreateDialogOpen(false)
         } else {
           throw new Error(data.error || 'Failed to create module')
@@ -227,8 +226,7 @@ export default function ModulesPage() {
     setNewModule({
       title: module.title,
       description: module.description || '',
-      hero_image: module.hero_image || '',
-      status: (module.status as 'draft' | 'published') || 'draft'
+      hero_image: module.hero_image || ''
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
@@ -294,7 +292,7 @@ export default function ModulesPage() {
     }
   }
 
-  const handleSort = (field: 'title' | 'description' | 'status' | 'created_at' | 'updated_at') => {
+  const handleSort = (field: 'title' | 'description' | 'created_at' | 'updated_at') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
@@ -307,8 +305,7 @@ export default function ModulesPage() {
     const filteredModules = modules.filter(module => {
       const matchesSearch = module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            (module.description && module.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      const matchesStatus = statusFilter === 'all' || module.status === statusFilter
-      return matchesSearch && matchesStatus
+      return matchesSearch
     })
 
     return filteredModules.sort((a, b) => {
@@ -324,10 +321,7 @@ export default function ModulesPage() {
           aValue = (a.description || '').toLowerCase()
           bValue = (b.description || '').toLowerCase()
           break
-        case 'status':
-          aValue = a.status || ''
-          bValue = b.status || ''
-          break
+
         case 'created_at':
           aValue = new Date(a.created_at || '').getTime()
           bValue = new Date(b.created_at || '').getTime()
@@ -350,12 +344,7 @@ export default function ModulesPage() {
 
 
 
-  const filteredModules = modules.filter(module => {
-    const matchesSearch = module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         module.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || module.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+
 
   useEffect(() => {
     void fetchModules()
@@ -581,33 +570,7 @@ export default function ModulesPage() {
                   <h3 className="font-semibold text-gray-900 text-sm">Module Settings</h3>
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="status" className="text-xs font-semibold text-gray-700">Publication Status</Label>
-                  <Select
-                    value={newModule.status}
-                    onValueChange={(value: 'draft' | 'published') =>
-                      setNewModule({ ...newModule, status: value })
-                    }
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <span>📝</span>
-                          <span>Draft - Not visible to students</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="published">
-                        <div className="flex items-center gap-2">
-                          <span>🌟</span>
-                          <span>Published - Available to students</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
               </div>
             </div>
 
@@ -655,24 +618,12 @@ export default function ModulesPage() {
               className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
             />
           </div>
-          <Select
-            value={statusFilter}
-            onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
-          >
-            <SelectTrigger className="w-[180px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg">
-              <SelectItem value="all">Alle Module</SelectItem>
-              <SelectItem value="published">Veröffentlicht</SelectItem>
-              <SelectItem value="draft">Entwurf</SelectItem>
-            </SelectContent>
-          </Select>
+
         </div>
       </div>
 
       {/* Modules Table */}
-      {filteredModules.length === 0 ? (
+      {getSortedModules().length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div className="text-gray-500 mb-4 text-lg">
             {modules.length === 0 ? 'No modules created yet' : 'No modules match your search'}
@@ -711,17 +662,7 @@ export default function ModulesPage() {
                       )}
                     </div>
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Status
-                      {sortField === 'status' && (
-                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </th>
+
                   <th
                     className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
                     onClick={() => handleSort('created_at')}
@@ -767,18 +708,7 @@ export default function ModulesPage() {
                         {module.description || 'No description available'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant={module.status === 'published' ? 'default' : 'secondary'}
-                        className={
-                          module.status === 'published'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                        }
-                      >
-                        {module.status}
-                      </Badge>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         {formatDateSafely(module.created_at)}

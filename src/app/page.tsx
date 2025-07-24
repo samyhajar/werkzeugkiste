@@ -38,11 +38,10 @@ export default async function Home({
   // const cookieStore = await cookies()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch all published modules with their courses
+  // Fetch all modules with their courses (status column was removed)
   const { data: fetchedModules } = await supabase
     .from('modules')
     .select('*')
-    .eq('status', 'published')
     .order('order', { ascending: true })
 
   const modules = fetchedModules ?? []
@@ -99,7 +98,6 @@ export default async function Home({
       .from('courses')
       .select('id, module_id')
       .in('module_id', modules.map(m => m.id))
-      .eq('status', 'published')
 
     if (courses && courses.length > 0) {
       // Get user's completed lessons with course info in a single query

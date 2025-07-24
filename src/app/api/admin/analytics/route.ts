@@ -28,7 +28,7 @@ export async function GET(_request: NextRequest) {
 
     // Fetch analytics data
     const [coursesResult, lessonsResult, studentsResult] = await Promise.all([
-      supabase.from('courses').select('id, title, status, created_at'),
+      supabase.from('courses').select('id, title, created_at'),
       supabase.from('lessons').select('id, title, created_at'),
       supabase.from('profiles').select('id, created_at').eq('role', 'student'),
     ])
@@ -47,10 +47,6 @@ export async function GET(_request: NextRequest) {
 
     // Calculate overview statistics
     const totalCourses = courses.length
-    const publishedCourses = courses.filter(
-      c => c.status === 'published'
-    ).length
-    const draftCourses = courses.filter(c => c.status === 'draft').length
     const totalLessons = lessons.length
     const totalQuizzes = 0 // Will be calculated when needed
     const totalStudents = students.length
@@ -87,8 +83,6 @@ export async function GET(_request: NextRequest) {
     const analytics = {
       overview: {
         totalCourses,
-        publishedCourses,
-        draftCourses,
         totalLessons,
         totalQuizzes,
         totalStudents,
@@ -107,7 +101,6 @@ export async function GET(_request: NextRequest) {
         courses: courses.map(c => ({
           id: c.id,
           created_at: c.created_at || '',
-          status: c.status || 'draft',
         })),
         students: students.map(s => ({
           id: s.id,

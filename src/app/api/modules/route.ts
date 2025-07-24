@@ -5,11 +5,10 @@ export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Fetch all published modules
+    // Fetch all modules (status column was removed)
     const { data: modules, error: modulesError } = await supabase
       .from('modules')
       .select('*')
-      .eq('status', 'published')
       .order('order', { ascending: true })
 
     if (modulesError) {

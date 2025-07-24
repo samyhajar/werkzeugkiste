@@ -19,7 +19,6 @@ export async function GET(
       .from('courses')
       .select('*')
       .eq('id', id)
-      .eq('status', 'published') // Only allow access to published courses
       .single()
 
     if (courseError || !course) {

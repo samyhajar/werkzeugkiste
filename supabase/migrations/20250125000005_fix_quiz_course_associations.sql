@@ -11,7 +11,7 @@ WHERE enhanced_quizzes.lesson_id IS NOT NULL
   AND enhanced_quizzes.course_id IS NULL;
 
 -- Also update quizzes that have scope = 'course' but no course_id
--- These should be associated with the first published course in their module
+-- These should be associated with the first course in their module
 UPDATE enhanced_quizzes
 SET course_id = (
   SELECT c.id
@@ -27,8 +27,7 @@ SET course_id = (
     )
     LIMIT 1
   )
-  AND c.status = 'published'
-  ORDER BY c.order
+  ORDER BY c.created_at
   LIMIT 1
 )
 WHERE enhanced_quizzes.scope = 'course'
@@ -42,7 +41,6 @@ SELECT
   eq.scope,
   eq.course_id,
   eq.lesson_id,
-  c.status as course_status,
   c.title as course_title
 FROM enhanced_quizzes eq
 LEFT JOIN courses c ON eq.course_id = c.id

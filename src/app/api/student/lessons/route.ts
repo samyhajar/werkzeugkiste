@@ -18,16 +18,15 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Get lessons for published courses only
+    // Get lessons for all courses (status column was removed)
     const { data: lessons, error } = await supabase
       .from('lessons')
       .select(
         `
         *,
-        courses!inner(status)
+        courses!inner()
       `
       )
-      .eq('courses.status', 'published')
       .order('sort_order', { ascending: true })
 
     if (error) {

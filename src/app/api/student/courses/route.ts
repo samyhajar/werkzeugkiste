@@ -18,11 +18,10 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Get only published courses for students
+    // Get all courses for students (status column was removed)
     const { data: courses, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('status', 'published')
       .order('created_at', { ascending: false })
 
     if (error) {

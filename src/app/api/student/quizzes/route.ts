@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Get quizzes for published courses only from enhanced_quizzes table
+    // Get quizzes for all courses from enhanced_quizzes table (status column was removed)
     const { data: quizzes, error } = await supabase
       .from('enhanced_quizzes')
       .select(
@@ -26,11 +26,10 @@ export async function GET(_request: NextRequest) {
         *,
         lessons!inner(
           course_id,
-          courses!inner(status)
+          courses!inner()
         )
       `
       )
-      .eq('lessons.courses.status', 'published')
       .order('sort_order', { ascending: true })
 
     if (error) {
