@@ -84,15 +84,12 @@ export default function ModuleDetailPage() {
       setError(null)
 
       const response = await fetch(`/api/modules/${moduleId}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setModule(data.module)
-        } else {
-          setError(data.error || 'Failed to load module')
-        }
+      const data = await response.json() as { success: boolean; module?: Module; error?: string }
+
+      if (response.ok && data.success && data.module) {
+        setModule(data.module)
       } else {
-        setError(`HTTP ${response.status}: ${response.statusText}`)
+        setError(data.error || 'Failed to load module')
       }
     } catch (err) {
       console.error('Error fetching module:', err)
@@ -242,7 +239,7 @@ export default function ModuleDetailPage() {
               </div>
               <div className="text-sm">
                 <div className="font-medium text-gray-900">
-                  {user.user_metadata?.full_name || user.email}
+                  {user.user_metadata?.full_name || user.email || 'Student'}
                 </div>
                 <div className="text-gray-500 text-xs">Student</div>
               </div>

@@ -52,72 +52,63 @@ export default function DashboardPage() {
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
 
-  const fetchStudentData = useCallback(async () => {
-    // Prevent duplicate requests
-    if (fetchInProgress.current) {
-      return
-    }
-
-    // Debounce requests
-    const now = Date.now()
-    if (now - lastFetchTime.current < 2000) {
-      return
-    }
-
-    fetchInProgress.current = true
-    lastFetchTime.current = now
-
+  const fetchModules = useCallback(async () => {
     try {
       setLoading(true)
-
-      // Fetch modules with their courses
       const response = await fetch('/api/modules')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          const modulesData = data.modules || []
-          setModules(modulesData)
-          // Set first module as selected by default
-          if (modulesData.length > 0 && !selectedModule) {
-            setSelectedModule(modulesData[0])
-          }
-        }
-      }
+      const data = await response.json() as { success: boolean; modules?: Module[]; error?: string }
 
-      // Fetch user progress
-      const progressResponse = await fetch('/api/student/progress')
-      if (progressResponse.ok) {
-        const progressData = await progressResponse.json()
-        if (progressData.success) {
-          setUserProgress(progressData.progress || {})
+      if (data.success && data.modules) {
+        setModules(data.modules)
+        if (data.modules.length > 0) {
+          setSelectedModule(data.modules[0])
         }
+      } else {
+        console.error('Failed to fetch modules:', data.error)
       }
     } catch (error) {
-      console.error('Error fetching student data:', error)
+      console.error('Error fetching modules:', error)
     } finally {
       setLoading(false)
-      fetchInProgress.current = false
     }
-  }, [selectedModule])
+  }, [])
+
+  const fetchUserProgress = useCallback(async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/student/progress')
+      const data = await response.json() as { success: boolean; progress?: Record<string, number>; error?: string }
+
+      if (data.success && data.progress) {
+        setUserProgress(data.progress)
+      } else {
+        console.error('Failed to fetch progress:', data.error)
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error)
+    }
+  }, [user])
 
   useEffect(() => {
-    void fetchStudentData()
-  }, [fetchStudentData])
+    void fetchModules()
+    void fetchUserProgress()
+  }, [fetchModules, fetchUserProgress])
 
   // Use centralized subscription management with debouncing
   useTableSubscription('modules', '*', undefined, () => {
     if (!fetchInProgress.current) {
-      void fetchStudentData()
+      void fetchModules()
     }
   })
   useTableSubscription('courses', '*', undefined, () => {
     if (!fetchInProgress.current) {
-      void fetchStudentData()
+      void fetchModules()
     }
   })
   useTableSubscription('lessons', '*', undefined, () => {
     if (!fetchInProgress.current) {
-      void fetchStudentData()
+      void fetchModules()
     }
   })
 
@@ -215,15 +206,20 @@ export default function DashboardPage() {
                   <CardContent>
                     <div className="space-y-3">
                       {modules.map((module) => (
-                        <div
-                          key={module.id}
-                          className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                            selectedModule?.id === module.id
-                              ? 'border-[#486681] bg-[#486681]/5'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => setSelectedModule(module)}
-                        >
+                            <div
+                                key={module.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => setSelectedModule(module)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault()
+                                    setSelectedModule(module)
+                                  }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Select module ${module.title}`}
+                              >
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold text-gray-900">{module.title}</h3>
                             <Badge variant="secondary">
