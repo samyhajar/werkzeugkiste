@@ -522,7 +522,7 @@ export default function CoursesPage() {
           <DialogTrigger asChild>
             <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">
               <Plus className="w-4 h-4 mr-2" />
-              + Kurs erstellen
+              Kurs erstellen
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[90vw] max-w-[1400px] max-h-[95vh] flex flex-col mx-4">
