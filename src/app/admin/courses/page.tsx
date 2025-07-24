@@ -39,7 +39,8 @@ export default function CoursesPage() {
     title: '',
     description: '',
     module_id: '',
-    hero_image: ''
+    hero_image: '',
+    status: 'draft' as 'draft' | 'published'
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -169,7 +170,8 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: ''
+            hero_image: '',
+            status: 'draft'
           })
           setCreateModalOpen(false)
           setEditingCourse(null)
@@ -199,7 +201,8 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: ''
+            hero_image: '',
+            status: 'draft'
           })
           setCreateModalOpen(false)
         } else {
@@ -253,7 +256,8 @@ export default function CoursesPage() {
       title: course.title,
       description: course.description || '',
       module_id: course.module_id || '',
-      hero_image: course.hero_image || ''
+      hero_image: course.hero_image || '',
+      status: (course.status as 'draft' | 'published') || 'draft'
     })
     setEditingCourse(course)
 
@@ -594,6 +598,30 @@ export default function CoursesPage() {
               </div>
 
 
+
+              {/* Status Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📊</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Course Status</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="status" className="text-xs font-semibold text-gray-700">Status</Label>
+                  <Select value={formData.status} onValueChange={(value: 'draft' | 'published') => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Choose whether this course is ready for students</p>
+                </div>
+              </div>
 
               {/* Visual Design Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
