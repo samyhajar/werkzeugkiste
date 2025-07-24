@@ -204,11 +204,78 @@ export default function ModuleDetailPage() {
             toast.style.opacity = '0'
             setTimeout(() => document.body.removeChild(toast), 300)
           }, 3000)
+
+          // Check if module is completed after this lesson
+          await checkModuleCompletion()
         }
       } catch (error) {
         console.error('Failed to mark lesson complete:', error)
         // Don't show error to user as this is a background operation
       }
+    }
+  }
+
+  const checkModuleCompletion = async () => {
+    if (!user || !moduleId) return
+
+    try {
+      const response = await fetch('/api/student/check-module-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          moduleId: moduleId,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.certificatesGenerated > 0) {
+          // Show module completion success message
+          const successToast = document.createElement('div')
+          successToast.className = 'fixed top-20 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+          successToast.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">🎉</div>
+              <div>
+                <div class="font-semibold">Modul abgeschlossen!</div>
+                <div class="text-sm opacity-90">${data.message}</div>
+                <div class="text-sm opacity-90 mt-1">${data.certificatesGenerated} Zertifikat(e) generiert!</div>
+              </div>
+            </div>
+          `
+          document.body.appendChild(successToast)
+
+          // Remove toast after 5 seconds
+          setTimeout(() => {
+            successToast.style.opacity = '0'
+            setTimeout(() => document.body.removeChild(successToast), 300)
+          }, 5000)
+        } else if (data.success && data.completedCourses > 0) {
+          // Show progress message
+          const progressToast = document.createElement('div')
+          progressToast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+          progressToast.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">📚</div>
+              <div>
+                <div class="font-semibold">Fortschritt!</div>
+                <div class="text-sm opacity-90">${data.completedCourses} von ${data.totalCourses} Kursen abgeschlossen</div>
+              </div>
+            </div>
+          `
+          document.body.appendChild(progressToast)
+
+          // Remove toast after 3 seconds
+          setTimeout(() => {
+            progressToast.style.opacity = '0'
+            setTimeout(() => document.body.removeChild(progressToast), 300)
+          }, 3000)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking module completion:', error)
     }
   }
 

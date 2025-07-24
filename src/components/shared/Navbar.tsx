@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, User, LogOut } from 'lucide-react'
+import { ChevronDown, User, LogOut, Award } from 'lucide-react'
 import LoginModal from './LoginModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
@@ -331,7 +331,7 @@ export default function Navbar() {
                           </div>
                         </div>
 
-                        {getUserRole() === 'admin' && (
+                        {getUserRole() === 'admin' ? (
                           <Link
                             href="/admin"
                             className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
@@ -340,7 +340,25 @@ export default function Navbar() {
                             <User className="h-4 w-4 mr-2" />
                             Admin Panel
                           </Link>
+                        ) : (
+                          <Link
+                            href="/dashboard"
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <User className="h-4 w-4 mr-2" />
+                            Dashboard
+                          </Link>
                         )}
+
+                        <Link
+                          href="/certificates"
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Award className="h-4 w-4 mr-2" />
+                          Zertifikate
+                        </Link>
 
                         <button
                           onClick={handleLogout}
@@ -455,7 +473,7 @@ export default function Navbar() {
                       </div>
                     </div>
 
-                    {getUserRole() === 'admin' && (
+                    {getUserRole() === 'admin' ? (
                       <Link
                         href="/admin"
                         className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
@@ -463,7 +481,23 @@ export default function Navbar() {
                       >
                         Admin Panel
                       </Link>
+                    ) : (
+                      <Link
+                        href="/dashboard"
+                        className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
                     )}
+
+                    <Link
+                      href="/certificates"
+                      className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Zertifikate
+                    </Link>
 
                     <button
                       onClick={() => {

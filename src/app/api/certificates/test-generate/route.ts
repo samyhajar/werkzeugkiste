@@ -191,9 +191,9 @@ export async function POST(_req: NextRequest) {
         const { error: insertError } = await supabase
           .from('certificates')
           .insert({
-            student_id: userId,
-            course_id: module.id,
-            file_url: uploadData?.path,
+            user_id: userId,
+            module_id: module.id,
+            pdf_url: uploadData?.path,
             issued_at: new Date().toISOString(),
           })
 

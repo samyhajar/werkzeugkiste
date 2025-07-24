@@ -16,11 +16,11 @@ interface Certificate {
   id: string
   user_id: string
   module_id: string
-  issued_at: string
+  issued_at: string | null
   pdf_url: string
-  show_name: boolean
+  show_name: boolean | null
   name_used: string | null
-  meta: Record<string, unknown>
+  meta: any
   user?: {
     full_name: string
   }
@@ -84,15 +84,36 @@ export default function CertificatesPage() {
   const [showCertificateNumber, setShowCertificateNumber] = useState(true)
 
   useEffect(() => {
-    void fetchCertificates()
-    void fetchUsers()
-    void fetchModules()
-    void fetchStorageTemplates()
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchCertificates(),
+          fetchUsers(),
+          fetchModules(),
+          fetchStorageTemplates()
+        ])
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log('Loading timeout reached')
+      setLoading(false)
+    }, 10000) // 10 second timeout
+
+    loadData()
+
+    return () => clearTimeout(timeoutId)
   }, [])
 
-  const fetchCertificates = async () => {
+    const fetchCertificates = async () => {
     try {
       const response = await fetch('/api/admin/certificates')
+
       if (response.ok) {
         const _data = await response.json() as CertificatesResponse
         setCertificates(_data.certificates || [])
@@ -106,9 +127,10 @@ export default function CertificatesPage() {
     }
   }
 
-  const fetchUsers = async () => {
+    const fetchUsers = async () => {
     try {
       const response = await fetch('/api/admin/users')
+
       if (response.ok) {
         const _data = await response.json()
         if (_data.success) {
@@ -122,9 +144,10 @@ export default function CertificatesPage() {
     }
   }
 
-  const fetchModules = async () => {
+    const fetchModules = async () => {
     try {
       const response = await fetch('/api/admin/modules')
+
       if (response.ok) {
         const _data = await response.json()
         if (_data.success) {
@@ -138,9 +161,10 @@ export default function CertificatesPage() {
     }
   }
 
-  const fetchStorageTemplates = async () => {
+    const fetchStorageTemplates = async () => {
     try {
       const response = await fetch('/api/admin/storage-templates')
+
       if (response.ok) {
         const _data = await response.json() as StorageTemplatesResponse
         if (_data.success) {
@@ -195,9 +219,10 @@ export default function CertificatesPage() {
     }
   }
 
-  const downloadCertificate = async (pdfUrl: string) => {
+  const downloadCertificate = async (fileUrl: string) => {
     try {
-      const response = await fetch(pdfUrl)
+      // Get signed URL for the certificate
+      const response = await fetch(`/api/admin/certificates/download?url=${encodeURIComponent(fileUrl)}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -216,10 +241,20 @@ export default function CertificatesPage() {
     }
   }
 
-  const deleteCertificate = async (certificateId: string) => {
+    const deleteCertificate = async (certificateId: string) => {
     try {
-      const response = await fetch(`/api/admin/certificates/${certificateId}`, {
-        method: 'DELETE'
+      // Parse the certificate ID to get user_id and module_id
+      const [userId, moduleId] = certificateId.split('-')
+
+      const response = await fetch(`/api/admin/certificates/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          module_id: moduleId,
+        }),
       })
 
       if (response.ok) {
@@ -413,51 +448,64 @@ export default function CertificatesPage() {
         </div>
 
         <div className="space-y-4">
-          {certificates.map((certificate) => (
-            <div
-              key={certificate.id}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50"
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="bg-[#486681] text-white">
-                    {certificate.user?.full_name || 'Unbekannter Benutzer'}
-                  </Badge>
-                  <Badge variant="outline" className="border-gray-300 text-gray-700">
-                    {certificate.module?.title || 'Unbekanntes Modul'}
-                  </Badge>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Erstellt am: {formatDateSafely(certificate.issued_at)}
-                </p>
-                {certificate.name_used && (
+                    {certificates
+            .filter(certificate => certificate.user_id && certificate.module_id)
+            .map((certificate, index) => (
+              <div
+                key={certificate.user_id && certificate.module_id
+                  ? `${certificate.user_id}-${certificate.module_id}`
+                  : `certificate-${index}`
+                }
+                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="secondary" className="bg-[#486681] text-white">
+                      {certificate.user?.full_name || 'Unbekannter Benutzer'}
+                    </Badge>
+                    <Badge variant="outline" className="border-gray-300 text-gray-700">
+                      {certificate.module?.title || 'Unbekanntes Modul'}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-gray-600">
-                    Name: {certificate.name_used}
+                    Erstellt am: {formatDateSafely(certificate.issued_at)}
                   </p>
-                )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {certificate.pdf_url && (
+                    <Button
+                      size="sm"
+                      onClick={() => void downloadCertificate(certificate.pdf_url)}
+                      className="bg-[#486681] hover:bg-[#3e5570] text-white"
+                    >
+                      Herunterladen
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => void deleteCertificate(
+                      certificate.user_id && certificate.module_id
+                        ? `${certificate.user_id}-${certificate.module_id}`
+                        : `certificate-${index}`
+                    )}
+                  >
+                    Löschen
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => void downloadCertificate(certificate.pdf_url)}
-                  className="bg-[#486681] hover:bg-[#3e5570] text-white"
-                >
-                  Herunterladen
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => void deleteCertificate(certificate.id)}
-                >
-                  Löschen
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))}
           {certificates.length === 0 && (
             <p className="text-center text-gray-500 py-8">
               Keine Zertifikate vorhanden.
             </p>
+          )}
+          {certificates.filter(c => !c.user_id || !c.module_id).length > 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-yellow-800 text-sm">
+                ⚠️ {certificates.filter(c => !c.user_id || !c.module_id).length} Zertifikat(e) mit ungültigen Daten gefunden und ausgeblendet.
+              </p>
+            </div>
           )}
         </div>
       </div>

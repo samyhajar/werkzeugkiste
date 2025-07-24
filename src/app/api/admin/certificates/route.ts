@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
 interface Certificate {
-  student_id: string
-  course_id: string
-  file_url: string | null
+  id: string
+  user_id: string
+  module_id: string
   issued_at: string | null
+  pdf_url: string
+  show_name: boolean | null
+  name_used: string | null
+  meta: any
 }
 
 interface User {
@@ -20,7 +24,10 @@ interface Course {
 
 interface CertificateWithDetails extends Certificate {
   user?: User
-  course?: Course
+  module?: {
+    id: string
+    title: string
+  }
 }
 
 export async function GET(_request: NextRequest) {
@@ -71,12 +78,12 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Fetch user and course data separately
+    // Fetch user and module data separately
     const userIds = [
-      ...new Set(certificates?.map((c: Certificate) => c.student_id) || []),
+      ...new Set(certificates?.map((c: Certificate) => c.user_id) || []),
     ]
-    const courseIds = [
-      ...new Set(certificates?.map((c: Certificate) => c.course_id) || []),
+    const moduleIds = [
+      ...new Set(certificates?.map((c: Certificate) => c.module_id) || []),
     ]
 
     const { data: users } = await supabase
@@ -84,21 +91,21 @@ export async function GET(_request: NextRequest) {
       .select('id, full_name')
       .in('id', userIds)
 
-    const { data: courses } = await supabase
-      .from('courses')
+    const { data: modules } = await supabase
+      .from('modules')
       .select('id, title')
-      .in('id', courseIds)
+      .in('id', moduleIds)
 
     // Create lookup maps
     const userMap = new Map(users?.map((u: User) => [u.id, u]) || [])
-    const courseMap = new Map(courses?.map((c: Course) => [c.id, c]) || [])
+    const moduleMap = new Map(modules?.map((m: any) => [m.id, m]) || [])
 
     // Combine the data
     const certificatesWithDetails: CertificateWithDetails[] =
       certificates?.map((cert: Certificate) => ({
         ...cert,
-        user: userMap.get(cert.student_id),
-        course: courseMap.get(cert.course_id),
+        user: userMap.get(cert.user_id),
+        module: moduleMap.get(cert.module_id),
       })) || []
 
     return NextResponse.json({
