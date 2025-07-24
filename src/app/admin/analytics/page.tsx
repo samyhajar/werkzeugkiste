@@ -7,6 +7,9 @@ import AnalyticsHeader from '@/components/admin/AnalyticsHeader'
 import AnalyticsOverviewCards from '@/components/admin/AnalyticsOverviewCards'
 import AnalyticsRecentActivity from '@/components/admin/AnalyticsRecentActivity'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 interface Analytics {
   overview: {
     totalCourses: number

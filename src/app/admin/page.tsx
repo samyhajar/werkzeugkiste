@@ -11,6 +11,9 @@ import {
   CheckCircle,
 } from 'lucide-react'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 interface DashboardStats {
   totalUsers: number
   totalModules: number

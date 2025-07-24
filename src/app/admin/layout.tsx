@@ -7,6 +7,9 @@ import AdminSidebar from '@/components/dashboard/AdminSidebar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 interface AuthUser {
   id: string
   email: string
