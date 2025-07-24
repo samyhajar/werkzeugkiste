@@ -148,8 +148,8 @@ export default function CertificatesPage() {
     )
   }
 
-  const completedCertificates = certificates.filter(cert => cert.status === 'completed')
-  const inProgressCourses = certificates.filter(cert => cert.status === 'in_progress')
+  // Since the API only returns completed certificates, we don't need to filter
+  const completedCertificates = certificates
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -163,7 +163,7 @@ export default function CertificatesPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-12">
         {/* Statistics */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
           <Card>
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -171,16 +171,6 @@ export default function CertificatesPage() {
               </div>
               <div className="text-2xl font-bold text-green-600">{completedCertificates.length}</div>
               <div className="text-sm text-gray-600">Zertifikate erhalten</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <CheckCircle className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="text-2xl font-bold text-blue-600">{inProgressCourses.length}</div>
-              <div className="text-sm text-gray-600">Kurse in Bearbeitung</div>
             </CardContent>
           </Card>
 
@@ -200,7 +190,7 @@ export default function CertificatesPage() {
         </div>
 
         {/* Empty State */}
-        {completedCertificates.length === 0 && inProgressCourses.length === 0 && (
+        {completedCertificates.length === 0 && (
           <div className="text-center py-16">
             <div className="text-gray-400 mb-4">
               <FileText className="h-16 w-16 mx-auto" />
@@ -221,11 +211,11 @@ export default function CertificatesPage() {
 
         {/* Completed Certificates */}
         {completedCertificates.length > 0 && (
-          <section className="mb-12">
+          <section>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Meine Zertifikate</h2>
             <div className="grid gap-6">
-              {completedCertificates.map((certificate) => (
-                <Card key={certificate.id} className="hover:shadow-lg transition-shadow">
+              {completedCertificates.map((certificate, index) => (
+                <Card key={`certificate-${certificate.id}-${index}`} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
@@ -260,45 +250,6 @@ export default function CertificatesPage() {
                           Download
                         </Button>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Courses in Progress */}
-        {inProgressCourses.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Kurse in Bearbeitung</h2>
-            <div className="grid gap-6">
-              {inProgressCourses.map((certificate) => (
-                <Card key={certificate.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                            {certificate.courseName}
-                          </h3>
-                          <div className="text-sm text-gray-500">
-                            Kurs in Bearbeitung
-                          </div>
-                        </div>
-                      </div>
-                      <Link href="/">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          Fortsetzen
-                        </Button>
-                      </Link>
                     </div>
                   </CardContent>
                 </Card>

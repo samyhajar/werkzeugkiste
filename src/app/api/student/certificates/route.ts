@@ -43,7 +43,7 @@ export async function GET(_request: NextRequest) {
 
     // Now let's get the course information for each certificate
     const certificatesWithModules = await Promise.all(
-      certificates.map(async cert => {
+      certificates.map(async (cert, index) => {
         const { data: module } = await supabase
           .from('modules')
           .select('id, title')
@@ -51,7 +51,7 @@ export async function GET(_request: NextRequest) {
           .single()
 
         return {
-          id: `${cert.user_id}-${cert.module_id}`,
+          id: cert.id || `cert-${cert.user_id}-${cert.module_id}-${index}`,
           courseName: module?.title || 'Unknown Module',
           moduleName: module?.title || 'Unknown Module',
           completedDate: cert.issued_at,
