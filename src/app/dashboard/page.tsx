@@ -13,6 +13,7 @@ import StudentSidebar from '@/components/dashboard/StudentSidebar'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface Course {
   id: string
@@ -28,8 +29,9 @@ interface Lesson {
   id: string
   title: string
   content: string | null
-  course_id: string
+  markdown: string | null
   order: number
+  course_id: string
 }
 
 interface Quiz {
@@ -43,17 +45,31 @@ interface Module {
   id: string
   title: string
   description: string | null
+  order: number
   courses: Course[]
 }
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth()
   const [modules, setModules] = useState<Module[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userProgress, setUserProgress] = useState<Record<string, number>>({})
   const [selectedModule, setSelectedModule] = useState<Module | null>(null)
+  const [userProgress, setUserProgress] = useState<Record<string, number>>({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+
+  // Prevent static generation by checking for user
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+          <p className="text-gray-600">Please wait while we load your dashboard.</p>
+        </div>
+      </div>
+    )
+  }
 
   const fetchModules = useCallback(async () => {
     try {
@@ -86,16 +102,16 @@ export default function DashboardPage() {
       if (data.success && data.progress) {
         setUserProgress(data.progress)
       } else {
-        console.error('Failed to fetch progress:', data.error)
+        console.error('Failed to fetch user progress:', data.error)
       }
     } catch (error) {
-      console.error('Error fetching progress:', error)
+      console.error('Error fetching user progress:', error)
     }
   }, [user])
 
   useEffect(() => {
-    void fetchModules()
-    void fetchUserProgress()
+    fetchModules()
+    fetchUserProgress()
   }, [fetchModules, fetchUserProgress])
 
   // Use centralized subscription management with debouncing
