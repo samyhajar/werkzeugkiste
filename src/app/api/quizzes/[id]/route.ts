@@ -34,8 +34,7 @@ export async function GET(
           course_id,
           courses(
             id,
-            title,
-            status
+            title
           )
         )
       `

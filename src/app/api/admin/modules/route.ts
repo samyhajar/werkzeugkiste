@@ -8,7 +8,6 @@ interface CreateModuleRequest {
   title: string
   description?: string
   hero_image?: string
-  status?: string
 }
 
 export async function GET(_request: NextRequest) {
@@ -98,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = (await request.json()) as CreateModuleRequest
-    const { title, description, hero_image, status } = body
+    const { title, description, hero_image } = body
 
     if (!title || !title.trim()) {
       return NextResponse.json(

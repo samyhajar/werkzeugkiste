@@ -492,7 +492,7 @@ export default function ModulesPage() {
                       <div className="space-y-2">
                         {moduleCourses.map((course, index) => (
                           <div
-                            key={`${course.id}-${course.order}`}
+                            key={`${course.id}-${index}`}
                             className={`flex items-center justify-between p-3 border rounded-lg transition-all cursor-move ${
                               draggedCourseId === course.id
                                 ? 'bg-blue-100 border-blue-300 shadow-lg scale-105'

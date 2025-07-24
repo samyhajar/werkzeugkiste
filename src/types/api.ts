@@ -8,8 +8,6 @@ export interface BaseApiResponse {
 export interface AnalyticsData {
   overview: {
     totalCourses: number
-    publishedCourses: number
-    draftCourses: number
     totalLessons: number
     totalQuizzes: number
     totalStudents: number
@@ -25,7 +23,7 @@ export interface AnalyticsData {
     studentsThisMonth: number
   }
   trends: {
-    courses: Array<{ id: string; created_at: string; status: string }>
+    courses: Array<{ id: string; created_at: string }>
     students: Array<{ id: string; created_at: string }>
   }
 }
@@ -58,7 +56,6 @@ export interface CourseData {
   id: string
   title: string
   description: string | null
-  status: string | null
   created_at: string | null
   updated_at: string | null
   hero_image: string | null

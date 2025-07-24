@@ -79,7 +79,7 @@ export default function ModuleDetailsPage() {
           ...course,
           lesson_count: course.lessons ? course.lessons.length : 0,
           lessons: course.lessons || []
-        }))
+        })) as CourseWithStats[]
 
         setModule(moduleData)
         setCourses(coursesWithStats)
@@ -322,9 +322,6 @@ export default function ModuleDetailsPage() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={module.status === 'published' ? 'default' : 'secondary'}>
-                  {module.status}
-                </Badge>
                 {editing ? (
                   <div className="flex gap-2">
                     <Button
@@ -465,7 +462,7 @@ export default function ModuleDetailsPage() {
               <div className="space-y-3">
                 {courses.map((course, index) => (
                   <div
-                    key={`${course.id}-${course.order}`}
+                    key={`${course.id}-${index}`}
                     className={`flex items-center justify-between p-4 border rounded-lg transition-all cursor-move ${
                       draggedCourseId === course.id
                         ? 'bg-blue-100 border-blue-300 shadow-lg scale-105'

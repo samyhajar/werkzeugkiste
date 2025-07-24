@@ -43,8 +43,7 @@ export default function CourseDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    status: 'draft' as 'draft' | 'published'
+    description: ''
   })
   const [saving, setSaving] = useState(false)
   const [reordering, setReordering] = useState(false)
@@ -92,8 +91,7 @@ export default function CourseDetailsPage() {
         setCourse(courseWithStats)
         setFormData({
           title: courseData.title || '',
-          description: courseData.description || '',
-          status: (courseData.status as 'draft' | 'published') || 'draft'
+          description: courseData.description || ''
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch course')
@@ -114,8 +112,7 @@ export default function CourseDetailsPage() {
         .from('courses')
         .update({
           title: formData.title,
-          description: formData.description,
-          status: formData.status
+          description: formData.description
         })
         .eq('id', courseId)
 
@@ -344,9 +341,6 @@ export default function CourseDetailsPage() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={course.status === 'published' ? 'default' : 'secondary'}>
-                  {course.status}
-                </Badge>
                 {editing ? (
                   <div className="flex gap-2">
                     <Button
@@ -398,21 +392,6 @@ export default function CourseDetailsPage() {
                     rows={4}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: 'draft' | 'published') => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -424,19 +403,13 @@ export default function CourseDetailsPage() {
                   <Label className="text-sm font-medium text-foreground/60">Description</Label>
                   <p className="text-foreground">{course.description || 'No description'}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-foreground/60">Status</Label>
-                    <p className="text-foreground capitalize">{course.status}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-foreground/60">Created</Label>
-                    <p className="text-foreground">
-                      {course.created_at
-                        ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true })
-                        : 'Unknown'}
-                    </p>
-                  </div>
+                <div>
+                  <Label className="text-sm font-medium text-foreground/60">Created</Label>
+                  <p className="text-foreground">
+                    {course.created_at
+                      ? formatDistanceToNow(new Date(course.created_at), { addSuffix: true })
+                      : 'Unknown'}
+                  </p>
                 </div>
               </div>
             )}

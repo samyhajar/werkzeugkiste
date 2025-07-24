@@ -1,33 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
 
-interface Certificate {
-  id: string
-  user_id: string
-  module_id: string
-  issued_at: string | null
-  pdf_url: string
-  show_name: boolean | null
-  name_used: string | null
-  meta: any
-}
-
-interface User {
-  id: string
-  full_name: string | null
-}
-
-interface Course {
-  id: string
-  title: string
-}
+type Certificate = Database['public']['Tables']['certificates']['Row']
+type User = Database['public']['Tables']['profiles']['Row']
+type Course = Database['public']['Tables']['courses']['Row']
 
 interface CertificateWithDetails extends Certificate {
-  user?: User
-  module?: {
-    id: string
-    title: string
-  }
+  user?: { id: string; full_name: string | null }
+  course?: { id: string; title: string } // Keep as 'course' for API compatibility
 }
 
 export async function GET(_request: NextRequest) {
@@ -97,15 +78,20 @@ export async function GET(_request: NextRequest) {
       .in('id', moduleIds)
 
     // Create lookup maps
-    const userMap = new Map(users?.map((u: User) => [u.id, u]) || [])
-    const moduleMap = new Map(modules?.map((m: any) => [m.id, m]) || [])
+    const userMap = new Map(
+      users?.map((u: { id: string; full_name: string | null }) => [u.id, u]) ||
+        []
+    )
+    const moduleMap = new Map(
+      modules?.map((m: { id: string; title: string }) => [m.id, m]) || []
+    )
 
     // Combine the data
     const certificatesWithDetails: CertificateWithDetails[] =
       certificates?.map((cert: Certificate) => ({
         ...cert,
         user: userMap.get(cert.user_id),
-        module: moduleMap.get(cert.module_id),
+        course: moduleMap.get(cert.module_id), // Keep as 'course' for API compatibility
       })) || []
 
     return NextResponse.json({

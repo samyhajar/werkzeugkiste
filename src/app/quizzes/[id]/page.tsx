@@ -41,7 +41,6 @@ interface Course {
   id: string
   title: string
   description: string | null
-  status: 'draft' | 'published'
   admin_id: string | null
   created_at: string
   updated_at: string

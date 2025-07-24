@@ -8,7 +8,6 @@ interface UpdateModuleRequest {
   title: string
   description?: string
   hero_image?: string
-  status?: string
 }
 
 export async function GET(
@@ -98,7 +97,7 @@ export async function PUT(
 
     // Parse request body
     const body = (await request.json()) as UpdateModuleRequest
-    const { title, description, hero_image, status } = body
+    const { title, description, hero_image } = body
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -112,7 +111,6 @@ export async function PUT(
       title: title.trim(),
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
-      status: status || 'draft',
       updated_at: new Date().toISOString(),
     }
 

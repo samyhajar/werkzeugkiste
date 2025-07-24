@@ -42,7 +42,6 @@ interface Module {
   id: string
   title: string
   description: string | null
-  status: 'draft' | 'published'
   hero_image: string | null
   created_at: string
   updated_at: string

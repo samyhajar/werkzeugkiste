@@ -45,7 +45,6 @@ export default function CreateCourseForm() {
       title,
       description,
       admin_id: user.id,
-      status: 'draft',
       hero_image: null,
     }
 

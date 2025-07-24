@@ -5,11 +5,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [],
   // Image configuration
   images: {
-    domains: ['werkzeugkiste.vercel.app'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'werkzeugkiste.vercel.app',
+        hostname: '**',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
         port: '',
         pathname: '/**',
       },
