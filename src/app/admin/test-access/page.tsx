@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server-client'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 export default async function AdminTestPage() {
   const supabase = await createClient()
 
