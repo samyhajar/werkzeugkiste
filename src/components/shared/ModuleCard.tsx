@@ -14,7 +14,7 @@ interface ModuleCardProps {
 
 export default function ModuleCard({ module, progress = 0, isLoggedIn = false }: ModuleCardProps) {
   return (
-    <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg">
+    <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg hover:shadow-xl transition-shadow duration-300 module-card-hover">
       {/* Hero Image */}
       <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
         <Image
@@ -38,14 +38,20 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
             {module.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
           </p>
 
-          {/* Progress bar for logged-in users */}
+          {/* Simple Progress bar for logged-in users */}
           {isLoggedIn && (
             <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-xs text-gray-600">
-                <span>Fortschritt</span>
-                <span>{progress}%</span>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-700">Fortschritt</span>
+                <span className="text-sm font-semibold text-[#486681]">{progress}%</span>
               </div>
-              <Progress value={progress} className="h-2" />
+              <Progress
+                value={progress}
+                variant="custom"
+                size="lg"
+                className="h-3"
+                progressColor={progress > 0 ? '#486681' : '#e5e7eb'}
+              />
             </div>
           )}
         </div>
@@ -57,7 +63,7 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
             href={`/modules/${module.id}`}
             className="block w-full border-2 border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:text-gray-800 text-center py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50"
           >
-            Modul starten
+            {isLoggedIn && progress > 0 ? 'Weiter lernen' : 'Modul starten'}
           </Link>
         </div>
       </CardContent>

@@ -110,8 +110,8 @@
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
   --sidebar: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 94.1%;
+  --sidebar-foreground: 240 5% 64.9%;
+  --sidebar-primary: 0 0% 98%;
   --sidebar-primary-foreground: 240 5.9% 10%;
   --sidebar-accent: 240 3.7% 15.9%;
   --sidebar-accent-foreground: 0 0% 98%;
@@ -119,16 +119,57 @@
   --sidebar-ring: 217.2 10.6% 64.9%;
 }
 
-@layer base {
-  html {
-    @apply overflow-x-hidden;
-  }
+* {
+  border-color: hsl(var(--border));
+}
 
-  body {
-    @apply bg-background text-foreground overflow-x-hidden;
-  }
+html {
+  scroll-behavior: smooth;
+}
 
-  * {
-    @apply box-border;
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Enhanced Progress Bar Styles */
+.progress-bar-animated {
+  background: linear-gradient(90deg, #486681 0%, #5a7a8f 50%, #486681 100%);
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: -200% 0;
   }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Progress indicator dots animation */
+.progress-dot {
+  transition: all 0.3s ease-in-out;
+}
+
+.progress-dot.active {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(72, 102, 129, 0.4);
+}
+
+/* Module card hover effects */
+.module-card-hover {
+  transition: all 0.3s ease-in-out;
+}
+
+.module-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }

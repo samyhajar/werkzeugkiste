@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3 } from 'lucide-react'
+import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { useProgressTracking } from '@/hooks/useProgressTracking'
 import Link from 'next/link'
 
 interface Course {
@@ -63,6 +64,9 @@ export default function ModuleDetailPage() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+
+  // Add progress tracking hook
+  const { markLessonComplete, isMarking } = useProgressTracking()
 
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
@@ -148,6 +152,11 @@ export default function ModuleDetailPage() {
     return Math.round((completedLessons.size / totalLessons) * 100)
   }
 
+  // Update progress display when completedLessons changes
+  useEffect(() => {
+    // This will trigger a re-render of the progress bar when completedLessons changes
+  }, [completedLessons])
+
   useEffect(() => {
     if (moduleId) {
       void fetchModule()
@@ -170,11 +179,37 @@ export default function ModuleDetailPage() {
     })
   }
 
-  const selectLesson = (lesson: Lesson) => {
+  const selectLesson = async (lesson: Lesson) => {
     setSelectedLesson(lesson)
     // Find the course using the lesson's course_id
     const course = module?.courses.find(c => c.id === lesson.course_id)
     setSelectedCourse(course || null)
+
+    // Mark lesson as complete when selected (if user is logged in and lesson not already completed)
+    if (user && lesson.id && !completedLessons.has(lesson.id)) {
+      try {
+        const success = await markLessonComplete(lesson.id)
+        if (success) {
+          // Update local state to reflect completion
+          setCompletedLessons(prev => new Set([...prev, lesson.id]))
+
+          // Show success feedback (simple toast)
+          const toast = document.createElement('div')
+          toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
+          toast.textContent = `✓ "${lesson.title}" als abgeschlossen markiert`
+          document.body.appendChild(toast)
+
+          // Remove toast after 3 seconds
+          setTimeout(() => {
+            toast.style.opacity = '0'
+            setTimeout(() => document.body.removeChild(toast), 300)
+          }, 3000)
+        }
+      } catch (error) {
+        console.error('Failed to mark lesson complete:', error)
+        // Don't show error to user as this is a background operation
+      }
+    }
   }
 
   const getTotalLessons = () => {
@@ -304,37 +339,55 @@ export default function ModuleDetailPage() {
                       {/* Lessons */}
                       {course.lessons
                         .sort((a, b) => (a.order || 0) - (b.order || 0))
-                        .map((lesson, _lessonIndex) => (
-                          <div key={lesson.id}>
-                            <button
-                              onClick={() => selectLesson(lesson)}
-                              className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
-                              }`}
-                            >
-                              <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                              <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                {lesson.title}
-                              </span>
-                            </button>
-
-                            {/* Quizzes for this lesson */}
-                            {course.quizzes
-                              .filter(quiz => quiz.lesson_id === lesson.id)
-                              .map((quiz) => (
-                                <Link
-                                  key={quiz.id}
-                                  href={`/quizzes/${quiz.id}`}
-                                  className="flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group"
-                                >
-                                  <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                                  <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                    {quiz.title}
+                        .map((lesson, _lessonIndex) => {
+                          const isCompleted = completedLessons.has(lesson.id)
+                          return (
+                            <div key={lesson.id}>
+                              <button
+                                onClick={() => selectLesson(lesson)}
+                                disabled={isMarking}
+                                className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                  selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
+                                } ${isCompleted ? 'text-green-700' : ''} ${isMarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                {isCompleted ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                ) : (
+                                  <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                )}
+                                <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                  isCompleted ? 'text-green-700' : 'text-[#de0449]'
+                                }`}>
+                                  {lesson.title}
+                                </span>
+                                {isCompleted && (
+                                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                    ✓ Abgeschlossen
                                   </span>
-                                </Link>
-                              ))}
-                          </div>
-                        ))}
+                                )}
+                                {isMarking && selectedLesson?.id === lesson.id && (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#486681]"></div>
+                                )}
+                              </button>
+
+                              {/* Quizzes for this lesson */}
+                              {course.quizzes
+                                .filter(quiz => quiz.lesson_id === lesson.id)
+                                .map((quiz) => (
+                                  <Link
+                                    key={quiz.id}
+                                    href={`/quizzes/${quiz.id}`}
+                                    className="flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group"
+                                  >
+                                    <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                    <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
+                                      {quiz.title}
+                                    </span>
+                                  </Link>
+                                ))}
+                            </div>
+                          )
+                        })}
 
                       {/* Course-level quizzes */}
                       {course.quizzes
