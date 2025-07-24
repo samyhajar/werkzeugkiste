@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
       description?: string
       module_id?: string
       hero_image?: string
+      status?: 'draft' | 'published'
     }
 
     const { data: course, error } = await supabase
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
         module_id: body.module_id || null, // Convert empty string to null
         hero_image: body.hero_image,
         admin_id: user.id,
-        status: 'draft',
+        status: body.status || 'draft',
       })
       .select()
       .single()

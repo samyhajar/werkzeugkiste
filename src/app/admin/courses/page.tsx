@@ -154,7 +154,7 @@ export default function CoursesPage() {
             description: formData.description,
             module_id: formData.module_id,
             hero_image: formData.hero_image,
-            status: editingCourse.status
+            status: formData.status
           }),
         })
 
