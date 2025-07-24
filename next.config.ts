@@ -2,10 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
-    // Disable any experimental features that might cause issues
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
   // Ensure proper API handling
   async headers() {
     return [

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 export default function DebugAuthPage() {
   const { user, session, loading } = useAuth()
   const [serverAuth, setServerAuth] = useState<any>(null)
