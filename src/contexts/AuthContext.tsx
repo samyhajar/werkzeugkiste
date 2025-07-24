@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react'
-import { User, Session } from '@supabase/supabase-js'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
@@ -19,11 +19,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const initialized = useRef(false)
+  const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
 
   const refreshSession = async () => {
     try {
       console.log('[AuthContext] Refreshing session...')
-      const supabase = getBrowserClient()
+      if (!supabase) return
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) {
@@ -45,6 +46,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    // Initialize Supabase client only in browser
+    if (typeof window !== 'undefined') {
+      setSupabase(getBrowserClient())
+    }
+  }, [])
+
+  useEffect(() => {
+    // Don't proceed if Supabase client is not available
+    if (!supabase) return
+
     // Prevent duplicate initialization
     if (initialized.current) {
       return
@@ -54,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         console.log('[AuthContext] Getting initial session...')
-        const supabase = getBrowserClient()
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (error) {
@@ -77,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void getInitialSession()
 
     // Set up auth state change listener
-    const supabase = getBrowserClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[AuthContext] Auth state change:', event, session?.user?.email)
@@ -101,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
       clearTimeout(timeout)
     }
-  }, [])
+  }, [supabase])
 
   const signOut = async () => {
     try {
@@ -117,35 +126,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('[AuthContext] Logout API call failed')
       }
 
-      // Also call Supabase client logout
-      const supabase = getBrowserClient()
-      const { error } = await supabase.auth.signOut()
-
-      if (error) {
-        console.error('[AuthContext] Supabase sign out error:', error.message)
+      // Clear client-side session
+      if (supabase) {
+        await supabase.auth.signOut()
       }
 
       // Clear local state
       setUser(null)
       setSession(null)
 
-      console.log('[AuthContext] Sign out completed successfully')
-
-      // Add a small delay to ensure state is updated before redirect
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Force a page reload to ensure clean state
-      window.location.href = '/'
+      console.log('[AuthContext] Sign out completed')
     } catch (error) {
-      console.error('[AuthContext] Sign out failed:', error)
-      // Even if there's an error, clear the local state
-      setUser(null)
-      setSession(null)
-
-      // Add a small delay to ensure state is updated before redirect
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      window.location.href = '/'
+      console.error('[AuthContext] Error during sign out:', error)
     }
   }
 

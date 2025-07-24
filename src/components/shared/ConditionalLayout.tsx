@@ -25,14 +25,28 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const isModulePage = pathname?.startsWith('/modules/')
   const isAdminPage = pathname?.startsWith('/admin')
 
+  // For admin pages, always provide AuthProvider even during SSR
+  if (isAdminPage) {
+    return (
+      <AuthProvider>
+        <RealtimeProvider>
+          <SessionBootstrap />
+          <div className="min-h-screen">
+            <main className="flex-1">{children}</main>
+          </div>
+        </RealtimeProvider>
+      </AuthProvider>
+    )
+  }
+
   // During SSR or before hydration, render a minimal layout without AuthProvider
   if (!isClient) {
     return (
       <div className="min-h-screen flex flex-col">
         {/* Only render Navbar and other auth-dependent components after hydration */}
         <main className="flex-1">{children}</main>
-        {!isModulePage && !isAdminPage && <Footer />}
-        {!isModulePage && !isAdminPage && <ScrollToTopButton />}
+        {!isModulePage && <Footer />}
+        {!isModulePage && <ScrollToTopButton />}
       </div>
     )
   }
@@ -44,10 +58,10 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       <RealtimeProvider>
         <SessionBootstrap />
         <div className="min-h-screen">
-          {!isModulePage && !isAdminPage && <Navbar />}
-          <main className={`flex-1 ${!isModulePage && !isAdminPage ? 'pt-24' : ''}`}>{children}</main>
-          {!isModulePage && !isAdminPage && <Footer />}
-          {!isModulePage && !isAdminPage && <ScrollToTopButton />}
+          {!isModulePage && <Navbar />}
+          <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>{children}</main>
+          {!isModulePage && <Footer />}
+          {!isModulePage && <ScrollToTopButton />}
         </div>
       </RealtimeProvider>
     </AuthProvider>

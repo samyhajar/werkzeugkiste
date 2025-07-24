@@ -94,7 +94,7 @@ export default function QuizDetailPage() {
             <p className="text-gray-600">
               {error || 'Das angeforderte Quiz konnte nicht geladen werden.'}
             </p>
-            <Link href="/dashboard">
+            <Link href="/">
               <Button>Zurück zur Übersicht</Button>
             </Link>
           </CardContent>
@@ -109,7 +109,7 @@ export default function QuizDetailPage() {
       <header className="bg-[#486681] text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-2">
-            <Link href="/dashboard" className="text-white hover:text-blue-200">
+            <Link href="/" className="text-white hover:text-blue-200">
               ← Zurück zur Übersicht
             </Link>
           </div>
@@ -139,12 +139,12 @@ export default function QuizDetailPage() {
             </div>
 
             <div className="flex gap-4 justify-center">
-              <Link href="/dashboard">
+              <Link href="/">
                 <Button variant="outline">
                   Zurück zur Übersicht
                 </Button>
               </Link>
-              <Link href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/dashboard'}>
+              <Link href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/'}>
                 <Button>
                   Zur Lektion
                 </Button>

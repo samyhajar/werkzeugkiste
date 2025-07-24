@@ -61,7 +61,7 @@ export default async function AdminDashboard() {
     .single()
 
   if (profileError || !profile || profile.role !== 'admin') {
-    redirect('/dashboard')
+    redirect('/')
   }
 
   // Fetch dashboard data directly from Supabase

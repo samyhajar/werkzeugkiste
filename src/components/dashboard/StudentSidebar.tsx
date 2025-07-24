@@ -68,14 +68,6 @@ export default function StudentSidebar({ profile, role: _role, userEmail, onLogo
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
         <NavItem
-          href="/dashboard"
-          icon={<Home className="w-5 h-5" />}
-          isActive={pathname === '/dashboard'}
-        >
-          Dashboard
-        </NavItem>
-
-        <NavItem
           href="/modules"
           icon={<BookOpen className="w-5 h-5" />}
           isActive={pathname.startsWith('/modules')}

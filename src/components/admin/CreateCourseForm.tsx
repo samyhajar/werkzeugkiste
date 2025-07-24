@@ -12,9 +12,9 @@ import { TablesInsert } from '@/types/supabase'
 
 export default function CreateCourseForm() {
   const [mounted, setMounted] = useState(false)
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null)
   const { user } = useAuth()
   const router = useRouter()
-  const supabase = createClient()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -23,16 +23,20 @@ export default function CreateCourseForm() {
 
   useEffect(() => {
     setMounted(true)
+    // Initialize Supabase client only in browser
+    if (typeof window !== 'undefined') {
+      setSupabase(createClient())
+    }
   }, [])
 
   // Don't render during SSR/build time
-  if (!mounted) {
+  if (!mounted || !supabase) {
     return <div>Loading...</div>
   }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !supabase) return
 
     setLoading(true)
     setError('')

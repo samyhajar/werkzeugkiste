@@ -63,7 +63,6 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
   const isAdminPage = request.nextUrl.pathname.startsWith('/admin')
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
   const isHomePage = request.nextUrl.pathname === '/'
   const isPublicPage = [
     '/digi-sammlung',
@@ -96,13 +95,6 @@ export async function middleware(request: NextRequest) {
 
   // Role-based access control
   if (user) {
-    // Admin trying to access student dashboard
-    if (userRole === 'admin' && isDashboardPage) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin'
-      return NextResponse.redirect(url)
-    }
-
     // Student trying to access admin pages
     if (userRole === 'student' && isAdminPage) {
       const url = request.nextUrl.clone()

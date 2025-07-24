@@ -137,7 +137,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         if (data.user.role === 'admin') {
           router.push('/admin')
         } else {
-          router.push('/dashboard')
+          // Students stay on the landing page after login
+          router.push('/')
         }
       }
     } catch (err) {

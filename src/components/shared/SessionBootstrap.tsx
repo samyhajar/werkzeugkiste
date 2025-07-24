@@ -13,11 +13,11 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
 export default function SessionBootstrap() {
   const syncInProgress = useRef(false)
   const hasRun = useRef(false)
-  const supabase = useRef(getBrowserClient())
+  const supabase = useRef<ReturnType<typeof getBrowserClient> | null>(null)
 
   const syncAuthState = useCallback(async () => {
     // Prevent duplicate sync operations
-    if (syncInProgress.current || hasRun.current) {
+    if (syncInProgress.current || hasRun.current || !supabase.current) {
       return
     }
 
@@ -67,6 +67,9 @@ export default function SessionBootstrap() {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       return
     }
+
+    // Initialize Supabase client
+    supabase.current = getBrowserClient()
 
     // Run sync on mount with a small delay to avoid conflicts
     const initialTimeout = setTimeout(() => {
