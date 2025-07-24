@@ -3,6 +3,18 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   /* config options here */
   serverExternalPackages: [],
+  // Image configuration
+  images: {
+    domains: ['werkzeugkiste.vercel.app'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'werkzeugkiste.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
   // Ensure proper API handling
   async headers() {
     return [
