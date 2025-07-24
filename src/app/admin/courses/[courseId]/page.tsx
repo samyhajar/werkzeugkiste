@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 type Course = Tables<'courses'>
 type Lesson = Tables<'lessons'>
@@ -46,6 +47,7 @@ export default function CourseDetailsPage() {
     status: 'draft' as 'draft' | 'published'
   })
   const [saving, setSaving] = useState(false)
+  const [reordering, setReordering] = useState(false)
 
   const supabase = createClient()
 
@@ -156,6 +158,72 @@ export default function CourseDetailsPage() {
     }
   }
 
+  const handleReorder = async (lessonId: string, newOrder: number) => {
+    setReordering(true)
+
+    try {
+      const response = await fetch('/api/admin/lessons/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          lessonId,
+          newOrder
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Refresh the lessons list
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select(`
+            *,
+            quizzes(id)
+          `)
+          .eq('course_id', courseId)
+          .order('order', { ascending: true })
+
+        if (!lessonsError && lessonsData && course) {
+          const lessonsWithQuizCount = lessonsData.map(lesson => ({
+            ...lesson,
+            quiz_count: lesson.quizzes ? lesson.quizzes.length : 0
+          }))
+          setCourse({
+            ...course,
+            lessons: lessonsWithQuizCount,
+            lesson_count: lessonsWithQuizCount.length
+          })
+        }
+      } else {
+        throw new Error(data.error || 'Failed to reorder lessons')
+      }
+    } catch (err) {
+      console.error('Error reordering lessons:', err)
+      setError(err instanceof Error ? err.message : 'Failed to reorder lessons')
+    } finally {
+      setReordering(false)
+    }
+  }
+
+    const moveLesson = (index: number, direction: 'up' | 'down') => {
+    if (!course) return
+    if (direction === 'up' && index === 0) return
+    if (direction === 'down' && index === course.lessons.length - 1) return
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    const lesson = course.lessons[index]
+
+    void handleReorder(lesson.id, newIndex)
+  }
+
   if (loading) {
     return (
       <div className="p-8">
@@ -219,14 +287,7 @@ export default function CourseDetailsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href={`/admin/courses/${courseId}/builder`}>
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Course Builder
-              </Link>
-            </Button>
+
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
               <DialogTrigger asChild>
                 <Button
@@ -421,7 +482,7 @@ export default function CourseDetailsPage() {
                 </CardDescription>
               </div>
               <Button asChild>
-                <Link href={`/admin/courses/${courseId}/builder`}>
+                <Link href="/admin/lessons">
                   <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -439,14 +500,34 @@ export default function CourseDetailsPage() {
                 <h3 className="text-lg font-medium text-foreground mb-2">No lessons yet</h3>
                 <p className="text-foreground/60 mb-4">Start building your course by adding lessons</p>
                 <Button asChild>
-                  <Link href={`/admin/courses/${courseId}/builder`}>Add First Lesson</Link>
+                  <Link href="/admin/lessons">Add First Lesson</Link>
                 </Button>
               </div>
             ) : (
               <div className="space-y-3">
                 {course.lessons.map((lesson, index) => (
-                  <div key={lesson.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={lesson.id} className="flex items-center justify-between p-4 border rounded-lg bg-transparent">
                     <div className="flex items-center gap-3">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveLesson(index, 'up')}
+                          disabled={index === 0 || reordering}
+                          className="h-6 w-6 p-0"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveLesson(index, 'down')}
+                          disabled={index === course.lessons.length - 1 || reordering}
+                          className="h-6 w-6 p-0"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <div className="w-8 h-8 bg-brand-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-brand-primary">
                         {index + 1}
                       </div>

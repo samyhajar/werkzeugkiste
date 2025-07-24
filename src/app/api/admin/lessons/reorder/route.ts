@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-export async function PATCH(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is authenticated and is admin
+    // Check if user is authenticated
     const {
       data: { user },
       error: authError,
@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Check if user is admin using profiles table
+    // Check if user is admin
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -32,69 +32,100 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { course_id, lesson_ids } = await request.json()
+    const { lessonId, newOrder } = await request.json()
 
-    if (!course_id || !lesson_ids || !Array.isArray(lesson_ids)) {
+    if (!lessonId || typeof newOrder !== 'number') {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Course ID and lesson IDs array are required',
-        },
+        { success: false, error: 'Invalid parameters' },
         { status: 400 }
       )
     }
 
-    // Get current orders of all lessons in the course
-    const { data: currentLessons, error: fetchError } = await supabase
+    // Get the current lesson to find its course_id
+    const { data: currentLesson, error: currentError } = await supabase
       .from('lessons')
-      .select('id, sort_order')
-      .eq('course_id', course_id)
-      .order('sort_order', { ascending: true })
+      .select('course_id, "order"')
+      .eq('id', lessonId)
+      .single()
 
-    if (fetchError) {
-      console.error('Error fetching current lessons:', fetchError)
+    if (currentError || !currentLesson) {
       return NextResponse.json(
-        { success: false, error: fetchError.message },
+        { success: false, error: 'Lesson not found' },
+        { status: 404 }
+      )
+    }
+
+    const courseId = currentLesson.course_id
+    if (!courseId) {
+      return NextResponse.json(
+        { success: false, error: 'Lesson not assigned to a course' },
+        { status: 400 }
+      )
+    }
+    const currentOrder = currentLesson.order || 0
+
+    // Get all lessons in the same course
+    const { data: courseLessons, error: courseError } = await supabase
+      .from('lessons')
+      .select('id, "order"')
+      .eq('course_id', courseId)
+      .order('"order"', { ascending: true })
+
+    if (courseError) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch course lessons' },
         { status: 500 }
       )
     }
 
-    // Create a map of current orders
-    const currentOrderMap = new Map()
-    currentLessons?.forEach(lesson => {
-      currentOrderMap.set(lesson.id, lesson.sort_order)
+    // Calculate new order values
+    const updatedLessons = courseLessons.map((lesson, index) => {
+      let newOrderValue: number
+      const lessonOrder = lesson.order || 0
+
+      if (lesson.id === lessonId) {
+        // This is the lesson being moved
+        newOrderValue = newOrder
+      } else if (currentOrder < newOrder) {
+        // Moving down: shift lessons between current and new position up
+        if (lessonOrder > currentOrder && lessonOrder <= newOrder) {
+          newOrderValue = lessonOrder - 1
+        } else {
+          newOrderValue = lessonOrder
+        }
+      } else {
+        // Moving up: shift lessons between new and current position down
+        if (lessonOrder >= newOrder && lessonOrder < currentOrder) {
+          newOrderValue = lessonOrder + 1
+        } else {
+          newOrderValue = lessonOrder
+        }
+      }
+
+      return {
+        id: lesson.id,
+        order: newOrderValue,
+      }
     })
 
-    // Update orders incrementally
-    for (let i = 0; i < lesson_ids.length; i++) {
-      const lessonId = lesson_ids[i]
-      const currentOrder = currentOrderMap.get(lessonId) || 0
-      const newOrder = i + 1
+    // Update all lessons with their new order values
+    for (const lesson of updatedLessons) {
+      const { error: updateError } = await supabase
+        .from('lessons')
+        .update({ order: lesson.order })
+        .eq('id', lesson.id)
 
-      // Only update if order actually changed
-      if (currentOrder !== newOrder) {
-        const { error } = await supabase
-          .from('lessons')
-          .update({ sort_order: newOrder })
-          .eq('id', lessonId)
-          .eq('course_id', course_id)
-
-        if (error) {
-          console.error('Error updating lesson order:', error)
-          return NextResponse.json(
-            { success: false, error: error.message },
-            { status: 500 }
-          )
-        }
+      if (updateError) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to update lesson order' },
+          { status: 500 }
+        )
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Lessons reordered successfully',
-    })
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error in reorder lessons API:', error)
+    console.error('Error reordering lessons:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

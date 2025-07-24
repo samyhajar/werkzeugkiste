@@ -110,7 +110,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Connection health check
+  // Connection health check - reduced frequency and made less intrusive
   useEffect(() => {
     const checkConnection = () => {
       if (!supabase.current) return
@@ -123,8 +123,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         })
     }
 
-    // Check connection every 30 seconds
-    const interval = setInterval(checkConnection, 30000)
+    // Check connection every 2 minutes instead of 30 seconds
+    const interval = setInterval(checkConnection, 120000)
 
     return () => clearInterval(interval)
   }, [])

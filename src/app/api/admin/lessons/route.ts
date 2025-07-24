@@ -40,11 +40,14 @@ export async function GET(_request: NextRequest) {
         id,
         title,
         content,
+        course_id,
+        "order",
         created_at,
+        updated_at,
         course:courses(id, title)
       `
       )
-      .order('title', { ascending: true })
+      .order('"order"', { ascending: true })
 
     if (error) {
       console.error('Error fetching lessons:', error)

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-interface ReorderCoursesRequest {
-  module_id: string
-  course_ids: string[]
-}
-
-export async function PATCH(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is authenticated and is admin
+    // Check if user is authenticated
     const {
       data: { user },
       error: authError,
@@ -23,7 +18,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Check if user is admin using profiles table
+    // Check if user is admin
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -37,47 +32,100 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { module_id, course_ids } =
-      (await request.json()) as ReorderCoursesRequest
+    const { courseId, newOrder } = await request.json()
 
-    if (!module_id || !course_ids || !Array.isArray(course_ids)) {
+    if (!courseId || typeof newOrder !== 'number') {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'Module ID and course IDs array are required',
-        },
+        { success: false, error: 'Invalid parameters' },
         { status: 400 }
       )
     }
 
-    // Get current courses in the module
-    const { data: _currentCourses, error: fetchError } = await supabase
+    // Get the current course to find its module_id
+    const { data: currentCourse, error: currentError } = await supabase
       .from('courses')
-      .select('id, created_at')
-      .eq('module_id', module_id)
-      .order('created_at', { ascending: true })
+      .select('module_id, order')
+      .eq('id', courseId)
+      .single()
 
-    if (fetchError) {
-      console.error('Error fetching current courses:', fetchError)
+    if (currentError || !currentCourse) {
       return NextResponse.json(
-        { success: false, error: fetchError.message },
+        { success: false, error: 'Course not found' },
+        { status: 404 }
+      )
+    }
+
+    const moduleId = currentCourse.module_id
+    if (!moduleId) {
+      return NextResponse.json(
+        { success: false, error: 'Course not assigned to a module' },
+        { status: 400 }
+      )
+    }
+    const currentOrder = currentCourse.order || 0
+
+    // Get all courses in the same module
+    const { data: moduleCourses, error: moduleError } = await supabase
+      .from('courses')
+      .select('id, order')
+      .eq('module_id', moduleId)
+      .order('order', { ascending: true })
+
+    if (moduleError) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch module courses' },
         { status: 500 }
       )
     }
 
-    // For now, just return success since we don't have a sort_order column
-    // TODO: Add sort_order column to courses table in a future migration
-    return NextResponse.json({
-      success: true,
-      message: 'Courses reorder not implemented yet - sort_order column needed',
+    // Calculate new order values
+    const updatedCourses = moduleCourses.map((course, index) => {
+      let newOrderValue: number
+      const courseOrder = course.order || 0
+
+      if (course.id === courseId) {
+        // This is the course being moved
+        newOrderValue = newOrder
+      } else if (currentOrder < newOrder) {
+        // Moving down: shift courses between current and new position up
+        if (courseOrder > currentOrder && courseOrder <= newOrder) {
+          newOrderValue = courseOrder - 1
+        } else {
+          newOrderValue = courseOrder
+        }
+      } else {
+        // Moving up: shift courses between new and current position down
+        if (courseOrder >= newOrder && courseOrder < currentOrder) {
+          newOrderValue = courseOrder + 1
+        } else {
+          newOrderValue = courseOrder
+        }
+      }
+
+      return {
+        id: course.id,
+        order: newOrderValue,
+      }
     })
 
-    return NextResponse.json({
-      success: true,
-      message: 'Courses reordered successfully',
-    })
+    // Update all courses with their new order values
+    for (const course of updatedCourses) {
+      const { error: updateError } = await supabase
+        .from('courses')
+        .update({ order: course.order })
+        .eq('id', course.id)
+
+      if (updateError) {
+        return NextResponse.json(
+          { success: false, error: 'Failed to update course order' },
+          { status: 500 }
+        )
+      }
+    }
+
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error in reorder courses API:', error)
+    console.error('Error reordering courses:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

@@ -237,8 +237,8 @@ export default function LessonsPage() {
           bValue = (b.content || '').toLowerCase()
           break
         case 'course':
-          aValue = (a.course?.title || '').toLowerCase()
-          bValue = (b.course?.title || '').toLowerCase()
+          aValue = (a.course?.title || 'Nicht zugewiesen').toLowerCase()
+          bValue = (b.course?.title || 'Nicht zugewiesen').toLowerCase()
           break
 
         case 'created_at':
@@ -440,10 +440,10 @@ export default function LessonsPage() {
 
   CreateLessonDialogContent.displayName = 'CreateLessonDialogContent'
 
-  const filteredLessons = useMemo(() => {
+    const filteredLessons = useMemo(() => {
     return lessons.filter(lesson => {
       const matchesSearch = lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           lesson.content?.toLowerCase().includes(searchTerm.toLowerCase())
+                           (lesson.content && lesson.content.toLowerCase().includes(searchTerm.toLowerCase()))
       const matchesCourse = courseFilter === 'all' || lesson.course_id === courseFilter
       return matchesSearch && matchesCourse
     })
@@ -488,12 +488,12 @@ export default function LessonsPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8">
+    <div className="w-full px-8 py-8 space-y-8 bg-transparent">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Lektionen</h1>
-          <p className="text-gray-300 text-sm">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Lektionen</h1>
+          <p className="text-gray-600 text-sm">
             Lektionen in allen Kursen verwalten
           </p>
         </div>
@@ -625,10 +625,7 @@ export default function LessonsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {(() => {
-                          const courseItem = courses.find(c => c.id === lesson.course_id)
-                          return courseItem?.title || 'Nicht zugewiesen'
-                        })()}
+                        {lesson.course?.title || 'Nicht zugewiesen'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

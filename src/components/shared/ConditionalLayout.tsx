@@ -26,15 +26,14 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const isAdminPage = pathname?.startsWith('/admin')
 
   // For admin pages, always provide AuthProvider even during SSR
+  // Admin pages don't need real-time updates, so we skip RealtimeProvider
   if (isAdminPage) {
     return (
       <AuthProvider>
-        <RealtimeProvider>
-          <SessionBootstrap />
-          <div className="min-h-screen">
-            <main className="flex-1">{children}</main>
-          </div>
-        </RealtimeProvider>
+        <SessionBootstrap />
+        <div className="min-h-screen">
+          <main className="flex-1">{children}</main>
+        </div>
       </AuthProvider>
     )
   }

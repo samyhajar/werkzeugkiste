@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -40,7 +41,9 @@ const formatDateSafely = (dateString: string | null | undefined) => {
 }
 
 export default function ModulesPage() {
+  const router = useRouter()
   const [modules, setModules] = useState<Module[]>([])
+  const [courses, setCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -51,10 +54,10 @@ export default function ModulesPage() {
     title: '',
     description: '',
     hero_image: '',
-    status: 'draft' as 'draft' | 'published'
+    status: 'draft' as 'draft' | 'published',
+    course_id: ''
   })
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
+
   const [editingModule, setEditingModule] = useState<Module | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -91,39 +94,93 @@ export default function ModulesPage() {
     }
   }
 
-  const createModule = async () => {
-    if (!newModule.title.trim()) {
-      return
-    }
-
-    setCreating(true)
-
+  const fetchCourses = async () => {
     try {
-      const response = await fetch('/api/admin/modules', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch('/api/admin/courses', {
+        method: 'GET',
         credentials: 'include',
-        body: JSON.stringify(newModule),
       })
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json() as ApiResponse<Module>
+      const data = await response.json()
 
-      if (data.success && data.module) {
-        setModules([data.module, ...modules])
-        setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
-        setIsCreateDialogOpen(false)
-      } else {
-        throw new Error(data.error || 'Failed to create module')
+      if (data.success && data.courses) {
+        setCourses(data.courses)
       }
     } catch (err) {
-      console.error('Error creating module:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create module')
+      console.error('Error fetching courses:', err)
+    }
+  }
+
+  const createModule = async () => {
+    if (!newModule.title.trim() || (!editingModule && !newModule.course_id)) {
+      return
+    }
+
+    setCreating(true)
+
+    try {
+      if (editingModule) {
+        // Update existing module
+        const response = await fetch(`/api/admin/modules/${editingModule.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            title: newModule.title,
+            description: newModule.description,
+            hero_image: newModule.hero_image,
+            status: newModule.status
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const data = await response.json() as ApiResponse<Module>
+
+        if (data.success) {
+          setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
+          setNewModule({ title: '', description: '', hero_image: '', status: 'draft', course_id: '' })
+          setIsCreateDialogOpen(false)
+          setEditingModule(null)
+        } else {
+          throw new Error(data.error || 'Failed to update module')
+        }
+      } else {
+        // Create new module
+        const response = await fetch('/api/admin/modules', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(newModule),
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const data = await response.json() as ApiResponse<Module>
+
+        if (data.success && data.module) {
+          setModules([data.module, ...modules])
+          setNewModule({ title: '', description: '', hero_image: '', status: 'draft', course_id: '' })
+          setIsCreateDialogOpen(false)
+        } else {
+          throw new Error(data.error || 'Failed to create module')
+        }
+      }
+    } catch (err) {
+      console.error('Error saving module:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save module')
     } finally {
       setCreating(false)
     }
@@ -167,8 +224,15 @@ export default function ModulesPage() {
   }
 
   const openEditDialog = (module: Module) => {
+    setNewModule({
+      title: module.title,
+      description: module.description || '',
+      hero_image: module.hero_image || '',
+      status: (module.status as 'draft' | 'published') || 'draft',
+      course_id: ''
+    })
     setEditingModule(module)
-    setIsEditDialogOpen(true)
+    setIsCreateDialogOpen(true)
   }
 
   const handleSort = (field: 'title' | 'description' | 'status' | 'created_at' | 'updated_at') => {
@@ -225,48 +289,7 @@ export default function ModulesPage() {
     })
   }
 
-  const updateModule = async () => {
-    if (!editingModule || !editingModule.title.trim()) {
-      return
-    }
 
-    setEditing(true)
-
-    try {
-      const response = await fetch(`/api/admin/modules/${editingModule.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          title: editingModule.title,
-          description: editingModule.description,
-          hero_image: editingModule.hero_image,
-          status: editingModule.status
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data = await response.json() as ApiResponse<Module>
-
-      if (data.success && data.module) {
-        setModules(modules.map(m => m.id === editingModule.id ? data.module! : m))
-        setIsEditDialogOpen(false)
-        setEditingModule(null)
-      } else {
-        throw new Error(data.error || 'Failed to update module')
-      }
-    } catch (err) {
-      console.error('Error updating module:', err)
-      setError(err instanceof Error ? err.message : 'Failed to update module')
-    } finally {
-      setEditing(false)
-    }
-  }
 
   const filteredModules = modules.filter(module => {
     const matchesSearch = module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -277,6 +300,7 @@ export default function ModulesPage() {
 
   useEffect(() => {
     void fetchModules()
+    void fetchCourses()
   }, [])
 
   if (loading) {
@@ -313,12 +337,12 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
+    <div className="w-full px-8 py-8 space-y-8 bg-transparent min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Module</h1>
-          <p className="text-white mt-2">
+          <h1 className="text-3xl font-bold text-gray-900">Module</h1>
+          <p className="text-gray-600 mt-2">
                           Verwalten Sie Lernmodule und organisieren Sie Ihre Kurse
           </p>
         </div>
@@ -334,9 +358,11 @@ export default function ModulesPage() {
               <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">📦</span>
               </div>
-              <DialogTitle className="text-xl font-bold text-gray-900">Create New Module</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-gray-900">
+                {editingModule ? 'Edit Module' : 'Create New Module'}
+              </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
-                Create a learning module to organize and group related courses together
+                {editingModule ? 'Update the module information' : 'Create a learning module to organize and group related courses together'}
               </DialogDescription>
             </DialogHeader>
 
@@ -397,6 +423,39 @@ export default function ModulesPage() {
                 </div>
               </div>
 
+              {/* Course Assignment Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">📚</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Course Assignment</h3>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="course_id" className="text-xs font-semibold text-gray-700">Select Course</Label>
+                  <Select
+                    value={newModule.course_id}
+                    onValueChange={(value) => setNewModule({ ...newModule, course_id: value })}
+                  >
+                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
+                      <SelectValue placeholder="Choose a course for this module" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          <div className="flex items-center gap-2">
+                            <span>📚</span>
+                            <span>{course.title}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">Choose the course where this module should appear</p>
+                </div>
+              </div>
+
               {/* Settings Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
@@ -449,18 +508,18 @@ export default function ModulesPage() {
               </Button>
               <Button
                 onClick={() => void createModule()}
-                disabled={creating || !newModule.title.trim()}
+                disabled={creating || !newModule.title.trim() || (!editingModule && !newModule.course_id)}
                 className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
                   <>
                     <span className="mr-2 animate-spin">⏳</span>
-                    Creating...
+                    {editingModule ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
                   <>
                     <span className="mr-2">✨</span>
-                    Create Module
+                    {editingModule ? 'Update Module' : 'Create Module'}
                   </>
                 )}
               </Button>
@@ -626,6 +685,16 @@ export default function ModulesPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
+                          onClick={() => {
+                            router.push(`/admin/modules/${module.id}`)
+                          }}
+                        >
+                          Details
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => openDeleteDialog(module)}
                           className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm"
                         >
@@ -684,151 +753,7 @@ export default function ModulesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Module Modal */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
-          <DialogHeader className="text-center pb-4 flex-shrink-0">
-            <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
-              <span className="text-white text-lg">✏️</span>
-            </div>
-            <DialogTitle className="text-xl font-bold text-gray-900">Modul bearbeiten</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen des Moduls &quot;{editingModule?.title}&quot;
-            </DialogDescription>
-          </DialogHeader>
 
-          {editingModule && (
-            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
-              {/* Module Info Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📝</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Modul Informationen</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-title" className="text-xs font-semibold text-gray-700">Modul Titel *</Label>
-                    <Input
-                      id="edit-title"
-                      value={editingModule.title}
-                      onChange={(e) => setEditingModule({ ...editingModule, title: e.target.value })}
-                      placeholder="e.g., Digital Marketing Fundamentals"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-description" className="text-xs font-semibold text-gray-700">Beschreibung</Label>
-                    <Textarea
-                      id="edit-description"
-                      value={editingModule.description || ''}
-                      onChange={(e) => setEditingModule({ ...editingModule, description: e.target.value })}
-                      placeholder="Beschreiben Sie, was dieses Modul abdeckt und seine Lernziele..."
-                      rows={2}
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Visual Design Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">🎨</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Visuelles Design</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="edit-hero_image" className="text-xs font-semibold text-gray-700">Hero Bild URL</Label>
-                  <Input
-                    id="edit-hero_image"
-                    value={editingModule.hero_image || ''}
-                    onChange={(e) => setEditingModule({ ...editingModule, hero_image: e.target.value })}
-                    placeholder="https://example.com/module-image.jpg (optional)"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                  />
-                  <p className="text-xs text-gray-500">Fügen Sie ein Bild hinzu, um Ihr Modul ansprechender zu gestalten (800x400px)</p>
-                </div>
-              </div>
-
-              {/* Settings Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">⚙️</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Modul Einstellungen</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="edit-status" className="text-xs font-semibold text-gray-700">Publikationsstatus</Label>
-                  <Select
-                    value={editingModule.status || 'draft'}
-                    onValueChange={(value: 'draft' | 'published') =>
-                      setEditingModule({ ...editingModule, status: value })
-                    }
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">
-                        <div className="flex items-center gap-2">
-                          <span>📝</span>
-                          <span>Entwurf - Nicht sichtbar für Studenten</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="published">
-                        <div className="flex items-center gap-2">
-                          <span>🌟</span>
-                          <span>Veröffentlicht - Verfügbar für Studenten</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons - Fixed Footer */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditDialogOpen(false)
-                setEditingModule(null)
-              }}
-              disabled={editing}
-              className="sm:w-auto w-full h-9 text-sm"
-            >
-              <span className="mr-2">❌</span>
-              Abbrechen
-            </Button>
-            <Button
-              onClick={() => void updateModule()}
-              disabled={editing || !editingModule?.title.trim()}
-              className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
-            >
-              {editing ? (
-                <>
-                  <span className="mr-2 animate-spin">⏳</span>
-                  Wird aktualisiert...
-                </>
-              ) : (
-                <>
-                  <span className="mr-2">💾</span>
-                  Änderungen speichern
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

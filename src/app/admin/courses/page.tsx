@@ -2,7 +2,7 @@
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +30,8 @@ interface ApiResponse<T> {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([])
   const [modules, setModules] = useState<Module[]>([])
+  const [lessons, setLessons] = useState<Database['public']['Tables']['lessons']['Row'][]>([])
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -37,16 +39,18 @@ export default function CoursesPage() {
     title: '',
     description: '',
     module_id: '',
-    hero_image: '',
+    hero_image: ''
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
   const [sortField, setSortField] = useState<'title' | 'description' | 'module' | 'status' | 'created_at'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
+
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [courseLessons, setCourseLessons] = useState<(Database['public']['Tables']['lessons']['Row'] & { course?: { id: string; title: string } })[]>([])
+  const [reordering, setReordering] = useState(false)
+  const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const router = useRouter()
@@ -99,50 +103,112 @@ export default function CoursesPage() {
     }
   }
 
+  const fetchLessons = async () => {
+    try {
+      const response = await fetch('/api/admin/lessons', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch lessons: ${response.status}`)
+      }
+
+      const result = await response.json()
+
+      if (result.success && result.lessons) {
+        setLessons(result.lessons)
+      }
+    } catch (err) {
+      console.error('Error fetching lessons:', err)
+    }
+  }
+
+
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
-      await Promise.all([fetchCourses(), fetchModules()])
+      await Promise.all([fetchCourses(), fetchModules(), fetchLessons()])
       setLoading(false)
     }
     void loadData()
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+        const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title.trim()) return
 
     try {
-      const response = await fetch('/api/admin/courses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.success) {
-        setCourses([data.course, ...courses])
-        setFormData({
-          title: '',
-          description: '',
-          module_id: '',
-          hero_image: '',
+      if (editingCourse) {
+        // Update existing course
+        const response = await fetch(`/api/admin/courses/${editingCourse.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            title: formData.title,
+            description: formData.description,
+            module_id: formData.module_id,
+            hero_image: formData.hero_image,
+            status: editingCourse.status
+          }),
         })
-        setCreateModalOpen(false)
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (data.success) {
+          setCourses(courses.map(c => c.id === editingCourse.id ? { ...editingCourse, ...formData } : c))
+          setFormData({
+            title: '',
+            description: '',
+            module_id: '',
+            hero_image: ''
+          })
+          setCreateModalOpen(false)
+          setEditingCourse(null)
+        } else {
+          throw new Error(data.error || 'Failed to update course')
+        }
       } else {
-        throw new Error(data.error || 'Failed to create course')
+        // Create new course
+        const response = await fetch('/api/admin/courses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(formData),
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (data.success) {
+          setCourses([data.course, ...courses])
+          setFormData({
+            title: '',
+            description: '',
+            module_id: '',
+            hero_image: ''
+          })
+          setCreateModalOpen(false)
+        } else {
+          throw new Error(data.error || 'Failed to create course')
+        }
       }
     } catch (err) {
-      console.error('Error creating course:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create course')
+      console.error('Error saving course:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save course')
     }
   }
 
@@ -182,9 +248,23 @@ export default function CoursesPage() {
     setDeleteDialogOpen(true)
   }
 
-  const _openEditDialog = (course: Course) => {
+    const _openEditDialog = async (course: Course) => {
+    setFormData({
+      title: course.title,
+      description: course.description || '',
+      module_id: course.module_id || '',
+      hero_image: course.hero_image || ''
+    })
     setEditingCourse(course)
-    setIsEditDialogOpen(true)
+
+    // Filter lessons for this course from the already fetched lessons and sort by order
+    const courseLessons = lessons
+      .filter(lesson => lesson.course_id === course.id)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+    console.log('Setting courseLessons:', courseLessons.map(l => ({ title: l.title, order: l.order })))
+    setCourseLessons(courseLessons)
+
+    setCreateModalOpen(true)
   }
 
   const handleSort = (field: 'title' | 'description' | 'module' | 'status' | 'created_at') => {
@@ -236,26 +316,22 @@ export default function CoursesPage() {
     })
   }
 
-  const updateCourse = async () => {
-    if (!editingCourse || !editingCourse.title.trim()) {
-      return
-    }
 
-    setEditing(true)
+
+  const handleReorder = useCallback(async (lessonId: string, newOrder: number) => {
+    setReordering(true)
+    console.log('Reordering lesson:', lessonId, 'to position:', newOrder)
 
     try {
-      const response = await fetch(`/api/admin/courses/${editingCourse.id}`, {
-        method: 'PUT',
+      const response = await fetch('/api/admin/lessons/reorder', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          title: editingCourse.title,
-          description: editingCourse.description,
-          module_id: editingCourse.module_id,
-          hero_image: editingCourse.hero_image,
-          status: editingCourse.status
+          lessonId,
+          newOrder
         }),
       })
 
@@ -264,21 +340,129 @@ export default function CoursesPage() {
       }
 
       const data = await response.json()
+      console.log('Reorder response:', data)
 
       if (data.success) {
-        setCourses(courses.map(c => c.id === editingCourse.id ? editingCourse : c))
-        setIsEditDialogOpen(false)
-        setEditingCourse(null)
+        // Refresh the lessons list for this course
+        await fetchLessons()
+        // Update courseLessons with the fresh data
+        const freshLessons = await fetch('/api/admin/lessons', {
+          method: 'GET',
+          credentials: 'include',
+        }).then(res => res.json()).then(data => data.lessons || [])
+
+        const updatedCourseLessons = freshLessons
+          .filter((lesson: any) => lesson.course_id === editingCourse?.id)
+          .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+        console.log('Fresh lessons from API:', freshLessons.map((l: any) => ({ title: l.title, order: l.order, course_id: l.course_id })))
+        console.log('Current editing course ID:', editingCourse?.id)
+        console.log('Filtered and sorted lessons:', updatedCourseLessons.map((l: any) => ({ title: l.title, order: l.order })))
+        setCourseLessons(updatedCourseLessons)
       } else {
-        throw new Error(data.error || 'Failed to update course')
+        throw new Error(data.error || 'Failed to reorder lessons')
       }
     } catch (err) {
-      console.error('Error updating course:', err)
-      setError(err instanceof Error ? err.message : 'Failed to update course')
+      console.error('Error reordering lessons:', err)
+      setError(err instanceof Error ? err.message : 'Failed to reorder lessons')
     } finally {
-      setEditing(false)
+      setReordering(false)
     }
-  }
+  }, [editingCourse?.id])
+
+
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, title: e.target.value }))
+  }, [])
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, description: e.target.value }))
+  }, [])
+
+  const handleModuleChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, module_id: value }))
+  }, [])
+
+  const handleHeroImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, hero_image: e.target.value }))
+  }, [])
+
+
+
+  const moduleOptions = useMemo(() => modules.map((module) => (
+    <SelectItem key={module.id} value={module.id}>
+      <div className="flex items-center gap-2">
+        <span>📦</span>
+        <span>{module.title}</span>
+      </div>
+    </SelectItem>
+  )), [modules])
+
+  const lessonItems = useMemo(() => courseLessons.map((lesson, index) => (
+        <div
+      key={`${lesson.id}-${lesson.order}`}
+      className={`flex items-center justify-between p-3 border rounded-lg transition-all cursor-move ${
+        draggedLessonId === lesson.id
+          ? 'bg-blue-100 border-blue-300 shadow-lg scale-105'
+          : 'bg-gray-50 hover:bg-gray-100'
+      }`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', lesson.id)
+        e.dataTransfer.effectAllowed = 'move'
+        setDraggedLessonId(lesson.id)
+      }}
+      onDragEnd={() => {
+        setDraggedLessonId(null)
+      }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        if (draggedLessonId && draggedLessonId !== lesson.id) {
+          e.currentTarget.classList.add('border-blue-400', 'bg-blue-50')
+        }
+      }}
+      onDragLeave={(e) => {
+        e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+      }}
+              onDrop={(e) => {
+          e.preventDefault()
+          e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+          const draggedId = e.dataTransfer.getData('text/plain')
+          if (draggedId !== lesson.id) {
+            const draggedLesson = courseLessons.find(l => l.id === draggedId)
+            if (draggedLesson) {
+              void handleReorder(draggedId, index)
+            }
+          }
+          setDraggedLessonId(null)
+        }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium text-white">
+            {index + 1}
+          </div>
+          <div className="w-6 h-6 text-gray-400">
+            <svg fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zm6-8a2 2 0 1 1-.001-4.001A2 2 0 0 1 13 6zm0 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"/>
+            </svg>
+          </div>
+        </div>
+        <div className="flex-1">
+          <h4 className="font-medium text-gray-900 text-sm">{lesson.title}</h4>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Badge variant="secondary">
+          Lesson
+        </Badge>
+        {reordering && (
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+        )}
+      </div>
+    </div>
+  )), [courseLessons, reordering, handleReorder])
 
   const filteredCourses = getSortedCourses().filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -321,12 +505,12 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
+    <div className="w-full px-8 py-8 space-y-8 bg-transparent min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Kurse</h1>
-          <p className="text-white mt-2">
+          <h1 className="text-3xl font-bold text-gray-900">Kurse</h1>
+          <p className="text-gray-600 mt-2">
             Verwalten Sie Ihre Lernkurse
           </p>
         </div>
@@ -337,14 +521,16 @@ export default function CoursesPage() {
               + Kurs erstellen
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
+          <DialogContent className="w-[90vw] max-w-[1400px] max-h-[95vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
               <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">📚</span>
               </div>
-              <DialogTitle className="text-xl font-bold text-gray-900">Create New Course</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-gray-900">
+                {editingCourse ? 'Edit Course' : 'Create New Course'}
+              </DialogTitle>
               <DialogDescription className="text-sm text-gray-600">
-                Create a new learning course to add to your platform
+                {editingCourse ? 'Update the course information' : 'Create a new learning course to add to your platform'}
               </DialogDescription>
             </DialogHeader>
 
@@ -364,7 +550,7 @@ export default function CoursesPage() {
                     <Input
                       id="title"
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={handleTitleChange}
                       placeholder="e.g., Digital Marketing Fundamentals"
                       className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
                       required
@@ -375,7 +561,7 @@ export default function CoursesPage() {
                     <Textarea
                       id="description"
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={handleDescriptionChange}
                       placeholder="Describe what this course covers and its learning objectives..."
                       rows={3}
                       className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
@@ -395,24 +581,19 @@ export default function CoursesPage() {
 
                 <div className="space-y-1">
                   <Label htmlFor="module_id" className="text-xs font-semibold text-gray-700">Select Module</Label>
-                  <Select value={formData.module_id} onValueChange={(value) => setFormData({ ...formData, module_id: value })}>
+                  <Select value={formData.module_id} onValueChange={handleModuleChange}>
                     <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
                       <SelectValue placeholder="Choose a module for this course" />
                     </SelectTrigger>
                     <SelectContent>
-                      {modules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          <div className="flex items-center gap-2">
-                            <span>📦</span>
-                            <span>{module.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
+                      {moduleOptions}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">Choose the module where this course should appear</p>
                 </div>
               </div>
+
+
 
               {/* Visual Design Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
@@ -425,16 +606,41 @@ export default function CoursesPage() {
 
                 <div className="space-y-1">
                   <Label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
-                  <Input
-                    id="hero_image"
-                    value={formData.hero_image}
-                    onChange={(e) => setFormData({ ...formData, hero_image: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                  />
+                                      <Input
+                      id="hero_image"
+                      value={formData.hero_image}
+                      onChange={handleHeroImageChange}
+                      placeholder="https://example.com/image.jpg"
+                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                    />
                   <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
                 </div>
               </div>
+
+              {/* Lessons Management Card - Only show when editing */}
+              {editingCourse && (
+                <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+                      <span className="text-white text-xs">📖</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-sm">Course Lessons</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {courseLessons.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        <p>No lessons assigned to this course yet.</p>
+                        <p className="text-sm">Lessons will appear here when assigned to this course.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {lessonItems}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </form>
 
             <DialogFooter className="flex-shrink-0 pt-4 border-t border-gray-200">
@@ -456,12 +662,12 @@ export default function CoursesPage() {
                 {loading ? (
                   <>
                     <span className="mr-2 animate-spin">⏳</span>
-                    Creating...
+                    {editingCourse ? 'Updating...' : 'Creating...'}
                   </>
                 ) : (
                   <>
                     <span className="mr-2">✨</span>
-                    Create Course
+                    {editingCourse ? 'Update Course' : 'Create Course'}
                   </>
                 )}
               </Button>
@@ -628,22 +834,21 @@ export default function CoursesPage() {
                         <Button
                           size="sm"
                           className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
-                          onClick={() => {
-                            router.push(`/admin/courses/${course.id}`)
-                          }}
+                          onClick={() => _openEditDialog(course)}
                         >
                           Bearbeiten
                         </Button>
+
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
+                          className="border-red-500 text-red-500 hover:bg-red-50 shadow-sm"
                           onClick={() => {
                             setCourseToDelete(course)
                             setDeleteDialogOpen(true)
                           }}
                         >
-                          Löschen
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </td>
@@ -698,172 +903,7 @@ export default function CoursesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Course Modal */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col mx-4">
-          <DialogHeader className="text-center pb-4 flex-shrink-0">
-            <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
-              <span className="text-white text-lg">✏️</span>
-            </div>
-            <DialogTitle className="text-xl font-bold text-gray-900">Edit Course</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
-              Update course information and settings
-            </DialogDescription>
-          </DialogHeader>
 
-          {editingCourse && (
-            <div className="space-y-6 overflow-y-auto flex-1 pr-2 -mr-2">
-              {/* Course Information Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📝</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Information</h3>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-title" className="text-xs font-semibold text-gray-700">Course Title *</Label>
-                    <Input
-                      id="edit-title"
-                      value={editingCourse.title}
-                      onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                      placeholder="e.g., Social Media Marketing Basics"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="edit-description" className="text-xs font-semibold text-gray-700">Description</Label>
-                    <Textarea
-                      id="edit-description"
-                      value={editingCourse.description || ''}
-                      onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
-                      placeholder="Describe what this course covers and its learning objectives..."
-                      rows={2}
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Module Assignment Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📚</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Module Assignment</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="edit-module" className="text-xs font-semibold text-gray-700">Select Module</Label>
-                  <Select
-                    value={editingCourse.module_id || ''}
-                    onValueChange={(value) => setEditingCourse({ ...editingCourse, module_id: value })}
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Choose a module for this course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          <div className="flex items-center gap-2">
-                            <span>📦</span>
-                            <span>{module.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Choose the module where this course should appear</p>
-                </div>
-              </div>
-
-              {/* Visual Design Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-green-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">🎨</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="edit-hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
-                  <Input
-                    id="edit-hero_image"
-                    value={editingCourse.hero_image || ''}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, hero_image: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                  />
-                  <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
-                </div>
-              </div>
-
-              {/* Status Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">⚙️</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Status</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <Label htmlFor="edit-status" className="text-xs font-semibold text-gray-700">Status</Label>
-                  <Select
-                    value={editingCourse.status || 'draft'}
-                    onValueChange={(value: 'draft' | 'published') => setEditingCourse({ ...editingCourse, status: value })}
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Set the course visibility status</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="flex-shrink-0 pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsEditDialogOpen(false)
-                setEditingCourse(null)
-              }}
-              disabled={editing}
-              className="sm:w-auto w-full h-9 text-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void updateCourse()}
-              disabled={editing || !editingCourse?.title.trim()}
-              className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
-            >
-              {editing ? (
-                <>
-                  <span className="mr-2 animate-spin">⏳</span>
-                  Updating...
-                </>
-              ) : (
-                <>
-                  <span className="mr-2">💾</span>
-                  Update Course
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
