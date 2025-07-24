@@ -1,12 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { User, Calendar, Activity } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { User, Mail, Calendar, BookOpen, Award } from 'lucide-react'
 import { formatDistance } from 'date-fns'
 import { de } from 'date-fns/locale'
+
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
 
 interface Student {
   id: string
@@ -150,7 +153,7 @@ export default function StudentsPage() {
                 <p className="text-3xl font-bold text-gray-900">{activeStudents}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Activity className="w-6 h-6 text-purple-600" />
+                <Award className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>

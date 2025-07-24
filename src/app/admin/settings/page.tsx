@@ -1,13 +1,24 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Settings, Save, RefreshCw } from 'lucide-react'
+
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
+interface Settings {
+  platformName: string;
+  contactEmail: string;
+  logoUrl: string;
+}
 
 export default function AdminSettingsPage() {
   // Platform branding state
-  const [branding, setBranding] = useState({
+  const [branding, setBranding] = useState<Settings>({
     platformName: 'Werkzeugkiste Learning Platform',
     contactEmail: '',
     logoUrl: ''
