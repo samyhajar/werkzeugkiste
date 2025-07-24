@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+// Add metadata export for Next.js 15
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[Logout API] Starting logout process')

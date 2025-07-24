@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
+interface LoginRequest {
+  email: string
+  password: string
+}
+
+// Add metadata export for Next.js 15
+export const dynamic = 'force-dynamic'
+
 /**
  * POST /api/auth/login
  * ① Signs‑in with Supabase on the **server**
@@ -11,12 +19,33 @@ import { createClient } from '@/lib/supabase/server-client'
 export async function POST(request: NextRequest) {
   try {
     console.log('[Login API] Starting login process')
-    const supabase = await createClient()
+    console.log(
+      '[Login API] Request headers:',
+      Object.fromEntries(request.headers.entries())
+    )
+    console.log('[Login API] Request URL:', request.url)
 
-    const body = (await request.json()) as {
-      email: string
-      password: string
+    // Validate request body
+    let body: LoginRequest
+    try {
+      body = (await request.json()) as LoginRequest
+    } catch (parseError) {
+      console.error('[Login API] Failed to parse request body:', parseError)
+      return NextResponse.json(
+        { success: false, error: 'Invalid request body' },
+        { status: 400 }
+      )
     }
+
+    if (!body.email || !body.password) {
+      console.error('[Login API] Missing email or password')
+      return NextResponse.json(
+        { success: false, error: 'Email and password are required' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
 
     console.log('[Login API] Attempting login for:', body.email)
 
@@ -90,7 +119,7 @@ export async function POST(request: NextRequest) {
     console.log('[Login API] Login process completed successfully')
     return response
   } catch (error) {
-    console.error('[Login API] Login error:', error)
+    console.error('[Login API] Unexpected error:', error)
     return NextResponse.json(
       { success: false, error: 'Login failed' },
       { status: 500 }

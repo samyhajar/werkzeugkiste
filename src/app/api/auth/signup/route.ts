@@ -1,83 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 
-interface SignupRequest {
-  email: string
-  password: string
-  role?: string
-}
+// Add metadata export for Next.js 15
+export const dynamic = 'force-dynamic'
 
-interface SignupResponse {
-  success: boolean
-  message?: string
-  error?: string
-}
-
-export async function POST(
-  request: NextRequest
-): Promise<NextResponse<SignupResponse>> {
+export async function POST(request: NextRequest) {
   try {
+    console.log('[Signup API] Starting signup process')
     const supabase = await createClient()
-    const body: SignupRequest = await request.json()
 
-    const { email, password, role = 'student' } = body
-
-    // Basic validation
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    // Extract name from email for now
-    const fullName = email.split('@')[0] || 'User'
-    const firstName = fullName.split('.')[0] || 'User'
+    const body = await request.json()
 
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
+      email: body.email,
+      password: body.password,
       options: {
         data: {
-          full_name: fullName,
-          first_name: firstName,
-          role: role,
+          role: body.role || 'student',
         },
       },
     })
 
     if (signUpError) {
+      console.error('[Signup API] Signup error:', signUpError)
       return NextResponse.json(
         { success: false, error: signUpError.message },
         { status: 400 }
       )
     }
 
-    if (authData.user) {
-      // Create profile entry
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        email,
-        full_name: fullName,
-        first_name: firstName,
-        role: role,
-      })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Continue anyway as the user was created successfully
-      }
+    if (!authData.user) {
+      console.error('[Signup API] No user created')
+      return NextResponse.json(
+        { success: false, error: 'Failed to create user' },
+        { status: 500 }
+      )
     }
 
+    // Create user profile
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: authData.user.id,
+      email: authData.user.email,
+      role: body.role || 'student',
+      full_name: body.full_name || '',
+    })
+
+    if (profileError) {
+      console.error('[Signup API] Profile creation error:', profileError)
+      // Continue even if profile creation fails
+    }
+
+    console.log('[Signup API] Signup successful for:', authData.user.email)
     return NextResponse.json({
       success: true,
-      message:
-        'Account created successfully. Please check your email to verify your account.',
+      user: {
+        id: authData.user.id,
+        email: authData.user.email,
+        role: body.role || 'student',
+      },
     })
   } catch (error) {
-    console.error('Signup error:', error)
+    console.error('[Signup API] Unexpected error:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create account' },
+      { success: false, error: 'Signup failed' },
       { status: 500 }
     )
   }

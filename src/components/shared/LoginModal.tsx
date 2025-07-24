@@ -55,16 +55,62 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setError('')
 
         try {
+      console.log('[LoginModal] Starting login request')
+      console.log('[LoginModal] Request data:', { email: signInEmail, password: '***' })
+
       // Use server-side login API that sets proper cookies
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`/api/auth/login?t=${Date.now()}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        },
         body: JSON.stringify({ email: signInEmail, password: signInPassword }),
       })
 
-      const data: AuthResponse = await response.json()
+      console.log('[LoginModal] Response status:', response.status)
+      console.log('[LoginModal] Response headers:', Object.fromEntries(response.headers.entries()))
 
-      if (!response.ok || !data.success) {
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Login API error response:', errorText)
+        console.error('Login API error response length:', errorText.length)
+        console.error('Login API error response first 100 chars:', errorText.substring(0, 100))
+
+        // Try to parse as JSON, fallback to text
+        let errorData: { error?: string } | null = null
+        try {
+          errorData = JSON.parse(errorText) as { error?: string }
+          console.log('[LoginModal] Parsed error data:', errorData)
+        } catch (parseError) {
+          console.error('[LoginModal] Failed to parse error response as JSON:', parseError)
+          // If it's not JSON, it might be an HTML error page
+          setError('Server error occurred. Please try again.')
+          setLoading(false)
+          return
+        }
+
+        setError(errorData?.error || 'Anmeldung fehlgeschlagen')
+        setLoading(false)
+        return
+      }
+
+      let data: AuthResponse
+      try {
+        const responseText = await response.text()
+        console.log('[LoginModal] Response text:', responseText)
+        data = JSON.parse(responseText) as AuthResponse
+      } catch (parseError) {
+        console.error('Failed to parse login response:', parseError)
+        setError('Invalid response from server. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      if (!data.success) {
         setError(data.error || 'Anmeldung fehlgeschlagen')
         setLoading(false)
         return
@@ -132,7 +178,36 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         }),
       })
 
-      const data: AuthResponse = await response.json()
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Signup API error response:', errorText)
+
+        // Try to parse as JSON, fallback to text
+        let errorData: { error?: string } | null = null
+        try {
+          errorData = JSON.parse(errorText) as { error?: string }
+        } catch {
+          // If it's not JSON, it might be an HTML error page
+          setError('Server error occurred. Please try again.')
+          setLoading(false)
+          return
+        }
+
+        setError(errorData?.error || 'Registrierung fehlgeschlagen')
+        setLoading(false)
+        return
+      }
+
+      let data: AuthResponse
+      try {
+        data = await response.json() as AuthResponse
+      } catch (parseError) {
+        console.error('Failed to parse signup response:', parseError)
+        setError('Invalid response from server. Please try again.')
+        setLoading(false)
+        return
+      }
 
       if (data.success) {
         setSuccess('Registrierung erfolgreich! Sie können sich jetzt anmelden.')
