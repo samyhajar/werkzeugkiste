@@ -23,6 +23,8 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
 
 interface BuilderElement {
   id: string
