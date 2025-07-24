@@ -61,12 +61,11 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = await params
-    const body = await request.json()
+    const quizId = params.id
 
     // Check if user is authenticated and is admin
     const {
@@ -81,7 +80,7 @@ export async function PUT(
       )
     }
 
-    // Check if user is admin using profiles table (more reliable)
+    // Check if user is admin using profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -95,23 +94,74 @@ export async function PUT(
       )
     }
 
-    // Update quiz data
-    const { error } = await supabase
-      .from('enhanced_quizzes')
-      .update({
-        title: body.title,
-        description: body.description,
-        scope: body.scope,
-        course_id: body.course_id,
-        lesson_id: body.lesson_id,
-        pass_percent: body.pass_percent,
-        max_points: body.max_points,
-        feedback_mode: body.feedback_mode,
-        sort_order: body.sort_order,
-        settings: body.settings,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
+    // Parse request body
+    const body = await request.json()
+    const {
+      title,
+      description,
+      scope,
+      course_id,
+      lesson_id,
+      pass_percent,
+      max_points,
+      feedback_mode,
+    } = body
+
+    // Validate required fields
+    if (!title || !scope) {
+      return NextResponse.json(
+        { success: false, error: 'Title and scope are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate assignment based on scope
+    if (scope === 'course' && !course_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Course assignment is required for course quizzes',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (scope === 'lesson' && !lesson_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Lesson assignment is required for lesson quizzes',
+        },
+        { status: 400 }
+      )
+    }
+
+    // Update the quiz
+    const updateData: any = {
+      title,
+      description,
+      scope,
+      pass_percent,
+      max_points,
+      feedback_mode,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Set assignment based on scope
+    if (scope === 'course') {
+      updateData.course_id = course_id
+      updateData.lesson_id = null
+    } else {
+      updateData.lesson_id = lesson_id
+      updateData.course_id = null
+    }
+
+    const { data: quiz, error } = await supabase
+      .from('quizzes')
+      .update(updateData)
+      .eq('id', quizId)
+      .select()
+      .single()
 
     if (error) {
       console.error('Error updating quiz:', error)
@@ -123,7 +173,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: 'Quiz updated successfully',
+      quiz,
     })
   } catch (error) {
     console.error('Error in quiz update API:', error)

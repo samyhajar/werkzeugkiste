@@ -65,6 +65,10 @@ export default function QuizzesPage() {
   const [scopeFilter, setScopeFilter] = useState('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [editingQuestions, setEditingQuestions] = useState<QuizQuestion[]>([])
 
   const [newQuiz, setNewQuiz] = useState({
     title: '',
@@ -212,6 +216,181 @@ export default function QuizzesPage() {
         i === prev.questions.length - 1 ? { ...q, options: q.options.filter((_, j) => j !== index) } : q
       )
     }))
+  }
+
+  const openEditDialog = (quiz: Quiz) => {
+    setEditingQuiz(quiz)
+    setIsEditDialogOpen(true)
+    // Initialize editing questions (you'll need to fetch questions for this quiz)
+    setEditingQuestions([])
+    void fetchQuizQuestions(quiz.id)
+  }
+
+  const fetchQuizQuestions = async (quizId: string) => {
+    try {
+      const response = await fetch(`/api/admin/quizzes/${quizId}/questions`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.questions) {
+          setEditingQuestions(data.questions)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching quiz questions:', error)
+    }
+  }
+
+  const addEditingQuestion = () => {
+    const newQuestion: QuizQuestion = {
+      type: 'multiple_choice',
+      question_text: '',
+      explanation: '',
+      sort_order: editingQuestions.length,
+      options: [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
+      ]
+    }
+    setEditingQuestions([...editingQuestions, newQuestion])
+  }
+
+  const removeEditingQuestion = (index: number) => {
+    setEditingQuestions(editingQuestions.filter((_, i) => i !== index))
+  }
+
+  const updateEditingQuestionType = (index: number, type: 'multiple_choice' | 'true_false' | 'short_answer') => {
+    const updatedQuestions = [...editingQuestions]
+    updatedQuestions[index] = {
+      ...updatedQuestions[index],
+      type,
+      options: type === 'multiple_choice' ? [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
+      ] : type === 'true_false' ? [
+        { text: 'True', is_correct: false },
+        { text: 'False', is_correct: false }
+      ] : []
+    }
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const updateEditingQuestionText = (index: number, text: string) => {
+    const updatedQuestions = [...editingQuestions]
+    updatedQuestions[index] = {
+      ...updatedQuestions[index],
+      question_text: text
+    }
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const updateEditingOption = (questionIndex: number, optionIndex: number, text: string) => {
+    const updatedQuestions = [...editingQuestions]
+    updatedQuestions[questionIndex].options[optionIndex].text = text
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const toggleEditingCorrectAnswer = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...editingQuestions]
+    const question = updatedQuestions[questionIndex]
+
+    if (question.type === 'multiple_choice') {
+      // For multiple choice, only one option can be correct
+      question.options.forEach((option, i) => {
+        option.is_correct = i === optionIndex
+      })
+    } else if (question.type === 'true_false') {
+      // For true/false, only one option can be correct
+      question.options.forEach((option, i) => {
+        option.is_correct = i === optionIndex
+      })
+    }
+
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const addEditingOption = (questionIndex: number) => {
+    const updatedQuestions = [...editingQuestions]
+    updatedQuestions[questionIndex].options.push({ text: '', is_correct: false })
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const removeEditingOption = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...editingQuestions]
+    updatedQuestions[questionIndex].options.splice(optionIndex, 1)
+    setEditingQuestions(updatedQuestions)
+  }
+
+  const updateQuiz = async () => {
+    if (!editingQuiz) return
+
+    setSaving(true)
+    try {
+      // First update the quiz basic info
+      const quizResponse = await fetch(`/api/admin/quizzes/${editingQuiz.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: editingQuiz.title,
+          description: editingQuiz.description,
+          scope: editingQuiz.scope,
+          course_id: editingQuiz.course_id,
+          lesson_id: editingQuiz.lesson_id,
+          pass_percent: editingQuiz.pass_percent,
+          max_points: editingQuiz.max_points,
+          feedback_mode: editingQuiz.feedback_mode
+        }),
+      })
+
+      if (!quizResponse.ok) {
+        throw new Error(`API error: ${quizResponse.status}`)
+      }
+
+      const quizData = await quizResponse.json()
+
+      if (quizData.success) {
+        // Update questions if there are any
+        if (editingQuestions.length > 0) {
+          const questionsResponse = await fetch(`/api/admin/quizzes/${editingQuiz.id}/questions`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              questions: editingQuestions
+            }),
+          })
+
+          if (!questionsResponse.ok) {
+            throw new Error(`API error: ${questionsResponse.status}`)
+          }
+
+          const questionsData = await questionsResponse.json()
+          if (!questionsData.success) {
+            throw new Error(questionsData.error || 'Failed to update questions')
+          }
+        }
+
+        // Refresh the quizzes list
+        await fetchQuizzes()
+        setIsEditDialogOpen(false)
+        setEditingQuiz(null)
+        setEditingQuestions([])
+      } else {
+        throw new Error(quizData.error || 'Failed to update quiz')
+      }
+    } catch (error) {
+      console.error('Error updating quiz:', error)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const createQuiz = async () => {
@@ -525,6 +704,269 @@ export default function QuizzesPage() {
           </DialogContent>
         </Dialog>
 
+      {/* Edit Quiz Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Quiz</DialogTitle>
+            <DialogDescription>
+              Update quiz settings and assignments.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingQuiz && (
+            <div className="space-y-6">
+              {/* Basic Quiz Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-title">Quiz Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={editingQuiz.title}
+                    onChange={(e) => setEditingQuiz(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    placeholder="Enter quiz title"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-description">Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    value={editingQuiz.description || ''}
+                    onChange={(e) => setEditingQuiz(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    placeholder="Enter quiz description"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Quiz Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="edit-scope">Scope</Label>
+                  <Select
+                    value={editingQuiz.scope}
+                    onValueChange={(value: 'course' | 'lesson') => setEditingQuiz(prev => prev ? { ...prev, scope: value, course_id: value === 'course' ? prev.course_id : '', lesson_id: value === 'lesson' ? prev.lesson_id : '' } : null)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="course">Course Quiz</SelectItem>
+                      <SelectItem value="lesson">Lesson Quiz</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit-pass-percent">Pass Percentage</Label>
+                  <Input
+                    id="edit-pass-percent"
+                    type="number"
+                    value={editingQuiz.pass_percent}
+                    onChange={(e) => setEditingQuiz(prev => prev ? { ...prev, pass_percent: parseInt(e.target.value) } : null)}
+                    min="0"
+                    max="100"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-max-points">Max Points</Label>
+                  <Input
+                    id="edit-max-points"
+                    type="number"
+                    value={editingQuiz.max_points}
+                    onChange={(e) => setEditingQuiz(prev => prev ? { ...prev, max_points: parseInt(e.target.value) } : null)}
+                    min="1"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Course/Lesson Selection */}
+              <div>
+                <Label htmlFor="edit-assignment">
+                  {editingQuiz.scope === 'course' ? 'Course Assignment' : 'Lesson Assignment'}
+                </Label>
+                <Select
+                  value={editingQuiz.scope === 'course' ? editingQuiz.course_id || '' : editingQuiz.lesson_id || ''}
+                  onValueChange={(value) => setEditingQuiz(prev => prev ? {
+                    ...prev,
+                    course_id: editingQuiz.scope === 'course' ? value : '',
+                    lesson_id: editingQuiz.scope === 'lesson' ? value : ''
+                  } : null)}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={`Select ${editingQuiz.scope === 'course' ? 'course' : 'lesson'}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {editingQuiz.scope === 'course'
+                      ? courses.map(course => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.title}
+                          </SelectItem>
+                        ))
+                      : lessons.map(lesson => (
+                          <SelectItem key={lesson.id} value={lesson.id}>
+                            {lesson.title} ({lesson.course?.title})
+                          </SelectItem>
+                        ))
+                    }
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {editingQuiz.scope === 'course'
+                    ? 'Course quizzes appear at the end of the course'
+                    : 'Lesson quizzes appear at the end of the specific lesson'
+                  }
+                </p>
+              </div>
+
+              {/* Current Assignment Info */}
+              {(editingQuiz.course_id || editingQuiz.lesson_id) && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="text-sm text-blue-800">
+                    <strong>Current Assignment:</strong>
+                    <div className="mt-1">
+                      {editingQuiz.scope === 'lesson' && editingQuiz.lesson?.title
+                        ? `${editingQuiz.lesson.title} (Course: ${editingQuiz.lesson.course?.title})`
+                        : editingQuiz.scope === 'course' && editingQuiz.course?.title
+                        ? editingQuiz.course.title
+                        : 'Unassigned'
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Questions Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-base font-semibold">Questions</Label>
+                  <Button onClick={addEditingQuestion} variant="outline" size="sm">
+                    Add Question
+                  </Button>
+                </div>
+                <div className="space-y-4">
+                  {editingQuestions.map((question, index) => (
+                    <Card key={index}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+                          <Button
+                            onClick={() => removeEditingQuestion(index)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label>Question Type</Label>
+                          <Select
+                            value={question.type}
+                            onValueChange={(value: 'multiple_choice' | 'true_false' | 'short_answer') => updateEditingQuestionType(index, value)}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                              <SelectItem value="true_false">True/False</SelectItem>
+                              <SelectItem value="short_answer">Short Answer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Question Text</Label>
+                          <Textarea
+                            value={question.question_text}
+                            onChange={(e) => updateEditingQuestionText(index, e.target.value)}
+                            placeholder="Enter your question"
+                            className="mt-1"
+                          />
+                        </div>
+                        {(question.type === 'multiple_choice' || question.type === 'true_false') && (
+                          <div>
+                            <Label>Options</Label>
+                            <div className="space-y-2 mt-1">
+                              {question.options.map((option, optionIndex) => (
+                                <div key={optionIndex} className="flex items-center gap-2">
+                                  <Input
+                                    value={option.text}
+                                    onChange={(e) => updateEditingOption(index, optionIndex, e.target.value)}
+                                    placeholder={`Option ${optionIndex + 1}`}
+                                    className="flex-1"
+                                  />
+                                  <Button
+                                    onClick={() => toggleEditingCorrectAnswer(index, optionIndex)}
+                                    variant={option.is_correct ? "default" : "outline"}
+                                    size="sm"
+                                  >
+                                    {option.is_correct ? "✓ Correct" : "Mark Correct"}
+                                  </Button>
+                                  {question.options.length > 2 && (
+                                    <Button
+                                      onClick={() => removeEditingOption(index, optionIndex)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-600"
+                                    >
+                                      Remove
+                                    </Button>
+                                  )}
+                                </div>
+                              ))}
+                              <Button onClick={() => addEditingOption(index)} variant="outline" size="sm">
+                                Add Option
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  disabled={saving}
+                  className="sm:w-auto w-full h-9 text-sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => void updateQuiz()}
+                  disabled={saving || !editingQuiz.title.trim() ||
+                    (editingQuiz.scope === 'lesson' && !editingQuiz.lesson_id) ||
+                    (editingQuiz.scope === 'course' && !editingQuiz.course_id) ||
+                    editingQuestions.length === 0}
+                  className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
+                >
+                  {saving ? (
+                    <>
+                      <span className="mr-2 animate-spin">⏳</span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">💾</span>
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Filters */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1">
@@ -653,7 +1095,7 @@ export default function QuizzesPage() {
                         <Button
                           size="sm"
                           className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
-                          onClick={() => router.push(`/admin/quizzes/${quiz.id}`)}
+                          onClick={() => openEditDialog(quiz)}
                         >
                           Edit
                         </Button>

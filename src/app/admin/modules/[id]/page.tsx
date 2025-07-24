@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { GripVertical } from 'lucide-react'
 
 type Module = Tables<'modules'>
 type Course = Tables<'courses'>
@@ -45,6 +45,7 @@ export default function ModuleDetailsPage() {
   })
   const [saving, setSaving] = useState(false)
   const [reordering, setReordering] = useState(false)
+  const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -203,15 +204,7 @@ export default function ModuleDetailsPage() {
     }
   }
 
-  const moveCourse = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return
-    if (direction === 'down' && index === courses.length - 1) return
 
-    const newIndex = direction === 'up' ? index - 1 : index + 1
-    const course = courses[index]
-
-    void handleReorder(course.id, newIndex)
-  }
 
   if (loading) {
     return (
@@ -494,30 +487,55 @@ export default function ModuleDetailsPage() {
             ) : (
               <div className="space-y-3">
                 {courses.map((course, index) => (
-                  <div key={course.id} className="flex items-center justify-between p-4 border rounded-lg bg-transparent">
+                  <div
+                    key={`${course.id}-${course.order}`}
+                    className={`flex items-center justify-between p-4 border rounded-lg transition-all cursor-move ${
+                      draggedCourseId === course.id
+                        ? 'bg-blue-100 border-blue-300 shadow-lg scale-105'
+                        : 'bg-transparent hover:bg-gray-50'
+                    }`}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', course.id)
+                      e.dataTransfer.effectAllowed = 'move'
+                      setDraggedCourseId(course.id)
+                    }}
+                    onDragEnd={() => {
+                      setDraggedCourseId(null)
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      if (draggedCourseId && draggedCourseId !== course.id) {
+                        e.currentTarget.classList.add('border-blue-400', 'bg-blue-50')
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+                      const draggedId = e.dataTransfer.getData('text/plain')
+                      if (draggedId !== course.id) {
+                        const draggedCourse = courses.find(c => c.id === draggedId)
+                        if (draggedCourse) {
+                          void handleReorder(draggedId, index)
+                        }
+                      }
+                      setDraggedCourseId(null)
+                    }}
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => moveCourse(index, 'up')}
-                          disabled={index === 0 || reordering}
-                          className="h-6 w-6 p-0"
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => moveCourse(index, 'down')}
-                          disabled={index === courses.length - 1 || reordering}
-                          className="h-6 w-6 p-0"
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="w-8 h-8 bg-brand-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-brand-primary">
-                        {index + 1}
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-brand-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-brand-primary">
+                          {index + 1}
+                        </div>
+                        <div className="w-6 h-6 text-gray-400">
+                          <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zm6-8a2 2 0 1 1-.001-4.001A2 2 0 0 1 13 6zm0 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"/>
+                          </svg>
+                        </div>
                       </div>
                       <div>
                         <h4 className="font-medium text-foreground">{course.title}</h4>
@@ -535,6 +553,9 @@ export default function ModuleDetailsPage() {
                           Edit Course
                         </Link>
                       </Button>
+                      {reordering && (
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                      )}
                     </div>
                   </div>
                 ))}

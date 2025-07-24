@@ -57,6 +57,9 @@ export default function ModulesPage() {
     status: 'draft' as 'draft' | 'published',
     course_id: ''
   })
+  const [moduleCourses, setModuleCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
+  const [reorderingCourses, setReorderingCourses] = useState(false)
+  const [draggedCourseId, setDraggedCourseId] = useState<string | null>(null)
 
   const [editingModule, setEditingModule] = useState<Module | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -233,6 +236,66 @@ export default function ModulesPage() {
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
+    void fetchModuleCourses(module.id)
+  }
+
+  const fetchModuleCourses = async (moduleId: string) => {
+    try {
+      const response = await fetch(`/api/admin/modules/${moduleId}/courses`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      if (data.success && data.courses) {
+        setModuleCourses(data.courses)
+      } else {
+        setModuleCourses([])
+      }
+    } catch (err) {
+      console.error('Error fetching module courses:', err)
+      setModuleCourses([])
+    }
+  }
+
+  const handleReorderCourses = async (courseId: string, newOrder: number) => {
+    if (!editingModule) return
+
+    setReorderingCourses(true)
+    try {
+      const response = await fetch('/api/admin/courses/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          courseId,
+          newOrder
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Refresh the courses list
+        await fetchModuleCourses(editingModule.id)
+      } else {
+        throw new Error(data.error || 'Failed to reorder courses')
+      }
+    } catch (err) {
+      console.error('Error reordering courses:', err)
+    } finally {
+      setReorderingCourses(false)
+    }
   }
 
   const handleSort = (field: 'title' | 'description' | 'status' | 'created_at' | 'updated_at') => {
@@ -455,6 +518,94 @@ export default function ModulesPage() {
                   <p className="text-xs text-gray-500">Choose the course where this module should appear</p>
                 </div>
               </div>
+
+              {/* Module Courses List Card */}
+              {editingModule && (
+                <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
+                      <span className="text-white text-xs">📋</span>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-sm">Module Courses</h3>
+                  </div>
+
+                  <div className="space-y-2">
+                    {moduleCourses.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-gray-500">No courses assigned to this module</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {moduleCourses.map((course, index) => (
+                          <div
+                            key={`${course.id}-${course.order}`}
+                            className={`flex items-center justify-between p-3 border rounded-lg transition-all cursor-move ${
+                              draggedCourseId === course.id
+                                ? 'bg-blue-100 border-blue-300 shadow-lg scale-105'
+                                : 'bg-gray-50 hover:bg-gray-100'
+                            }`}
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData('text/plain', course.id)
+                              e.dataTransfer.effectAllowed = 'move'
+                              setDraggedCourseId(course.id)
+                            }}
+                            onDragEnd={() => {
+                              setDraggedCourseId(null)
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                              e.dataTransfer.dropEffect = 'move'
+                              if (draggedCourseId && draggedCourseId !== course.id) {
+                                e.currentTarget.classList.add('border-blue-400', 'bg-blue-50')
+                              }
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50')
+                              const draggedId = e.dataTransfer.getData('text/plain')
+                              if (draggedId !== course.id) {
+                                const draggedCourse = moduleCourses.find(c => c.id === draggedId)
+                                if (draggedCourse) {
+                                  void handleReorderCourses(draggedId, index)
+                                }
+                              }
+                              setDraggedCourseId(null)
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium text-white">
+                                  {index + 1}
+                                </div>
+                                <div className="w-6 h-6 text-gray-400">
+                                  <svg fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M7 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 2zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 7 14zm6-8a2 2 0 1 1-.001-4.001A2 2 0 0 1 13 6zm0 2a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 8zm0 6a2 2 0 1 1 .001 4.001A2 2 0 0 1 13 14z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-900 text-sm">{course.title}</h4>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                Course
+                              </Badge>
+                              {reorderingCourses && (
+                                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Settings Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">

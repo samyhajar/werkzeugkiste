@@ -99,11 +99,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = await params
+    const quizId = params.id
 
     // Check if user is authenticated and is admin
     const {
@@ -118,7 +118,7 @@ export async function GET(
       )
     }
 
-    // Check if user is admin using profiles table (more reliable)
+    // Check if user is admin using profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
@@ -133,49 +133,167 @@ export async function GET(
     }
 
     // Fetch questions for this quiz
-    const { data: questions, error: questionsError } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .eq('quiz_id', id)
-      .order('sort_order', { ascending: true })
+    const { data: questions, error } = await supabase
+      .from('questions')
+      .select(
+        `
+        *,
+        options:options(*)
+      `
+      )
+      .eq('quiz_id', quizId)
+      .order('created_at', { ascending: true })
 
-    if (questionsError) {
-      console.error('Error fetching questions:', questionsError)
+    if (error) {
+      console.error('Error fetching quiz questions:', error)
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch questions' },
+        { success: false, error: 'Failed to fetch quiz questions' },
         { status: 500 }
       )
     }
 
-    // Fetch answers for all questions
-    const questionIds = questions?.map(q => q.id) || []
-    let answers: any[] = []
+    // Format questions to match the expected structure
+    const formattedQuestions =
+      questions?.map(q => ({
+        id: q.id,
+        type: q.type === 'single' ? 'multiple_choice' : q.type,
+        question_text: q.question || '',
+        explanation: '',
+        sort_order: 0,
+        options:
+          q.options?.map(o => ({
+            id: o.id,
+            text: o.option_text || '',
+            is_correct: o.is_correct || false,
+          })) || [],
+      })) || []
 
-    if (questionIds.length > 0) {
-      const { data: answersData, error: answersError } = await supabase
-        .from('quiz_answers')
-        .select('*')
-        .in('question_id', questionIds)
-        .order('sort_order', { ascending: true })
+    return NextResponse.json({
+      success: true,
+      questions: formattedQuestions,
+    })
+  } catch (error) {
+    console.error('Error in quiz questions API:', error)
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
 
-      if (answersError) {
-        console.error('Error fetching answers:', answersError)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient()
+    const quizId = params.id
+
+    // Check if user is authenticated and is admin
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is admin using profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    // Parse request body
+    const body = await request.json()
+    const { questions } = body
+
+    if (!questions || !Array.isArray(questions)) {
+      return NextResponse.json(
+        { success: false, error: 'Questions array is required' },
+        { status: 400 }
+      )
+    }
+
+    // Delete existing questions for this quiz
+    const { error: deleteError } = await supabase
+      .from('questions')
+      .delete()
+      .eq('quiz_id', quizId)
+
+    if (deleteError) {
+      console.error('Error deleting existing questions:', deleteError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to update questions' },
+        { status: 500 }
+      )
+    }
+
+    // Insert new questions
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i]
+
+      // Insert question
+      const { data: questionData, error: questionError } = await supabase
+        .from('questions')
+        .insert({
+          quiz_id: quizId,
+          type: question.type === 'multiple_choice' ? 'single' : question.type,
+          question: question.question_text,
+        })
+        .select()
+        .single()
+
+      if (questionError) {
+        console.error('Error inserting question:', questionError)
         return NextResponse.json(
-          { success: false, error: 'Failed to fetch answers' },
+          { success: false, error: 'Failed to insert question' },
           { status: 500 }
         )
       }
 
-      answers = answersData || []
+      // Insert options for multiple choice and true/false questions
+      if (question.options && question.options.length > 0) {
+        const optionsToInsert = question.options.map(
+          (option: any, optionIndex: number) => ({
+            question_id: questionData.id,
+            option_text: option.text,
+            is_correct: option.is_correct,
+          })
+        )
+
+        const { error: optionsError } = await supabase
+          .from('options')
+          .insert(optionsToInsert)
+
+        if (optionsError) {
+          console.error('Error inserting options:', optionsError)
+          return NextResponse.json(
+            { success: false, error: 'Failed to insert options' },
+            { status: 500 }
+          )
+        }
+      }
     }
 
     return NextResponse.json({
       success: true,
-      questions: questions || [],
-      answers: answers,
+      message: 'Questions updated successfully',
     })
   } catch (error) {
-    console.error('Error in quiz questions API:', error)
+    console.error('Error in quiz questions update API:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
