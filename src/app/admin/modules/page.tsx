@@ -54,8 +54,7 @@ export default function ModulesPage() {
     title: '',
     description: '',
     hero_image: '',
-    status: 'draft' as 'draft' | 'published',
-    course_id: ''
+    status: 'draft' as 'draft' | 'published'
   })
   const [moduleCourses, setModuleCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
   const [reorderingCourses, setReorderingCourses] = useState(false)
@@ -119,7 +118,7 @@ export default function ModulesPage() {
   }
 
   const createModule = async () => {
-    if (!newModule.title.trim() || (!editingModule && !newModule.course_id)) {
+    if (!newModule.title.trim()) {
       return
     }
 
@@ -150,7 +149,7 @@ export default function ModulesPage() {
 
         if (data.success) {
           setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
-          setNewModule({ title: '', description: '', hero_image: '', status: 'draft', course_id: '' })
+          setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
           setIsCreateDialogOpen(false)
           setEditingModule(null)
         } else {
@@ -175,7 +174,7 @@ export default function ModulesPage() {
 
         if (data.success && data.module) {
           setModules([data.module, ...modules])
-          setNewModule({ title: '', description: '', hero_image: '', status: 'draft', course_id: '' })
+          setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
           setIsCreateDialogOpen(false)
         } else {
           throw new Error(data.error || 'Failed to create module')
@@ -231,8 +230,7 @@ export default function ModulesPage() {
       title: module.title,
       description: module.description || '',
       hero_image: module.hero_image || '',
-      status: (module.status as 'draft' | 'published') || 'draft',
-      course_id: ''
+      status: (module.status as 'draft' | 'published') || 'draft'
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
@@ -486,38 +484,7 @@ export default function ModulesPage() {
                 </div>
               </div>
 
-              {/* Course Assignment Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📚</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Assignment</h3>
-                </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="course_id" className="text-xs font-semibold text-gray-700">Select Course</Label>
-                  <Select
-                    value={newModule.course_id}
-                    onValueChange={(value) => setNewModule({ ...newModule, course_id: value })}
-                  >
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Choose a course for this module" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courses.map((course) => (
-                        <SelectItem key={course.id} value={course.id}>
-                          <div className="flex items-center gap-2">
-                            <span>📚</span>
-                            <span>{course.title}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Choose the course where this module should appear</p>
-                </div>
-              </div>
 
               {/* Module Courses List Card */}
               {editingModule && (
@@ -659,7 +626,7 @@ export default function ModulesPage() {
               </Button>
               <Button
                 onClick={() => void createModule()}
-                disabled={creating || !newModule.title.trim() || (!editingModule && !newModule.course_id)}
+                disabled={creating || !newModule.title.trim()}
                 className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
               >
                 {creating ? (
