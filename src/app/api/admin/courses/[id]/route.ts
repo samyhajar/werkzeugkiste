@@ -9,7 +9,6 @@ interface UpdateCourseRequest {
   description?: string
   module_id?: string
   hero_image?: string
-  status?: string
 }
 
 export async function DELETE(
@@ -140,7 +139,6 @@ export async function PUT(
       description: body.description || null,
       module_id: body.module_id || null,
       hero_image: body.hero_image || null,
-      status: body.status || 'draft',
       updated_at: new Date().toISOString(),
     }
 

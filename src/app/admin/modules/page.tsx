@@ -47,14 +47,12 @@ export default function ModulesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [newModule, setNewModule] = useState({
     title: '',
     description: '',
-    hero_image: '',
-    status: 'draft' as 'draft' | 'published'
+    hero_image: ''
   })
   const [moduleCourses, setModuleCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
   const [reorderingCourses, setReorderingCourses] = useState(false)
@@ -149,7 +147,7 @@ export default function ModulesPage() {
 
         if (data.success) {
           setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
-          setNewModule({ title: '', description: '', hero_image: '', status: 'draft' })
+          setNewModule({ title: '', description: '', hero_image: '' })
           setIsCreateDialogOpen(false)
           setEditingModule(null)
         } else {

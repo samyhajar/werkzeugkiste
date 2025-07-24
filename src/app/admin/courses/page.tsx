@@ -39,13 +39,12 @@ export default function CoursesPage() {
     title: '',
     description: '',
     module_id: '',
-    hero_image: '',
-    status: 'draft' as 'draft' | 'published'
+    hero_image: ''
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
-  const [sortField, setSortField] = useState<'title' | 'description' | 'module' | 'status' | 'created_at'>('title')
+  const [sortField, setSortField] = useState<'title' | 'description' | 'module' | 'created_at'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
@@ -53,7 +52,7 @@ export default function CoursesPage() {
   const [reordering, setReordering] = useState(false)
   const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
+
   const router = useRouter()
 
   const fetchCourses = async () => {
@@ -153,8 +152,7 @@ export default function CoursesPage() {
             title: formData.title,
             description: formData.description,
             module_id: formData.module_id,
-            hero_image: formData.hero_image,
-            status: formData.status
+            hero_image: formData.hero_image
           }),
         })
 
@@ -170,8 +168,7 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: '',
-            status: 'draft'
+            hero_image: ''
           })
           setCreateModalOpen(false)
           setEditingCourse(null)
@@ -201,8 +198,7 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: '',
-            status: 'draft'
+            hero_image: ''
           })
           setCreateModalOpen(false)
         } else {
@@ -256,8 +252,7 @@ export default function CoursesPage() {
       title: course.title,
       description: course.description || '',
       module_id: course.module_id || '',
-      hero_image: course.hero_image || '',
-      status: (course.status as 'draft' | 'published') || 'draft'
+      hero_image: course.hero_image || ''
     })
     setEditingCourse(course)
 
@@ -271,7 +266,7 @@ export default function CoursesPage() {
     setCreateModalOpen(true)
   }
 
-  const handleSort = (field: 'title' | 'description' | 'module' | 'status' | 'created_at') => {
+  const handleSort = (field: 'title' | 'description' | 'module' | 'created_at') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
@@ -300,10 +295,7 @@ export default function CoursesPage() {
           aValue = (moduleA?.title || '').toLowerCase()
           bValue = (moduleB?.title || '').toLowerCase()
           break
-        case 'status':
-          aValue = a.status || 'draft'
-          bValue = b.status || 'draft'
-          break
+
         case 'created_at':
           aValue = new Date(a.created_at || '').getTime()
           bValue = new Date(b.created_at || '').getTime()
@@ -471,8 +463,7 @@ export default function CoursesPage() {
   const filteredCourses = getSortedCourses().filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesStatus = statusFilter === 'all' || course.status === statusFilter
-    return matchesSearch && matchesStatus
+    return matchesSearch
   })
 
   if (loading) {
@@ -608,19 +599,7 @@ export default function CoursesPage() {
                   <h3 className="font-semibold text-gray-900 text-sm">Course Status</h3>
                 </div>
 
-                <div className="space-y-1">
-                  <Label htmlFor="status" className="text-xs font-semibold text-gray-700">Status</Label>
-                  <Select value={formData.status} onValueChange={(value: 'draft' | 'published') => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Choose whether this course is ready for students</p>
-                </div>
+
               </div>
 
               {/* Visual Design Card */}
@@ -715,19 +694,7 @@ export default function CoursesPage() {
               className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
             />
           </div>
-          <Select
-            value={statusFilter}
-            onValueChange={(value: 'all' | 'published' | 'draft') => setStatusFilter(value)}
-          >
-            <SelectTrigger className="w-[180px] h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-white border border-gray-200 shadow-lg">
-              <SelectItem value="all">Alle Kurse</SelectItem>
-              <SelectItem value="published">Veröffentlicht</SelectItem>
-              <SelectItem value="draft">Entwurf</SelectItem>
-            </SelectContent>
-          </Select>
+
         </div>
       </div>
 
@@ -782,17 +749,7 @@ export default function CoursesPage() {
                       )}
                     </div>
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Status
-                      {sortField === 'status' && (
-                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </th>
+
                   <th
                     className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
                     onClick={() => handleSort('created_at')}
@@ -835,18 +792,7 @@ export default function CoursesPage() {
                         })()}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant={course.status === 'published' ? 'default' : 'secondary'}
-                        className={
-                          course.status === 'published'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                        }
-                      >
-                        {course.status || 'draft'}
-                      </Badge>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         {course.created_at

@@ -19,7 +19,6 @@ export async function GET(
       .from('modules')
       .select('*')
       .eq('id', id)
-      .eq('status', 'published') // Only allow access to published modules
       .single()
 
     if (moduleError || !module) {
@@ -34,7 +33,6 @@ export async function GET(
       .from('courses')
       .select('*')
       .eq('module_id', id)
-      .eq('status', 'published')
       .order('order', { ascending: true })
 
     if (coursesError) {
