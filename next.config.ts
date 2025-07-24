@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  // Disable static generation for admin pages
+  experimental: {
+    workerThreads: false,
+    cpus: 1,
+  },
 }
 
 export default nextConfig
