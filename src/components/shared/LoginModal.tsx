@@ -6,10 +6,6 @@ import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-
-import { Checkbox } from '@/components/ui/checkbox'
 import { X } from 'lucide-react'
 import { AuthResponse } from '@/types/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -233,8 +229,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 bg-white">
-        <div className="p-8">
+      <DialogContent className="sm:max-w-lg p-0 bg-white pointer-events-auto select-text">
+        <div className="p-8 pointer-events-auto">
           <DialogHeader className="mb-8">
             <DialogTitle className="text-3xl font-normal text-gray-700 text-left">
               Willkommen
@@ -277,47 +273,49 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <TabsContent value="signin" className="space-y-6 mt-0">
               <form onSubmit={handleSignIn} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="text-gray-600 font-normal">
+                  <label htmlFor="signin-email" className="text-gray-600 font-normal text-sm">
                     Benutzername oder E-Mail
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="signin-email"
                     type="email"
                     value={signInEmail}
-                    onChange={(e) => setSignInEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignInEmail(e.target.value)}
                     required
                     disabled={loading}
                     autoComplete="username"
-                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="text-gray-600 font-normal">
+                  <label htmlFor="signin-password" className="text-gray-600 font-normal text-sm">
                     Passwort
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="signin-password"
                     type="password"
                     value={signInPassword}
-                    onChange={(e) => setSignInPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignInPassword(e.target.value)}
                     required
                     disabled={loading}
-                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
                     autoComplete="current-password"
                   />
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <Checkbox
+                  <input
                     id="remember-me"
+                    type="checkbox"
                     checked={rememberMe}
-                    onCheckedChange={setRememberMe}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
                     disabled={loading}
+                    className="h-4 w-4 text-[#de0449] border-gray-300 rounded focus:ring-[#de0449] focus:ring-2"
                   />
-                  <Label htmlFor="remember-me" className="text-gray-600 font-normal">
+                  <label htmlFor="remember-me" className="text-gray-600 font-normal text-sm select-text pointer-events-auto">
                     Meine Eingaben speichern
-                  </Label>
+                  </label>
                 </div>
 
                 <div className="text-center">
@@ -352,50 +350,50 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             <TabsContent value="signup" className="space-y-6 mt-0">
               <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-gray-600 font-normal">
+                  <label htmlFor="signup-email" className="text-gray-600 font-normal text-sm">
                     E-Mail-Adresse
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="signup-email"
                     type="email"
                     value={signUpEmail}
-                    onChange={(e) => setSignUpEmail(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpEmail(e.target.value)}
                     required
                     disabled={loading}
-                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-gray-600 font-normal">
+                  <label htmlFor="signup-password" className="text-gray-600 font-normal text-sm">
                     Passwort
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="signup-password"
                     type="password"
                     value={signUpPassword}
-                    onChange={(e) => setSignUpPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpPassword(e.target.value)}
                     required
                     disabled={loading}
                     minLength={6}
                     autoComplete="new-password"
-                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password" className="text-gray-600 font-normal">
+                  <label htmlFor="signup-confirm-password" className="text-gray-600 font-normal text-sm">
                     Passwort bestätigen
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="signup-confirm-password"
                     type="password"
                     value={signUpConfirmPassword}
-                    onChange={(e) => setSignUpConfirmPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpConfirmPassword(e.target.value)}
                     required
                     disabled={loading}
                     autoComplete="new-password"
-                    className="border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent"
+                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
                   />
                 </div>
 
