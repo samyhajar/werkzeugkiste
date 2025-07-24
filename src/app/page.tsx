@@ -62,11 +62,13 @@ export default async function Home({
     .in('course_id', courses?.map(c => c.id) || [])
     .order('order', { ascending: true })
 
-  // Fetch all quizzes for these courses
+  // Fetch all quizzes for these courses from enhanced_quizzes table
   const { data: quizzes } = await supabase
-    .from('quizzes')
+    .from('enhanced_quizzes')
     .select('*')
     .in('course_id', courses?.map(c => c.id) || [])
+    .eq('scope', 'course')
+    .order('sort_order', { ascending: true })
 
   // Build the hierarchical structure
   const modulesWithCourses = modules.map(module => {

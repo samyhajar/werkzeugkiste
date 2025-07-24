@@ -51,29 +51,22 @@ export async function POST(request: NextRequest) {
     // Determine the parent type and update accordingly
     const updateData: any = {}
 
-    if (scope === 'module') {
-      // Assign to module (as a course)
-      updateData.module_id = parentId
-    } else if (scope === 'course') {
+    if (scope === 'course') {
       // Assign to course
       updateData.course_id = parentId
-    } else if (scope === 'lesson') {
-      // Assign to lesson (as a quiz)
-      updateData.lesson_id = parentId
+    } else {
+      // Lessons can only be assigned to courses
+      return NextResponse.json(
+        { success: false, error: 'Lessons can only be assigned to courses' },
+        { status: 400 }
+      )
     }
 
-    // Get the current maximum order for lessons in this parent
+    // Get the current maximum order for lessons in this course
     const { data: maxOrderResult, error: maxOrderError } = (await supabase
       .from('lessons')
       .select('sort_order')
-      .eq(
-        scope === 'module'
-          ? 'module_id'
-          : scope === 'course'
-            ? 'course_id'
-            : 'lesson_id',
-        parentId
-      )
+      .eq('course_id', parentId)
       .not('sort_order', 'is', null)
       .order('sort_order', { ascending: false })
       .limit(1)

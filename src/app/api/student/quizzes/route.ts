@@ -18,9 +18,9 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Get quizzes for published courses only
+    // Get quizzes for published courses only from enhanced_quizzes table
     const { data: quizzes, error } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .select(
         `
         *,
@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest) {
       `
       )
       .eq('lessons.courses.status', 'published')
-      .order('created_at', { ascending: true })
+      .order('sort_order', { ascending: true })
 
     if (error) {
       console.error('Error fetching quizzes:', error)

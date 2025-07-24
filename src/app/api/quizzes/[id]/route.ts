@@ -22,9 +22,9 @@ export async function GET(
       )
     }
 
-    // Fetch quiz details with related data
+    // Fetch quiz details with related data from enhanced_quizzes table
     const { data: quiz, error: quizError } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .select(
         `
         *,
@@ -48,6 +48,26 @@ export async function GET(
       return NextResponse.json(
         { success: false, error: 'Quiz not found' },
         { status: 404 }
+      )
+    }
+
+    // Fetch quiz questions with answers
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select(
+        `
+        *,
+        quiz_answers(*)
+      `
+      )
+      .eq('quiz_id', id)
+      .order('sort_order', { ascending: true })
+
+    if (questionsError) {
+      console.error('Error fetching quiz questions:', questionsError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to load quiz questions' },
+        { status: 500 }
       )
     }
 
@@ -78,6 +98,7 @@ export async function GET(
 
     const quizWithAttempts = {
       ...quiz,
+      questions: questions || [],
       user_attempts: attempts || [],
       best_score:
         attempts && attempts.length > 0

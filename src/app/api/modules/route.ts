@@ -69,11 +69,13 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Fetch all quizzes for these courses
+    // Fetch all quizzes for these courses from enhanced_quizzes table
     const { data: quizzes, error: quizzesError } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .select('*')
       .in('course_id', courses?.map(c => c.id) || [])
+      .eq('scope', 'course')
+      .order('sort_order', { ascending: true })
 
     if (quizzesError) {
       console.error('Error fetching quizzes:', quizzesError)

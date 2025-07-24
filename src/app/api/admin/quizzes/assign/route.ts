@@ -22,19 +22,38 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Determine the parent type and update accordingly
-    const updateData: any = {}
-
-    if (scope === 'module') {
-      updateData.module_id = parentId
-    } else if (scope === 'course') {
-      updateData.course_id = parentId
-    } else if (scope === 'lesson') {
-      updateData.lesson_id = parentId
+    const updateData: any = {
+      scope: scope,
     }
 
-    // Update the quiz
+    if (scope === 'course') {
+      updateData.course_id = parentId
+      updateData.lesson_id = null
+    } else if (scope === 'lesson') {
+      updateData.lesson_id = parentId
+      updateData.course_id = null
+    }
+
+    // Get the current sort order for the target scope
+    let sortOrder = 1
+    if (scope === 'course' || scope === 'lesson') {
+      const { data: existingQuizzes } = await supabase
+        .from('enhanced_quizzes')
+        .select('sort_order')
+        .eq(scope === 'course' ? 'course_id' : 'lesson_id', parentId)
+        .order('sort_order', { ascending: false })
+        .limit(1)
+
+      if (existingQuizzes && existingQuizzes.length > 0) {
+        sortOrder = (existingQuizzes[0].sort_order || 0) + 1
+      }
+    }
+
+    updateData.sort_order = sortOrder
+
+    // Update the enhanced quiz
     const { data: quiz, error } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .update(updateData)
       .eq('id', elementId)
       .select()

@@ -3,25 +3,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ChevronRight, GripVertical, Plus, Trash2, FileText, HelpCircle, BookOpen, FolderOpen } from 'lucide-react'
+import { ChevronRight, Plus, Trash2, FileText, HelpCircle, BookOpen, FolderOpen, ChevronDown } from 'lucide-react'
 import { useTableSubscription } from '@/contexts/RealtimeContext'
 import {
-  DndContext,
-  closestCenter,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-} from '@dnd-kit/sortable'
-import {
-  useSortable,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -146,67 +136,42 @@ const findElementById = (elements: (BuilderElement | AvailableElement)[], id: st
   return undefined
 }
 
-function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
+function BuilderElement({ element, onRemove, onToggle, level = 0 }: {
   element: BuilderElement
   onRemove: (id: string) => Promise<void>
   onToggle: (id: string) => void
   level?: number
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: element.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  }
-
   const hasChildren = element.children && element.children.length > 0
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`relative ${isDragging ? 'opacity-50' : ''}`}
-    >
+    <div className="relative">
       <div
-        className={`flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+        className={`flex items-start gap-3 p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow ${
           level > 0 ? 'ml-6' : ''
         }`}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
-        >
-          <GripVertical className="w-4 h-4 text-gray-400" />
+        <div className="p-1 hover:bg-gray-100 rounded flex-shrink-0 mt-1">
+          <ChevronRight className="w-4 h-4 text-gray-400" />
         </div>
 
-        <div className="flex items-center gap-2 flex-1">
-          {getElementIcon(element.type)}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="flex-shrink-0 mt-1">
+            {getElementIcon(element.type)}
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900 truncate">
+              <h3 className="font-medium text-gray-900 text-sm leading-tight">
                 {element.title}
-              </span>
-              <Badge className={getElementBadgeColor(element.type)}>
+              </h3>
+              <Badge className={`${getElementBadgeColor(element.type)} text-xs`}>
                 {getElementTypeLabel(element.type)}
               </Badge>
             </div>
-            {element.description && (
-              <p className="text-sm text-gray-600 truncate">
-                {element.description}
-              </p>
-            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0">
           {hasChildren && (
             <Button
               variant="ghost"
@@ -234,9 +199,9 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
       </div>
 
       {hasChildren && element.isExpanded && (
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-3">
           {element.children!.map((child) => (
-            <SortableBuilderElement
+            <BuilderElement
               key={child.id}
               element={child}
               onRemove={onRemove}
@@ -250,27 +215,110 @@ function SortableBuilderElement({ element, onRemove, onToggle, level = 0 }: {
   )
 }
 
-function DraggableAvailableElement({ element }: { element: AvailableElement }) {
+function AvailableElement({ element, onAssign, builderElements }: {
+  element: AvailableElement;
+  onAssign: (elementId: string, parentId: string, scope: string) => Promise<void>;
+  builderElements: BuilderElement[];
+}) {
+  const [selectedParent, setSelectedParent] = useState<string>('')
+  const [isAssigning, setIsAssigning] = useState(false)
+
+  const handleAssign = async () => {
+    if (!selectedParent) return
+
+    setIsAssigning(true)
+    try {
+      await onAssign(element.db_id || element.id.replace(`${element.type}-`, ''), selectedParent, element.type)
+      setSelectedParent('')
+    } catch (error) {
+      console.error('Error assigning element:', error)
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  // Generate dropdown options based on element type and builder structure
+  const getDropdownOptions = () => {
+    const options: { value: string; label: string }[] = []
+
+    const addElementToOptions = (el: BuilderElement, level: number = 0) => {
+      const indent = '  '.repeat(level)
+
+      // Determine valid targets based on element type
+      if (element.type === 'course') {
+        // Courses can only be assigned to modules
+        if (el.type === 'module') {
+          options.push({
+            value: `${el.type}-${el.db_id || el.id.replace(`${el.type}-`, '')}`,
+            label: `${indent}${el.title}`
+          })
+        }
+      } else if (element.type === 'lesson') {
+        // Lessons can only be assigned to courses
+        if (el.type === 'course') {
+          options.push({
+            value: `${el.type}-${el.db_id || el.id.replace(`${el.type}-`, '')}`,
+            label: `${indent}${el.title}`
+          })
+        }
+      } else if (element.type === 'quiz') {
+        // Quizzes can be assigned to courses or lessons
+        if (el.type === 'course' || el.type === 'lesson') {
+          options.push({
+            value: `${el.type}-${el.db_id || el.id.replace(`${el.type}-`, '')}`,
+            label: `${indent}${el.title}`
+          })
+        }
+      }
+
+      // Recursively add children
+      if (el.children) {
+        el.children.forEach(child => addElementToOptions(child, level + 1))
+      }
+    }
+
+    builderElements.forEach(addElementToOptions)
+    return options
+  }
+
   return (
-    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-      <div className="flex-shrink-0">
+    <div className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+      <div className="flex-shrink-0 mt-1">
         {element.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 truncate">
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="font-medium text-gray-900 text-sm leading-tight">
             {element.title}
-          </span>
-          <Badge className={getElementBadgeColor(element.type)}>
+          </h3>
+          <Badge className={`${getElementBadgeColor(element.type)} text-xs`}>
             {getElementTypeLabel(element.type)}
           </Badge>
         </div>
-        <p className="text-sm text-gray-600 truncate">
-          {element.description}
-        </p>
-      </div>
-      <div className="flex-shrink-0">
-        <Plus className="w-4 h-4 text-gray-400" />
+
+        <div className="flex items-center gap-2">
+          <Select value={selectedParent} onValueChange={setSelectedParent}>
+            <SelectTrigger className="w-full text-xs">
+              <SelectValue placeholder="Ziel auswählen..." />
+            </SelectTrigger>
+            <SelectContent>
+              {getDropdownOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            size="sm"
+            onClick={handleAssign}
+            disabled={!selectedParent || isAssigning}
+            className="text-xs"
+          >
+            {isAssigning ? 'Zuweisen...' : 'Zuweisen'}
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -286,7 +334,6 @@ export default function BuilderPage() {
   const [unassignedLessons, setUnassignedLessons] = useState<AvailableElement[]>([])
   const [unassignedQuizzes, setUnassignedQuizzes] = useState<AvailableElement[]>([])
 
-  const [activeId, setActiveId] = useState<string | null>(null)
   const [lastReloadTime, setLastReloadTime] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -300,14 +347,6 @@ export default function BuilderPage() {
   useEffect(() => {
     builderElementsRef.current = builderElements
   }, [builderElements])
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  )
 
   useEffect(() => {
     setIsMounted(true)
@@ -432,80 +471,34 @@ export default function BuilderPage() {
     return sortElements(rootElements)
   }
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
-  }
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveId(null)
-
-    if (!over || active.id === over.id) {
-      return
-    }
-
+  const handleAssignElement = async (elementId: string, parentId: string, elementType: string) => {
     setIsProcessing(true)
 
     try {
-      // Find the dragged element
-      const draggedElement = findElementById([...builderElements, ...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes], active.id as string)
-      if (!draggedElement) {
-        console.error('Dragged element not found')
-        return
-      }
-
-      // Find the target element
-      const targetElement = findElementById([...builderElements, ...unassignedCourses, ...unassignedLessons, ...unassignedQuizzes], over.id as string)
-      if (!targetElement) {
-        console.error('Target element not found')
-        return
-      }
-
-      // Determine the new parent and scope
-      let newParentId: string | null = null
+      // Determine the scope based on the target parent
       let scope: 'module' | 'course' | 'lesson' = 'module'
 
-      if (isBuilderElement(targetElement)) {
-        // Dropping on a builder element
-        if (targetElement.type === 'module') {
-          newParentId = targetElement.id
-          scope = 'module'
-        } else if (targetElement.type === 'course') {
-          newParentId = targetElement.id
-          scope = 'course'
-        } else if (targetElement.type === 'lesson') {
-          newParentId = targetElement.id
-          scope = 'lesson'
-        }
+      if (parentId.startsWith('module-')) {
+        scope = 'module'
+      } else if (parentId.startsWith('course-')) {
+        scope = 'course'
+      } else if (parentId.startsWith('lesson-')) {
+        scope = 'lesson'
       }
 
-      // Determine the element type and ID
-      let elementType: 'course' | 'lesson' | 'quiz'
-      let elementId: string
-
-      if (draggedElement.type === 'course') {
-        elementType = 'course'
-        elementId = draggedElement.db_id || draggedElement.id.replace('course-', '')
-      } else if (draggedElement.type === 'lesson') {
-        elementType = 'lesson'
-        elementId = draggedElement.db_id || draggedElement.id.replace('lesson-', '')
-      } else if (draggedElement.type === 'quiz') {
-        elementType = 'quiz'
-        elementId = draggedElement.db_id || draggedElement.id.replace('quiz-', '')
-      } else {
-        console.error('Invalid element type for assignment')
-        return
-      }
+      // Extract the actual database ID from the parent ID
+      const actualParentId = parentId.replace(/^(module|course|lesson)-/, '')
 
       // Make the API call to assign the element
-      const response = await fetch(`/api/admin/${elementType}s/assign`, {
+      const endpoint = elementType === 'quiz' ? 'quizzes' : `${elementType}s`
+      const response = await fetch(`/api/admin/${endpoint}/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           elementId,
-          parentId: newParentId,
+          parentId: actualParentId,
           scope
         }),
       })
@@ -520,24 +513,13 @@ export default function BuilderPage() {
 
     } catch (error) {
       console.error('Error assigning element:', error)
+      throw error
     } finally {
       setIsProcessing(false)
     }
   }
 
-  const getAllSortableItems = (elements: BuilderElement[]): string[] => {
-    const items: string[] = []
 
-    const addItems = (el: BuilderElement) => {
-      items.push(el.id)
-      if (el.children) {
-        el.children.forEach(addItems)
-      }
-    }
-
-    elements.forEach(addItems)
-    return items
-  }
 
   const toggleElementExpansion = (elementId: string) => {
     setBuilderElements(prevElements => {
@@ -585,8 +567,14 @@ export default function BuilderPage() {
         return
       }
 
+      // For enhanced quizzes, we need to handle the db_type properly
+      if (element.type === 'quiz' && element.db_type === 'enhanced_quizzes') {
+        // The elementDbId is already correct for enhanced quizzes
+      }
+
       // Make the API call to unassign the element
-      const response = await fetch(`/api/admin/${elementType}s/unassign`, {
+      const endpoint = elementType === 'quiz' ? 'quizzes' : `${elementType}s`
+      const response = await fetch(`/api/admin/${endpoint}/unassign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -679,123 +667,97 @@ export default function BuilderPage() {
       style={{ backgroundColor: '#6d859a' }}
       className="h-screen p-8"
     >
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={(event) => void handleDragEnd(event)}
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-          <SortableContext items={[
-            ...getAllSortableItems(builderElements),
-            ...unassignedCourses.map(course => course.id),
-            ...unassignedLessons.map(lesson => lesson.id),
-            ...unassignedQuizzes.map(quiz => quiz.id)
-          ]}>
-            {/* Left: Builder Structure */}
-            <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-              {builderElements.map((element) => (
-                <SortableBuilderElement
-                  key={element.id}
-                  element={element}
-                  onRemove={removeElement}
-                  onToggle={toggleElementExpansion}
-                />
-              ))}
-            </div>
-
-            {/* Right: Available Elements */}
-            <div className="h-full flex flex-col space-y-6">
-              {/* Available Courses */}
-              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-                <div className="flex items-center gap-3 mb-4">
-                  <FolderOpen className="w-5 h-5 text-purple-600" />
-                  <h3 className="font-semibold text-lg">Verfügbare Kurse</h3>
-                </div>
-                {unassignedCourses.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>Keine unzugewiesenen Kurse</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {unassignedCourses.map((course) => (
-                      <DraggableAvailableElement key={course.id} element={course} />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Available Lessons */}
-              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-                <div className="flex items-center gap-3 mb-4">
-                  <FileText className="w-5 h-5 text-green-600" />
-                  <h3 className="font-semibold text-lg">Verfügbare Lektionen</h3>
-                </div>
-                {unassignedLessons.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>Keine unzugewiesenen Lektionen</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {unassignedLessons.map((lesson) => (
-                      <DraggableAvailableElement key={lesson.id} element={lesson} />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Available Quizzes */}
-              <div className="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
-                <div className="flex items-center gap-3 mb-4">
-                  <HelpCircle className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-semibold text-lg">Verfügbare Quizze</h3>
-                </div>
-                {unassignedQuizzes.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>Keine unzugewiesenen Quizze</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {unassignedQuizzes.map((quiz) => (
-                      <DraggableAvailableElement key={quiz.id} element={quiz} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </SortableContext>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+        {/* Left: Builder Structure */}
+        <div className="lg:col-span-2 h-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto">
+          {builderElements.map((element) => (
+            <BuilderElement
+              key={element.id}
+              element={element}
+              onRemove={removeElement}
+              onToggle={toggleElementExpansion}
+            />
+          ))}
         </div>
 
-        {/* Drag Overlay - ensures dragged element appears above everything */}
-        <DragOverlay>
-          {activeId && (() => {
-            const allElements = [
-              ...builderElements,
-              ...unassignedCourses,
-              ...unassignedLessons,
-              ...unassignedQuizzes
-            ]
-            const draggingItem = findElementById(allElements, activeId)
-
-            if (!draggingItem) return null
-
-            return (
-              <div className="p-4 bg-white border border-gray-300 rounded-lg shadow-xl">
-                <div className="flex items-center gap-3">
-                  {getElementIcon(draggingItem.type)}
-                  <span className="text-base font-medium">{draggingItem.title}</span>
-                  <Badge className={getElementBadgeColor(draggingItem.type)}>
-                    {getElementTypeLabel(draggingItem.type)}
-                  </Badge>
+        {/* Right: Available Elements */}
+        <div className="h-full flex flex-col space-y-4">
+          {/* Available Courses */}
+          <div className="h-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex items-center gap-3 mb-4 sticky top-0 bg-white pb-2">
+              <FolderOpen className="w-5 h-5 text-purple-600" />
+              <h3 className="font-semibold text-lg">Verfügbare Kurse</h3>
+            </div>
+            <div className="space-y-3">
+              {unassignedCourses.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>Keine unzugewiesenen Kurse</p>
                 </div>
-              </div>
-            )
-          })()}
-        </DragOverlay>
-      </DndContext>
+              ) : (
+                                unassignedCourses.map((course) => (
+                  <AvailableElement
+                    key={course.id}
+                    element={course}
+                    onAssign={handleAssignElement}
+                    builderElements={builderElements}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Available Lessons */}
+          <div className="h-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex items-center gap-3 mb-4 sticky top-0 bg-white pb-2">
+              <FileText className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-lg">Verfügbare Lektionen</h3>
+            </div>
+            <div className="space-y-3">
+              {unassignedLessons.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>Keine unzugewiesenen Lektionen</p>
+                </div>
+              ) : (
+                                unassignedLessons.map((lesson) => (
+                  <AvailableElement
+                    key={lesson.id}
+                    element={lesson}
+                    onAssign={handleAssignElement}
+                    builderElements={builderElements}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Available Quizzes */}
+          <div className="h-1/3 bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex items-center gap-3 mb-4 sticky top-0 bg-white pb-2">
+              <HelpCircle className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-lg">Verfügbare Quizze</h3>
+            </div>
+            <div className="space-y-3">
+              {unassignedQuizzes.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  <Plus className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p>Keine unzugewiesenen Quizze</p>
+                </div>
+              ) : (
+                                unassignedQuizzes.map((quiz) => (
+                  <AvailableElement
+                    key={quiz.id}
+                    element={quiz}
+                    onAssign={handleAssignElement}
+                    builderElements={builderElements}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -207,25 +207,47 @@ export async function GET(_request: NextRequest) {
             db_id: lesson.id,
             db_type: 'lessons',
           })
+
+          // Add quizzes for this lesson
+          const lessonQuizzes =
+            quizzes?.filter((quiz: any) => quiz.lesson_id === lesson.id) || []
+          lessonQuizzes
+            .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+            .forEach((quiz: any) => {
+              elements.push({
+                id: `quiz-${quiz.id}`,
+                type: 'quiz',
+                title: quiz.title,
+                description: quiz.description || '',
+                order: quiz.sort_order || 0,
+                parent_id: `lesson-${lesson.id}`,
+                children: [],
+                isExpanded: false,
+                db_id: quiz.id,
+                db_type: 'enhanced_quizzes',
+              })
+            })
         })
 
         // Add quizzes for this course
         const courseQuizzes =
           quizzes?.filter((quiz: any) => quiz.course_id === course.id) || []
-        courseQuizzes.forEach((quiz: any, quizIndex: number) => {
-          elements.push({
-            id: `quiz-${quiz.id}`,
-            type: 'quiz',
-            title: quiz.title,
-            description: quiz.description || '',
-            order: quizIndex,
-            parent_id: `course-${course.id}`,
-            children: [],
-            isExpanded: false,
-            db_id: quiz.id,
-            db_type: 'quizzes',
+        courseQuizzes
+          .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+          .forEach((quiz: any) => {
+            elements.push({
+              id: `quiz-${quiz.id}`,
+              type: 'quiz',
+              title: quiz.title,
+              description: quiz.description || '',
+              order: quiz.sort_order || 0,
+              parent_id: `course-${course.id}`,
+              children: [],
+              isExpanded: false,
+              db_id: quiz.id,
+              db_type: 'enhanced_quizzes',
+            })
           })
-        })
       })
     })
 

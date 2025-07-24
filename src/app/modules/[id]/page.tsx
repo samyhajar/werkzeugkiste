@@ -48,6 +48,159 @@ interface Module {
   courses: Course[]
 }
 
+interface QuizQuestion {
+  id: string
+  type: string
+  question_html: string
+  explanation_html?: string
+  points: number
+  quiz_answers?: QuizAnswer[]
+}
+
+interface QuizAnswer {
+  id: string
+  answer_html: string
+  is_correct: boolean
+  feedback_html?: string
+}
+
+interface QuizContentProps {
+  quiz: Quiz
+  onBack: () => void
+}
+
+function QuizContent({ quiz, onBack }: QuizContentProps) {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchQuizContent = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/quizzes/${quiz.id}`)
+        const data = await response.json()
+
+        if (response.ok && data.success) {
+          setQuestions(data.quiz.questions || [])
+        } else {
+          setError(data.error || 'Failed to load quiz content')
+        }
+      } catch (err) {
+        console.error('Error fetching quiz content:', err)
+        setError('Failed to load quiz content')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (quiz.id) {
+      fetchQuizContent()
+    }
+  }, [quiz.id])
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Quiz wird geladen...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+        <div className="text-red-600 text-6xl mb-4">⚠️</div>
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">Fehler beim Laden</h2>
+        <p className="text-gray-500 mb-6">{error}</p>
+        <Button variant="outline" onClick={onBack}>
+          Zurück zur Übersicht
+        </Button>
+      </div>
+    )
+  }
+
+  // Show quiz questions if they exist, otherwise show placeholder
+  if (questions.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+        <div className="text-blue-400 text-6xl mb-4">❓</div>
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">Quiz wird vorbereitet</h2>
+        <p className="text-gray-500 mb-6">Dieses Quiz ist derzeit in Entwicklung und wird bald verfügbar sein.</p>
+        <div className="flex gap-4 justify-center">
+          <Button variant="outline" onClick={onBack}>
+            Zurück zur Übersicht
+          </Button>
+          {quiz.lesson_id && (
+            <Button onClick={() => {
+              // This would need to be handled by the parent component
+              onBack()
+            }}>
+              Zur Lektion
+            </Button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <div className="p-8">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Quiz: {quiz.title}</h3>
+          {quiz.description && (
+            <p className="text-gray-600">{quiz.description}</p>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          {questions.map((question, index) => (
+            <div key={question.id} className="border border-gray-200 rounded-lg p-6">
+              <div className="mb-4">
+                <h4 className="font-medium text-gray-800 mb-2">
+                  Frage {index + 1}: {question.question_html}
+                </h4>
+                {question.explanation_html && (
+                  <p className="text-sm text-gray-600 mt-2">{question.explanation_html}</p>
+                )}
+              </div>
+
+              {question.quiz_answers && question.quiz_answers.length > 0 && (
+                <div className="space-y-2">
+                  {question.quiz_answers.map((answer) => (
+                    <div key={answer.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <input
+                        type={question.type === 'multiple' ? 'checkbox' : 'radio'}
+                        name={`question-${question.id}`}
+                        id={`answer-${answer.id}`}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor={`answer-${answer.id}`} className="flex-1 cursor-pointer">
+                        {answer.answer_html}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex gap-4 justify-center">
+          <Button variant="outline" onClick={onBack}>
+            Zurück zur Übersicht
+          </Button>
+          <Button>
+            Quiz abschließen
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ModuleDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -58,6 +211,7 @@ export default function ModuleDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [user, setUser] = useState<any>(null)
@@ -181,6 +335,7 @@ export default function ModuleDetailPage() {
 
   const selectLesson = async (lesson: Lesson) => {
     setSelectedLesson(lesson)
+    setSelectedQuiz(null) // Clear quiz selection
     // Find the course using the lesson's course_id
     const course = module?.courses.find(c => c.id === lesson.course_id)
     setSelectedCourse(course || null)
@@ -213,6 +368,14 @@ export default function ModuleDetailPage() {
         // Don't show error to user as this is a background operation
       }
     }
+  }
+
+  const selectQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz)
+    setSelectedLesson(null) // Clear lesson selection
+    // Find the course using the quiz's course_id
+    const course = module?.courses.find(c => c.id === quiz.course_id)
+    setSelectedCourse(course || null)
   }
 
   const checkModuleCompletion = async () => {
@@ -441,16 +604,18 @@ export default function ModuleDetailPage() {
                               {course.quizzes
                                 .filter(quiz => quiz.lesson_id === lesson.id)
                                 .map((quiz) => (
-                                  <Link
+                                  <button
                                     key={quiz.id}
-                                    href={`/quizzes/${quiz.id}`}
-                                    className="flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group"
+                                    onClick={() => selectQuiz(quiz)}
+                                    className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                      selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                    }`}
                                   >
                                     <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                     <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
                                       {quiz.title}
                                     </span>
-                                  </Link>
+                                  </button>
                                 ))}
                             </div>
                           )
@@ -460,16 +625,18 @@ export default function ModuleDetailPage() {
                       {course.quizzes
                         .filter(quiz => !quiz.lesson_id)
                         .map((quiz) => (
-                          <Link
+                          <button
                             key={quiz.id}
-                            href={`/quizzes/${quiz.id}`}
-                            className="flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group"
+                            onClick={() => selectQuiz(quiz)}
+                            className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                              selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                            }`}
                           >
                             <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                             <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
                               {quiz.title}
                             </span>
-                          </Link>
+                          </button>
                         ))}
 
                       {/* Empty state for courses with no content */}
@@ -530,8 +697,6 @@ export default function ModuleDetailPage() {
                   </span>
                 </div>
               </div>
-
-
             </div>
 
             {/* Enhanced Lesson Content */}
@@ -558,12 +723,63 @@ export default function ModuleDetailPage() {
               )}
             </div>
           </div>
+        ) : selectedQuiz ? (
+          <div className="flex-1 overflow-y-auto">
+            {/* Enhanced Quiz Header */}
+            <div className="bg-white border-b border-gray-200 px-8 py-8">
+              {/* Centered Breadcrumb */}
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
+                <Link
+                  href="/"
+                  className="hover:text-[#486681] transition-colors font-medium hover:underline"
+                >
+                  {module.title}
+                </Link>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-600 font-medium">
+                  {selectedCourse?.title || 'Kurs'}
+                </span>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-800 font-semibold">
+                  {selectedQuiz.title}
+                </span>
+              </div>
+
+              {/* Centered Quiz Title */}
+              <div className="text-center mb-6">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                  {selectedQuiz.title}
+                </h1>
+                <div className="flex items-center justify-center gap-4 text-gray-600">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                    Quiz
+                  </span>
+                  {selectedQuiz.description && (
+                    <>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-600">
+                        {selectedQuiz.description}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Quiz Content */}
+            <div className="px-8 py-8 overflow-y-auto bg-gray-50">
+              <div className="max-w-4xl mx-auto">
+                <QuizContent quiz={selectedQuiz} onBack={() => setSelectedQuiz(null)} />
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <div className="text-gray-400 text-6xl mb-4">📚</div>
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion aus</h2>
-              <p className="text-gray-500">Klicke auf eine Lektion in der Seitenleiste, um den Inhalt anzuzeigen.</p>
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion oder ein Quiz aus</h2>
+              <p className="text-gray-500">Klicke auf eine Lektion oder ein Quiz in der Seitenleiste, um den Inhalt anzuzeigen.</p>
             </div>
           </div>
         )}

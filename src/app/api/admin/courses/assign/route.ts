@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
     if (scope === 'module') {
       // Assign to module
       updateData.module_id = parentId
-    } else if (scope === 'course') {
-      // Assign to course (as a lesson)
-      updateData.course_id = parentId
-    } else if (scope === 'lesson') {
-      // Assign to lesson (as a quiz)
-      updateData.lesson_id = parentId
+    } else {
+      // Courses can only be assigned to modules
+      return NextResponse.json(
+        { success: false, error: 'Courses can only be assigned to modules' },
+        { status: 400 }
+      )
     }
 
     // Update the course to assign it to the parent

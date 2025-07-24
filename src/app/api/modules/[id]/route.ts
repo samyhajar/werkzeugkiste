@@ -55,19 +55,26 @@ export async function GET(
           .eq('course_id', course.id)
           .order('order', { ascending: true })
 
-        // Fetch course-level quizzes
+        // Fetch course-level quizzes from enhanced_quizzes table
         const { data: courseQuizzes, error: _courseQuizzesError } =
-          await supabase.from('quizzes').select('*').eq('course_id', course.id)
+          await supabase
+            .from('enhanced_quizzes')
+            .select('*')
+            .eq('course_id', course.id)
+            .eq('scope', 'course')
+            .order('sort_order', { ascending: true })
 
-        // Fetch lesson-specific quizzes
+        // Fetch lesson-specific quizzes from enhanced_quizzes table
         const lessonIds = lessons?.map(l => l.id) || []
         let lessonQuizzes: any[] = []
         if (lessonIds.length > 0) {
           const { data: lessonQuizzesData, error: lessonQuizzesError } =
             await supabase
-              .from('quizzes')
+              .from('enhanced_quizzes')
               .select('*')
               .in('lesson_id', lessonIds)
+              .eq('scope', 'lesson')
+              .order('sort_order', { ascending: true })
 
           if (!lessonQuizzesError) {
             lessonQuizzes = lessonQuizzesData || []
