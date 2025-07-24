@@ -37,20 +37,31 @@ export default function SessionBootstrap() {
       console.log('[SessionBootstrap] Found auth cookies:', authCookies.length)
 
       if (authCookies.length > 0) {
-        // Force session refresh if cookies are present
-        const { data, error: refreshError } = await supabase.current.auth.refreshSession()
+        // First try to get the current session
+        const { data: sessionData, error: sessionError } = await supabase.current.auth.getSession()
 
-        if (refreshError) {
-          console.error('[SessionBootstrap] Refresh error:', refreshError)
-          // Try getSession as fallback
-          const { data: sessionData, error: sessionError } = await supabase.current.auth.getSession()
-          if (sessionError) {
-            console.error('[SessionBootstrap] Get session error:', sessionError)
-          } else {
-            console.log('[SessionBootstrap] Session retrieved:', sessionData.session?.user?.email || 'no session')
-          }
+        if (sessionError) {
+          console.error('[SessionBootstrap] Get session error:', sessionError)
+        } else if (sessionData.session) {
+          console.log('[SessionBootstrap] Session found:', sessionData.session.user?.email || 'no user')
         } else {
-          console.log('[SessionBootstrap] Session refreshed successfully:', data.session?.user?.email || 'no session')
+          // Only try to refresh if we don't have a valid session
+          console.log('[SessionBootstrap] No valid session found, attempting refresh...')
+          const { data, error: refreshError } = await supabase.current.auth.refreshSession()
+
+          if (refreshError) {
+            console.error('[SessionBootstrap] Refresh error:', refreshError)
+            // If refresh fails, clear invalid cookies
+            if (refreshError.message.includes('Auth session missing') ||
+                refreshError.message.includes('Invalid refresh token')) {
+              console.log('[SessionBootstrap] Clearing invalid auth cookies')
+              // Clear auth cookies by setting them to expire
+              document.cookie = 'sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+              document.cookie = 'sb-refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
+            }
+          } else {
+            console.log('[SessionBootstrap] Session refreshed successfully:', data.session?.user?.email || 'no session')
+          }
         }
       } else {
         console.log('[SessionBootstrap] No auth cookies found')

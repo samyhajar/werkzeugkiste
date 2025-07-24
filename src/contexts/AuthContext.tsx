@@ -25,10 +25,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('[AuthContext] Refreshing session...')
       if (!supabase) return
+
+      // First try to get the current session
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) {
-        console.error('[AuthContext] Error refreshing session:', error.message)
+        console.error('[AuthContext] Error getting session:', error.message)
+        // If there's an error, clear the session state
+        setSession(null)
+        setUser(null)
         return
       }
 
@@ -42,6 +47,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('[AuthContext] Exception refreshing session:', error)
+      // Clear session state on any exception
+      setSession(null)
+      setUser(null)
     }
   }
 
@@ -69,16 +77,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error('[AuthContext] Error getting session:', error.message)
-          return
-        }
-
-        console.log('[AuthContext] Initial session result:', session?.user?.email || 'no session')
-        if (session) {
-          setSession(session)
-          setUser(session.user)
+          // Clear session state on error
+          setSession(null)
+          setUser(null)
+        } else {
+          console.log('[AuthContext] Initial session result:', session?.user?.email || 'no session')
+          if (session) {
+            setSession(session)
+            setUser(session.user)
+          } else {
+            setSession(null)
+            setUser(null)
+          }
         }
       } catch (error) {
         console.error('[AuthContext] Exception getting session:', error)
+        // Clear session state on exception
+        setSession(null)
+        setUser(null)
       } finally {
         setLoading(false)
       }
