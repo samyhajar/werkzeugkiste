@@ -73,6 +73,106 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [studentAnswers, setStudentAnswers] = useState<Record<string, string[]>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [results, setResults] = useState<any>(null)
+
+  // Helper function to get question type label
+  const getQuestionTypeLabel = (type: string, answers?: QuizAnswer[]) => {
+    // Check if this is a True/False question by looking at the answers
+    const isTrueFalse = answers && answers.length === 2 &&
+      answers.some(a => a.answer_html === 'True') &&
+      answers.some(a => a.answer_html === 'False')
+
+    if (type === 'single' && isTrueFalse) {
+      return 'Wahr/Falsch'
+    }
+
+    switch (type) {
+      case 'single':
+        return 'Einzelauswahl'
+      case 'multiple':
+        return 'Mehrfachauswahl'
+      case 'true_false':
+        return 'Wahr/Falsch'
+      case 'free_text':
+        return 'Freitext'
+      case 'fill_blank':
+        return 'Lückentext'
+      case 'sorting':
+        return 'Sortierung'
+      case 'matching':
+        return 'Zuordnung'
+      case 'matrix':
+        return 'Matrix'
+      default:
+        return type
+    }
+  }
+
+  // Helper function to get input type
+  const getInputType = (type: string) => {
+    switch (type) {
+      case 'multiple':
+        return 'checkbox'
+      case 'single':
+      case 'true_false':
+        return 'radio'
+      default:
+        return 'radio'
+    }
+  }
+
+  // Handle answer changes
+  const handleAnswerChange = (questionId: string, answerId: string, isChecked: boolean) => {
+    setStudentAnswers(prev => {
+      const currentAnswers = prev[questionId] || []
+
+      if (getInputType(questions.find(q => q.id === questionId)?.type || 'single') === 'checkbox') {
+        // Multiple choice - toggle answer
+        if (isChecked) {
+          return { ...prev, [questionId]: [...currentAnswers, answerId] }
+        } else {
+          return { ...prev, [questionId]: currentAnswers.filter(id => id !== answerId) }
+        }
+      } else {
+        // Single choice - replace answer
+        return { ...prev, [questionId]: isChecked ? [answerId] : [] }
+      }
+    })
+  }
+
+  // Handle quiz submission
+  const handleSubmitQuiz = async () => {
+    try {
+      setSubmitting(true)
+
+      const response = await fetch(`/api/quizzes/${quiz.id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          answers: studentAnswers,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setResults(data.results)
+        setSubmitted(true)
+      } else {
+        setError(data.error || 'Failed to submit quiz')
+      }
+    } catch (err) {
+      console.error('Error submitting quiz:', err)
+      setError('Failed to submit quiz')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     const fetchQuizContent = async () => {
@@ -81,7 +181,7 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
         const response = await fetch(`/api/quizzes/${quiz.id}`)
         const data = await response.json()
 
-        if (response.ok && data.success) {
+                if (response.ok && data.success) {
           setQuestions(data.quiz.questions || [])
         } else {
           setError(data.error || 'Failed to load quiz content')
@@ -117,6 +217,75 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
         <Button variant="outline" onClick={onBack}>
           Zurück zur Übersicht
         </Button>
+      </div>
+    )
+  }
+
+  // Show results if quiz was submitted
+  if (submitted && results) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="p-8">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Ergebnisse</h3>
+            <p className="text-gray-600">Quiz: {quiz.title}</p>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-6 mb-6">
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-blue-600">{Math.round(results.score_percentage)}%</div>
+                <div className="text-sm text-gray-600">Erreichte Punktzahl</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">{results.earned_points}/{results.total_points}</div>
+                <div className="text-sm text-gray-600">Punkte</div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-center">
+              {results.passed ? (
+                <div className="text-green-600 font-semibold">✅ Quiz bestanden!</div>
+              ) : (
+                <div className="text-red-600 font-semibold">❌ Quiz nicht bestanden</div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4 mb-6">
+            <h4 className="font-semibold text-gray-800">Fragen Details:</h4>
+            {results.question_results.map((result: any, index: number) => (
+              <div key={index} className={`p-4 rounded-lg border ${
+                result.is_correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Frage {index + 1}</span>
+                  <span className={`text-sm font-medium ${
+                    result.is_correct ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {result.is_correct ? '✅ Richtig' : '❌ Falsch'}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-600 mt-1">
+                  Punkte: {result.earned_points}/{result.points}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <Button variant="outline" onClick={onBack}>
+              Zurück zur Übersicht
+            </Button>
+            <Button onClick={() => {
+              setSubmitted(false)
+              setResults(null)
+              setStudentAnswers({})
+            }}>
+              Quiz wiederholen
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -159,31 +328,87 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
           {questions.map((question, index) => (
             <div key={question.id} className="border border-gray-200 rounded-lg p-6">
               <div className="mb-4">
-                <h4 className="font-medium text-gray-800 mb-2">
-                  Frage {index + 1}: {question.question_html}
-                </h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-800 text-lg">
+                    Frage {index + 1}
+                  </h4>
+                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                    question.type === 'multiple' ? 'bg-purple-100 text-purple-800' :
+                    question.type === 'single' ? 'bg-blue-100 text-blue-800' :
+                    question.type === 'true_false' ? 'bg-green-100 text-green-800' :
+                    question.type === 'free_text' ? 'bg-orange-100 text-orange-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getQuestionTypeLabel(question.type, question.quiz_answers)}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <p className="text-gray-800 text-base leading-relaxed">
+                    {question.question_html}
+                  </p>
+                </div>
                 {question.explanation_html && (
-                  <p className="text-sm text-gray-600 mt-2">{question.explanation_html}</p>
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+                    <p className="text-sm text-blue-800">{question.explanation_html}</p>
+                  </div>
                 )}
               </div>
 
+
+
               {question.quiz_answers && question.quiz_answers.length > 0 && (
                 <div className="space-y-2">
-                  {question.quiz_answers.map((answer) => (
-                    <div key={answer.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <p className="text-sm text-gray-600 mb-2">
+                    {question.type === 'multiple'
+                      ? 'Wählen Sie alle zutreffenden Antworten aus:'
+                      : question.type === 'single'
+                      ? 'Wählen Sie eine Antwort aus:'
+                      : 'Antworten:'
+                    }
+                  </p>
+                  {question.quiz_answers.map((answer, answerIndex) => (
+                    <div key={answer.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <input
-                        type={question.type === 'multiple' ? 'checkbox' : 'radio'}
+                        type={getInputType(question.type)}
                         name={`question-${question.id}`}
                         id={`answer-${answer.id}`}
+                        checked={studentAnswers[question.id]?.includes(answer.id) || false}
+                        onChange={(e) => handleAnswerChange(question.id, answer.id, e.target.checked)}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <label htmlFor={`answer-${answer.id}`} className="flex-1 cursor-pointer">
+                      <label htmlFor={`answer-${answer.id}`} className="flex-1 cursor-pointer text-gray-800">
+                        <span className="font-medium text-gray-600 mr-2">{(answerIndex + 1).toString().padStart(2, '0')}.</span>
                         {answer.answer_html}
                       </label>
                     </div>
                   ))}
                 </div>
               )}
+
+
+
+              {/* Special handling for different question types */}
+              {question.type === 'free_text' && (
+                <div className="mt-4">
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    rows={4}
+                    placeholder="Ihre Antwort hier..."
+                  />
+                </div>
+              )}
+
+              {question.type === 'fill_blank' && (
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Lücken füllen..."
+                  />
+                </div>
+              )}
+
+              {/* True/False questions are handled by the regular answer display above */}
             </div>
           ))}
         </div>
@@ -192,8 +417,12 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
           <Button variant="outline" onClick={onBack}>
             Zurück zur Übersicht
           </Button>
-          <Button>
-            Quiz abschließen
+          <Button
+            onClick={handleSubmitQuiz}
+            disabled={submitting || Object.keys(studentAnswers).length === 0}
+            className={submitting ? 'opacity-50 cursor-not-allowed' : ''}
+          >
+            {submitting ? 'Wird eingereicht...' : 'Quiz abschließen'}
           </Button>
         </div>
       </div>

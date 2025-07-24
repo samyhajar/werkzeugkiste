@@ -174,14 +174,66 @@ export async function POST(request: NextRequest) {
         meta: {},
       }))
 
-      const { error: questionsError } = await supabase
+      const { data: createdQuestions, error: questionsError } = await supabase
         .from('quiz_questions')
         .insert(questionData)
+        .select()
 
       if (questionsError) {
         console.error('Error creating questions:', questionsError)
         // Don't fail the entire request, just log the error
       } else {
+        // Create answer options for each question
+        const answerData: any[] = []
+
+        questions.forEach((q: any, index: number) => {
+          const questionId = createdQuestions?.[index]?.id
+          if (!questionId) return
+
+          if (q.type === 'true_false') {
+            // Add True/False options for true_false questions
+            answerData.push(
+              {
+                question_id: questionId,
+                answer_html: 'True',
+                is_correct:
+                  q.options?.find((opt: any) => opt.text === 'True')
+                    ?.is_correct || false,
+                sort_order: 1,
+              },
+              {
+                question_id: questionId,
+                answer_html: 'False',
+                is_correct:
+                  q.options?.find((opt: any) => opt.text === 'False')
+                    ?.is_correct || false,
+                sort_order: 2,
+              }
+            )
+          } else if (q.type === 'multiple_choice' && q.options) {
+            // Add options for multiple choice questions
+            q.options.forEach((option: any, optIndex: number) => {
+              answerData.push({
+                question_id: questionId,
+                answer_html: option.text,
+                is_correct: option.is_correct || false,
+                sort_order: optIndex + 1,
+              })
+            })
+          }
+        })
+
+        // Insert answer options if any exist
+        if (answerData.length > 0) {
+          const { error: answersError } = await supabase
+            .from('quiz_answers')
+            .insert(answerData)
+
+          if (answersError) {
+            console.error('Error creating answers:', answersError)
+          }
+        }
+
         // Update max_points based on actual questions created
         const totalPoints = questions.length
         const { error: updateError } = await supabase
