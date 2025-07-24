@@ -11,6 +11,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTableSubscription } from '@/contexts/RealtimeContext'
 import StudentSidebar from '@/components/dashboard/StudentSidebar'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+
 interface Course {
   id: string
   title: string
