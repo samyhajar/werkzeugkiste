@@ -836,16 +836,6 @@ export default function ModulesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
-                          onClick={() => {
-                            router.push(`/admin/modules/${module.id}`)
-                          }}
-                        >
-                          Details
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => openDeleteDialog(module)}
                           className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 shadow-sm"
                         >
