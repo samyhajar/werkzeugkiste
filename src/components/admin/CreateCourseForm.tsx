@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { TablesInsert } from '@/types/supabase'
 
 export default function CreateCourseForm() {
+  const [mounted, setMounted] = useState(false)
   const { user } = useAuth()
   const router = useRouter()
   const supabase = createClient()
@@ -19,6 +20,15 @@ export default function CreateCourseForm() {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Don't render during SSR/build time
+  if (!mounted) {
+    return <div>Loading...</div>
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()

@@ -41,6 +41,28 @@ export default function Navbar() {
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Don't render during SSR/build time
+  if (!mounted) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex-shrink-0">
+              <Link href="/" className="text-xl font-bold text-gray-900">
+                Werkzeugkiste
+              </Link>
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   // Initialize Supabase client only in browser
   useEffect(() => {
