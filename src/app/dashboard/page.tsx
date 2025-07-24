@@ -58,18 +58,6 @@ export default function DashboardPage() {
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
 
-  // Prevent static generation by checking for user
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
-          <p className="text-gray-600">Please wait while we load your dashboard.</p>
-        </div>
-      </div>
-    )
-  }
-
   const fetchModules = useCallback(async () => {
     try {
       setLoading(true)
@@ -151,6 +139,18 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await signOut()
+  }
+
+  // Show loading state if user is not available
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading...</h1>
+          <p className="text-gray-600">Please wait while we load your dashboard.</p>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
