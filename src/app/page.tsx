@@ -197,7 +197,7 @@ export default async function Home({
       <PartnerSection />
 
       {/* Floating "Neu hier?" Button */}
-      <div className="fixed right-8 z-50" style={{ top: '252px' }}>
+      <div className="fixed right-8 z-40" style={{ top: '252px' }}>
         <button
           className="bg-[#de0446] hover:bg-[#c5043e] text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg flex items-center gap-2"
           style={{
