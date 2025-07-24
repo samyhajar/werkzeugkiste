@@ -98,8 +98,75 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. If all lessons are completed, generate certificates for each course
-    if (allLessonsCompleted && completedCourses.length > 0) {
+    // 3. Check if user has passed all quizzes for this module
+    const { data: allQuizzes, error: quizzesError } = await supabase
+      .from('enhanced_quizzes')
+      .select('id, title, course_id, lesson_id')
+      .in(
+        'course_id',
+        moduleCourses.map(c => c.id)
+      )
+
+    if (quizzesError) {
+      console.error('Error fetching quizzes:', quizzesError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch quizzes' },
+        { status: 500 }
+      )
+    }
+
+    let allQuizzesPassed = true
+    const passedQuizzes = []
+    const failedQuizzes = []
+
+    if (allQuizzes && allQuizzes.length > 0) {
+      // Check if user has passed all quizzes
+      const { data: quizAttempts, error: attemptsError } = await supabase
+        .from('enhanced_quiz_attempts')
+        .select('quiz_id, passed, score_percent')
+        .eq('user_id', user.id)
+        .in(
+          'quiz_id',
+          allQuizzes.map(q => q.id)
+        )
+
+      if (attemptsError) {
+        console.error('Error fetching quiz attempts:', attemptsError)
+        return NextResponse.json(
+          { success: false, error: 'Failed to fetch quiz attempts' },
+          { status: 500 }
+        )
+      }
+
+      // Check which quizzes have been passed
+      for (const quiz of allQuizzes) {
+        const attempt = quizAttempts?.find(a => a.quiz_id === quiz.id)
+
+        if (attempt && attempt.passed) {
+          passedQuizzes.push({
+            id: quiz.id,
+            title: quiz.title,
+            score: attempt.score_percent,
+          })
+        } else {
+          failedQuizzes.push({
+            id: quiz.id,
+            title: quiz.title,
+          })
+          allQuizzesPassed = false
+        }
+      }
+    } else {
+      // No quizzes for this module, so quiz completion is not required
+      allQuizzesPassed = true
+    }
+
+    // 4. If all lessons are completed AND all quizzes are passed, generate certificates for each course
+    if (
+      allLessonsCompleted &&
+      allQuizzesPassed &&
+      completedCourses.length > 0
+    ) {
       // Get user profile for certificate generation
       const { data: userProfile } = await supabase
         .from('profiles')
@@ -317,6 +384,11 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Module completed! Certificate generated.',
           certificatesGenerated: 1,
+          lessonsCompleted: allLessonsCompleted,
+          quizzesPassed: allQuizzesPassed,
+          passedQuizzes,
+          failedQuizzes,
+          totalQuizzes: allQuizzes?.length || 0,
         })
       } catch (error) {
         console.error('Error generating certificate:', error)
@@ -331,6 +403,11 @@ export async function POST(request: NextRequest) {
         message: 'Module not yet completed',
         completedCourses: completedCourses.length,
         totalCourses: moduleCourses.length,
+        lessonsCompleted: allLessonsCompleted,
+        quizzesPassed: allQuizzesPassed,
+        passedQuizzes,
+        failedQuizzes,
+        totalQuizzes: allQuizzes?.length || 0,
       })
     }
   } catch (error) {

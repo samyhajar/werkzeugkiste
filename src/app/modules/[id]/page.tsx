@@ -68,9 +68,10 @@ interface QuizAnswer {
 interface QuizContentProps {
   quiz: Quiz
   onBack: () => void
+  onQuizCompleted?: () => void
 }
 
-function QuizContent({ quiz, onBack }: QuizContentProps) {
+function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -164,6 +165,11 @@ function QuizContent({ quiz, onBack }: QuizContentProps) {
       if (response.ok && data.success) {
         setResults(data.results)
         setSubmitted(true)
+
+        // If quiz was passed, call the completion callback
+        if (data.results?.passed && onQuizCompleted) {
+          onQuizCompleted()
+        }
       } else {
         setError(data.error || 'Failed to submit quiz')
       }
@@ -446,6 +452,7 @@ export default function ModuleDetailPage() {
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set())
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const fetchInProgress = useRef(false)
@@ -547,11 +554,26 @@ export default function ModuleDetailPage() {
           const completedIds = new Set(progressData.map(p => p.lesson_id))
           setCompletedLessons(completedIds)
         }
+
+        // Fetch passed quizzes for this module
+        if (module) {
+          const courseIds = module.courses.map(c => c.id)
+          const { data: quizAttempts } = await supabase
+            .from('enhanced_quiz_attempts')
+            .select('quiz_id, passed')
+            .eq('user_id', user.id)
+            .eq('passed', true)
+
+          if (quizAttempts) {
+            const passedQuizIds = new Set(quizAttempts.map(a => a.quiz_id))
+            setPassedQuizzes(passedQuizIds)
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching user and progress:', error)
     }
-  }, [moduleId])
+  }, [moduleId, module])
 
   // Calculate progress percentage
   const getProgressPercentage = () => {
@@ -887,20 +909,34 @@ export default function ModuleDetailPage() {
                                 {/* Quizzes for this lesson */}
                                 {course.quizzes
                                   .filter(quiz => quiz.lesson_id === lesson.id)
-                                  .map((quiz) => (
-                                    <button
-                                      key={quiz.id}
-                                      onClick={() => selectQuiz(quiz)}
-                                      className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                        selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
-                                      }`}
-                                    >
-                                      <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                                      <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                        {quiz.title}
-                                      </span>
-                                    </button>
-                                  ))}
+                                  .map((quiz) => {
+                                    const isPassed = passedQuizzes.has(quiz.id)
+                                    return (
+                                      <button
+                                        key={quiz.id}
+                                        onClick={() => selectQuiz(quiz)}
+                                        className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                          selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                        } ${isPassed ? 'text-green-700' : ''}`}
+                                      >
+                                        {isPassed ? (
+                                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                        ) : (
+                                          <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                        )}
+                                        <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                          isPassed ? 'text-green-700' : 'text-[#de0449]'
+                                        }`}>
+                                          {quiz.title}
+                                        </span>
+                                        {isPassed && (
+                                          <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                            ✓ Bestanden
+                                          </span>
+                                        )}
+                                      </button>
+                                    )
+                                  })}
                               </div>
                             )
                           })}
@@ -908,20 +944,34 @@ export default function ModuleDetailPage() {
                         {/* Course-level quizzes */}
                         {course.quizzes
                           .filter(quiz => !quiz.lesson_id)
-                          .map((quiz) => (
-                            <button
-                              key={quiz.id}
-                              onClick={() => selectQuiz(quiz)}
-                              className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
-                              }`}
-                            >
-                              <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                              <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                {quiz.title}
-                              </span>
-                            </button>
-                          ))}
+                          .map((quiz) => {
+                            const isPassed = passedQuizzes.has(quiz.id)
+                            return (
+                              <button
+                                key={quiz.id}
+                                onClick={() => selectQuiz(quiz)}
+                                className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                  selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                } ${isPassed ? 'text-green-700' : ''}`}
+                              >
+                                {isPassed ? (
+                                  <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                ) : (
+                                  <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                )}
+                                <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                  isPassed ? 'text-green-700' : 'text-[#de0449]'
+                                }`}>
+                                  {quiz.title}
+                                </span>
+                                {isPassed && (
+                                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                    ✓ Bestanden
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
 
                         {/* Empty state for courses with no content */}
                         {course.lessons.length === 0 && course.quizzes.length === 0 && (
@@ -1054,7 +1104,16 @@ export default function ModuleDetailPage() {
               {/* Enhanced Quiz Content */}
               <div className="px-8 py-8 overflow-y-auto bg-gray-50">
                 <div className="max-w-4xl mx-auto">
-                  {selectedQuiz && <QuizContent quiz={selectedQuiz} onBack={() => setSelectedQuiz(null)} />}
+                  {selectedQuiz && (
+                  <QuizContent
+                    quiz={selectedQuiz}
+                    onBack={() => setSelectedQuiz(null)}
+                    onQuizCompleted={() => {
+                      // Refresh quiz progress when a quiz is completed
+                      setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
+                    }}
+                  />
+                )}
                 </div>
               </div>
             </div>
