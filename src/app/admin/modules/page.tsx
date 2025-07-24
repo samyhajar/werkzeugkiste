@@ -62,7 +62,7 @@ export default function ModulesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null)
-  const [sortField, setSortField] = useState<'title' | 'description' | 'created_at' | 'updated_at'>('title')
+  const [sortField, setSortField] = useState<'title' | 'description' | 'updated_at'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const fetchModules = async () => {
@@ -292,7 +292,7 @@ export default function ModulesPage() {
     }
   }
 
-  const handleSort = (field: 'title' | 'description' | 'created_at' | 'updated_at') => {
+  const handleSort = (field: 'title' | 'description' | 'updated_at') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
@@ -322,10 +322,7 @@ export default function ModulesPage() {
           bValue = (b.description || '').toLowerCase()
           break
 
-        case 'created_at':
-          aValue = new Date(a.created_at || '').getTime()
-          bValue = new Date(b.created_at || '').getTime()
-          break
+
         case 'updated_at':
           aValue = new Date(a.updated_at || '').getTime()
           bValue = new Date(b.updated_at || '').getTime()
@@ -663,17 +660,7 @@ export default function ModulesPage() {
                     </div>
                   </th>
 
-                  <th
-                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Erstellt
-                      {sortField === 'created_at' && (
-                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </th>
+
                   <th
                     className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
                     onClick={() => handleSort('updated_at')}
@@ -709,11 +696,7 @@ export default function ModulesPage() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDateSafely(module.created_at)}
-                      </div>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         {formatDateSafely(module.updated_at)}

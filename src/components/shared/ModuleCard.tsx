@@ -41,20 +41,21 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
         </div>
 
         <CardContent className="flex-1 flex flex-col p-6">
-          <div className="flex-1 flex flex-col">
-            {/* Title */}
-            <CardTitle className="text-xl font-bold text-[#c53030] mb-4 min-h-[3rem] leading-tight">
+          {/* Fixed height content area to ensure consistent progress bar position */}
+          <div className="flex-1 flex flex-col" style={{ minHeight: '200px' }}>
+            {/* Title with fixed height */}
+            <CardTitle className="text-xl font-bold text-[#c53030] mb-4 leading-tight" style={{ minHeight: '3rem', maxHeight: '3rem', overflow: 'hidden' }}>
               {module.title}
             </CardTitle>
 
-            {/* Description */}
-            <p className="text-gray-700 text-sm line-clamp-3 mb-6 leading-relaxed">
+            {/* Description with fixed height */}
+            <p className="text-gray-700 text-sm line-clamp-3 mb-6 leading-relaxed" style={{ minHeight: '4.5rem', maxHeight: '4.5rem' }}>
               {module.description || "Auf eigenen digitalen Füssen stehen. Kein Vorwissen notwendig. Für alle geeignet."}
             </p>
 
-            {/* Simple Progress bar for logged-in users */}
+            {/* Progress bar with consistent position */}
             {isLoggedIn && (
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2 mb-4 mt-auto">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Fortschritt</span>
                   <span className="text-sm font-semibold text-[#486681]">{progress}%</span>

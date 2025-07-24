@@ -51,7 +51,7 @@ export default function LessonsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
-  const [sortField, setSortField] = useState<'title' | 'content' | 'course' | 'created_at'>('title')
+  const [sortField, setSortField] = useState<'title' | 'content' | 'course'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const fetchLessons = useCallback(async () => {
@@ -206,7 +206,7 @@ export default function LessonsPage() {
     setIsEditDialogOpen(true)
   }, [])
 
-  const handleSort = useCallback((field: 'title' | 'content' | 'course' | 'created_at') => {
+  const handleSort = useCallback((field: 'title' | 'content' | 'course') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
@@ -241,10 +241,7 @@ export default function LessonsPage() {
           bValue = (b.course?.title || 'Nicht zugewiesen').toLowerCase()
           break
 
-        case 'created_at':
-          aValue = new Date(a.created_at).getTime()
-          bValue = new Date(b.created_at).getTime()
-          break
+
         default:
           return 0
       }
@@ -591,17 +588,7 @@ export default function LessonsPage() {
                       )}
                     </div>
                   </th>
-                  <th
-                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Erstellt
-                      {sortField === 'created_at' && (
-                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </th>
+
                   <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
                     Aktionen
                   </th>
@@ -628,16 +615,7 @@ export default function LessonsPage() {
                         {lesson.course?.title || 'Nicht zugewiesen'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {lesson.created_at
-                          ? formatDistanceToNow(new Date(lesson.created_at), {
-                              addSuffix: true,
-                              locale: de,
-                            })
-                          : 'Unbekannt'}
-                      </div>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Button

@@ -44,7 +44,7 @@ export default function CoursesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
-  const [sortField, setSortField] = useState<'title' | 'description' | 'module' | 'created_at'>('title')
+  const [sortField, setSortField] = useState<'title' | 'description' | 'module'>('title')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const [editingCourse, setEditingCourse] = useState<Course | null>(null)
@@ -266,7 +266,7 @@ export default function CoursesPage() {
     setCreateModalOpen(true)
   }
 
-  const handleSort = (field: 'title' | 'description' | 'module' | 'created_at') => {
+  const handleSort = (field: 'title' | 'description' | 'module') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
@@ -296,10 +296,7 @@ export default function CoursesPage() {
           bValue = (moduleB?.title || '').toLowerCase()
           break
 
-        case 'created_at':
-          aValue = new Date(a.created_at || '').getTime()
-          bValue = new Date(b.created_at || '').getTime()
-          break
+
         default:
           return 0
       }
@@ -750,17 +747,7 @@ export default function CoursesPage() {
                     </div>
                   </th>
 
-                  <th
-                    className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider cursor-pointer hover:bg-[#3e5570] transition-colors"
-                    onClick={() => handleSort('created_at')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Erstellt
-                      {sortField === 'created_at' && (
-                        sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </th>
+
                   <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
                     Aktionen
                   </th>
@@ -793,16 +780,7 @@ export default function CoursesPage() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {course.created_at
-                          ? formatDistanceToNow(new Date(course.created_at), {
-                              addSuffix: true,
-                              locale: de,
-                            })
-                          : 'Unbekannt'}
-                      </div>
-                    </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
                         <Button
