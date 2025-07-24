@@ -99,11 +99,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const quizId = params.id
+    const { id: quizId } = await params
 
     // Check if user is authenticated and is admin
     const {
@@ -134,15 +134,15 @@ export async function GET(
 
     // Fetch questions for this quiz
     const { data: questions, error } = await supabase
-      .from('questions')
+      .from('quiz_questions')
       .select(
         `
         *,
-        options:options(*)
+        quiz_answers(*)
       `
       )
       .eq('quiz_id', quizId)
-      .order('created_at', { ascending: true })
+      .order('sort_order', { ascending: true })
 
     if (error) {
       console.error('Error fetching quiz questions:', error)
@@ -157,13 +157,13 @@ export async function GET(
       questions?.map(q => ({
         id: q.id,
         type: q.type === 'single' ? 'multiple_choice' : q.type,
-        question_text: q.question || '',
-        explanation: '',
-        sort_order: 0,
+        question_text: q.question_html || '',
+        explanation: q.explanation_html || '',
+        sort_order: q.sort_order || 0,
         options:
-          q.options?.map(o => ({
+          q.quiz_answers?.map(o => ({
             id: o.id,
-            text: o.option_text || '',
+            text: o.answer_html || '',
             is_correct: o.is_correct || false,
           })) || [],
       })) || []
@@ -183,11 +183,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const quizId = params.id
+    const { id: quizId } = await params
 
     // Check if user is authenticated and is admin
     const {
@@ -229,7 +229,7 @@ export async function PUT(
 
     // Delete existing questions for this quiz
     const { error: deleteError } = await supabase
-      .from('questions')
+      .from('quiz_questions')
       .delete()
       .eq('quiz_id', quizId)
 
@@ -247,11 +247,14 @@ export async function PUT(
 
       // Insert question
       const { data: questionData, error: questionError } = await supabase
-        .from('questions')
+        .from('quiz_questions')
         .insert({
           quiz_id: quizId,
           type: question.type === 'multiple_choice' ? 'single' : question.type,
-          question: question.question_text,
+          question_html: question.question_text,
+          explanation_html: question.explanation || '',
+          points: 1,
+          sort_order: i,
         })
         .select()
         .single()
@@ -266,17 +269,18 @@ export async function PUT(
 
       // Insert options for multiple choice and true/false questions
       if (question.options && question.options.length > 0) {
-        const optionsToInsert = question.options.map(
+        const answersToInsert = question.options.map(
           (option: any, optionIndex: number) => ({
             question_id: questionData.id,
-            option_text: option.text,
+            answer_html: option.text,
             is_correct: option.is_correct,
+            sort_order: optionIndex,
           })
         )
 
         const { error: optionsError } = await supabase
-          .from('options')
-          .insert(optionsToInsert)
+          .from('quiz_answers')
+          .insert(answersToInsert)
 
         if (optionsError) {
           console.error('Error inserting options:', optionsError)

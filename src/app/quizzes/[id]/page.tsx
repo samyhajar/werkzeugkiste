@@ -10,6 +10,21 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
 import LoginModal from '@/components/shared/LoginModal'
 import { useRouter } from 'next/navigation'
 
+interface QuizQuestion {
+  id: string
+  type: string
+  question_html: string
+  explanation_html: string | null
+  points: number
+  sort_order: number
+  quiz_answers: {
+    id: string
+    answer_html: string
+    is_correct: boolean
+    sort_order: number
+  }[]
+}
+
 interface Quiz {
   id: string
   title: string
@@ -17,6 +32,9 @@ interface Quiz {
   lesson_id: string | null
   course_id: string
   created_at: string
+  questions: QuizQuestion[]
+  pass_percent: number
+  max_points: number
 }
 
 interface Course {
@@ -41,6 +59,10 @@ export default function QuizDetailPage() {
   const [user, setUser] = useState<any>(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [results, setResults] = useState<any>(null)
 
   // Check authentication on component mount
   useEffect(() => {
@@ -77,6 +99,7 @@ export default function QuizDetailPage() {
       }
 
       const data = await response.json()
+      console.log('Quiz data received:', data)
       setQuiz(data.quiz)
       setCourse(data.course)
     } catch (err) {
@@ -84,6 +107,53 @@ export default function QuizDetailPage() {
       setError(err instanceof Error ? err.message : 'Failed to load quiz')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAnswerSelect = (questionId: string, answerId: string, isMultiple: boolean) => {
+    setSelectedAnswers(prev => {
+      const currentAnswers = prev[questionId] || []
+
+      if (isMultiple) {
+        // For multiple choice, toggle the answer
+        const newAnswers = currentAnswers.includes(answerId)
+          ? currentAnswers.filter(id => id !== answerId)
+          : [...currentAnswers, answerId]
+        return { ...prev, [questionId]: newAnswers }
+      } else {
+        // For single choice, replace the answer
+        return { ...prev, [questionId]: [answerId] }
+      }
+    })
+  }
+
+  const handleSubmit = async () => {
+    if (!quiz) return
+
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/quizzes/${quizId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          answers: selectedAnswers,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit quiz: ${response.status}`)
+      }
+
+      const data = await response.json()
+      setResults(data)
+      setSubmitted(true)
+    } catch (err) {
+      console.error('Error submitting quiz:', err)
+      setError(err instanceof Error ? err.message : 'Failed to submit quiz')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -178,7 +248,7 @@ export default function QuizDetailPage() {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-8 pb-24">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -189,29 +259,119 @@ export default function QuizDetailPage() {
                 {quiz.description || 'Testen Sie Ihr Wissen mit diesem interaktiven Quiz.'}
               </CardDescription>
             </CardHeader>
-            <CardContent className="text-center space-y-6">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <h3 className="font-semibold text-blue-800 mb-2">Quiz wird vorbereitet</h3>
-                <p className="text-blue-700">
-                  Dieses Quiz ist derzeit in Entwicklung und wird bald verfügbar sein.
-                </p>
-              </div>
+            <CardContent className="space-y-6">
+              {!submitted ? (
+                <>
+                  {/* Quiz Instructions */}
+                  <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h3 className="font-semibold text-blue-800 mb-2">Quiz Anweisungen</h3>
+                    <p className="text-blue-700 text-sm">
+                      Beantworten Sie alle Fragen. Sie können Ihre Antworten ändern, bevor Sie das Quiz einreichen.
+                    </p>
+                  </div>
 
-              <div className="flex gap-4 justify-center">
-                <Link href="/">
-                  <Button variant="outline">
-                    Zurück zur Übersicht
-                  </Button>
-                </Link>
-                <Link href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/'}>
-                  <Button>
-                    Zur Lektion
-                  </Button>
-                </Link>
-              </div>
+                  {/* Questions */}
+                  {quiz.questions && quiz.questions.length > 0 ? (
+                    <div className="space-y-6">
+                      {quiz.questions.map((question, index) => (
+                        <div key={question.id} className="border rounded-lg p-4">
+                          <h3 className="font-semibold text-lg mb-3">
+                            Frage {index + 1}: {question.question_html}
+                          </h3>
+
+                          <div className="space-y-2">
+                            {question.quiz_answers.map((answer) => (
+                              <label
+                                key={answer.id}
+                                className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                              >
+                                <input
+                                  type={question.type === 'multiple' ? 'checkbox' : 'radio'}
+                                  name={`question-${question.id}`}
+                                  value={answer.id}
+                                  checked={selectedAnswers[question.id]?.includes(answer.id) || false}
+                                  onChange={() => handleAnswerSelect(question.id, answer.id, question.type === 'multiple')}
+                                  className="h-4 w-4 text-blue-600"
+                                />
+                                <span className="flex-1">{answer.answer_html}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">Keine Fragen verfügbar.</p>
+                    </div>
+                  )}
+
+                                    {/* Debug Info */}
+                  <div className="text-xs text-gray-500 mt-4 p-2 bg-gray-100 rounded">
+                    <p>Debug: {quiz.questions?.length || 0} Fragen geladen</p>
+                    <p>Debug: {Object.keys(selectedAnswers).length} Fragen beantwortet</p>
+                  </div>
+                </>
+              ) : (
+                /* Results */
+                <div className="space-y-6">
+                  <div className={`p-6 rounded-lg text-center ${
+                    results?.passed ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  }`}>
+                    <h3 className="font-semibold text-xl mb-2">
+                      {results?.passed ? '🎉 Bestanden!' : '❌ Nicht bestanden'}
+                    </h3>
+                    <p className="text-lg">
+                      Punktzahl: {results?.score_percentage?.toFixed(1)}% ({results?.earned_points}/{results?.total_points} Punkte)
+                    </p>
+                    <p className="text-sm mt-2">
+                      Bestehensgrenze: {quiz.pass_percent}%
+                    </p>
+                  </div>
+
+                  <div className="flex gap-4 justify-center">
+                    <Link href="/">
+                      <Button variant="outline">
+                        Zurück zur Übersicht
+                      </Button>
+                    </Link>
+                    <Link href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/'}>
+                      <Button>
+                        Zur Lektion
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </main>
+
+        {/* Sticky Submit Button */}
+        {!submitted && quiz?.questions && quiz.questions.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+            <div className="max-w-4xl mx-auto flex justify-center">
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || Object.keys(selectedAnswers).length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg font-semibold shadow-lg"
+                size="lg"
+              >
+                {submitting ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    Wird eingereicht...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">✅</span>
+                    Antworten überprüfen ({Object.keys(selectedAnswers).length} beantwortet)
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <LoginModal

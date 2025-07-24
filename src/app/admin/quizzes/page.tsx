@@ -69,6 +69,9 @@ export default function QuizzesPage() {
   const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null)
   const [saving, setSaving] = useState(false)
   const [editingQuestions, setEditingQuestions] = useState<QuizQuestion[]>([])
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deletingQuiz, setDeletingQuiz] = useState<Quiz | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const [newQuiz, setNewQuiz] = useState({
     title: '',
@@ -94,9 +97,16 @@ export default function QuizzesPage() {
     try {
       setLoading(true)
       const response = await fetch('/api/admin/quizzes')
+      console.log('Fetch quizzes response status:', response.status)
+
       if (response.ok) {
-      const data = await response.json()
+        const data = await response.json()
+        console.log('Fetch quizzes data:', data)
         setQuizzes(data.quizzes || [])
+      } else {
+        console.error('Failed to fetch quizzes:', response.status)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error)
@@ -423,6 +433,51 @@ export default function QuizzesPage() {
       console.error('Error creating quiz:', error)
     } finally {
       setCreating(false)
+    }
+  }
+
+  const openDeleteDialog = (quiz: Quiz) => {
+    setDeletingQuiz(quiz)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const deleteQuiz = async () => {
+    if (!deletingQuiz) return
+
+    try {
+      setDeleting(true)
+      console.log('Deleting quiz:', deletingQuiz.id)
+
+      const response = await fetch(`/api/admin/quizzes/${deletingQuiz.id}`, {
+        method: 'DELETE',
+      })
+
+      console.log('Delete response status:', response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Delete response error:', errorText)
+        throw new Error(`API error: ${response.status} - ${errorText}`)
+      }
+
+      const data = await response.json()
+      console.log('Delete response data:', data)
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete quiz')
+      }
+
+      // Close dialog and refresh quizzes list
+      setIsDeleteDialogOpen(false)
+      setDeletingQuiz(null)
+      console.log('Refreshing quizzes list...')
+      await fetchQuizzes()
+      console.log('Quizzes list refreshed')
+    } catch (error) {
+      console.error('Error deleting quiz:', error)
+      alert('Failed to delete quiz. Please try again.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -967,6 +1022,45 @@ export default function QuizzesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Quiz</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deletingQuiz?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={deleting}
+              className="sm:w-auto w-full h-9 text-sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void deleteQuiz()}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white sm:w-auto w-full h-9 text-sm"
+            >
+              {deleting ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">🗑️</span>
+                  Delete Quiz
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Filters */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1">
@@ -1102,10 +1196,10 @@ export default function QuizzesPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
-                          onClick={() => router.push(`/admin/quizzes/${quiz.id}/questions`)}
+                          className="border-red-500 text-red-500 hover:bg-red-50 shadow-sm"
+                          onClick={() => openDeleteDialog(quiz)}
                         >
-                          Questions
+                          🗑️
                         </Button>
                       </div>
                     </td>

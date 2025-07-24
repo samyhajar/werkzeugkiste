@@ -35,8 +35,11 @@ export async function DELETE(
       )
     }
 
-    // Delete quiz (questions and options will be cascade deleted)
-    const { error } = await supabase.from('quizzes').delete().eq('id', id)
+    // Delete quiz from enhanced_quizzes table (questions and answers will be cascade deleted)
+    const { error } = await supabase
+      .from('enhanced_quizzes')
+      .delete()
+      .eq('id', id)
 
     if (error) {
       console.error('Error deleting quiz:', error)
@@ -61,11 +64,11 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const quizId = params.id
+    const { id: quizId } = await params
 
     // Check if user is authenticated and is admin
     const {
@@ -136,14 +139,14 @@ export async function PUT(
       )
     }
 
-    // Update the quiz
+    // Update the enhanced quiz
     const updateData: any = {
       title,
       description,
       scope,
-      pass_percent,
-      max_points,
-      feedback_mode,
+      pass_percent: pass_percent || 80,
+      max_points: max_points || 0,
+      feedback_mode: feedback_mode || 'at_end',
       updated_at: new Date().toISOString(),
     }
 
@@ -157,7 +160,7 @@ export async function PUT(
     }
 
     const { data: quiz, error } = await supabase
-      .from('quizzes')
+      .from('enhanced_quizzes')
       .update(updateData)
       .eq('id', quizId)
       .select()
