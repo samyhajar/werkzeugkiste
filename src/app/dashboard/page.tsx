@@ -13,7 +13,6 @@ import StudentSidebar from '@/components/dashboard/StudentSidebar'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 interface Course {
   id: string
