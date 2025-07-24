@@ -2,11 +2,24 @@
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
 
-import CreateCourseForm from '@/components/admin/CreateCourseForm'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import dynamicImport from 'next/dynamic'
+
+// Dynamically import the CreateCourseForm to prevent SSR issues
+const CreateCourseForm = dynamicImport(() => import('@/components/admin/CreateCourseForm'), {
+  ssr: false,
+  loading: () => <div>Loading form...</div>
+})
 
 export default function NewCoursePage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <div className="p-8">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -31,7 +44,7 @@ export default function NewCoursePage() {
         </div>
 
         {/* Form */}
-      <CreateCourseForm />
+        {mounted && <CreateCourseForm />}
       </div>
     </div>
   )
