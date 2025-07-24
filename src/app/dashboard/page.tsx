@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Award, BookOpen, CheckCircle, TrendingUp, User, Calendar } from 'lucide-react'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
+import LoginModal from '@/components/shared/LoginModal'
+import { useRouter } from 'next/navigation'
 
 interface DashboardStats {
   totalModules: number
@@ -35,10 +38,39 @@ export default function StudentDashboard() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
+  const router = useRouter()
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = getBrowserClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          setShowLoginModal(true)
+        } else {
+          setUser(user)
+        }
+        setAuthChecked(true)
+      } catch (error) {
+        console.error('Error checking authentication:', error)
+        setShowLoginModal(true)
+        setAuthChecked(true)
+      }
+    }
+
+    void checkAuth()
+  }, [])
 
   useEffect(() => {
-    void fetchDashboardData()
-  }, [])
+    if (user) {
+      void fetchDashboardData()
+    }
+  }, [user])
 
   const fetchDashboardData = async () => {
     try {
@@ -109,16 +141,29 @@ export default function StudentDashboard() {
     }
   }
 
-  if (loading) {
+  // Don't render content until auth is checked
+  if (!authChecked) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-              <span className="text-gray-600">Dashboard wird geladen...</span>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
+          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login modal if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-blue-600 text-6xl mb-4">🔐</div>
+          <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
+          <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf Ihr Dashboard zuzugreifen.</p>
+          <Button onClick={() => setShowLoginModal(true)}>
+            Jetzt anmelden
+          </Button>
         </div>
       </div>
     )
@@ -298,6 +343,17 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
       </main>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false)
+          // If user is still not logged in after modal closes, redirect to home
+          if (!user) {
+            router.push('/')
+          }
+        }}
+      />
     </div>
   )
 }

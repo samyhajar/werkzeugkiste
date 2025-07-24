@@ -7,6 +7,7 @@ import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarCha
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
 import Link from 'next/link'
+import LoginModal from '@/components/shared/LoginModal'
 
 interface Course {
   id: string
@@ -445,11 +446,36 @@ export default function ModuleDetailPage() {
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
 
   // Add progress tracking hook
   const { markLessonComplete, isMarking } = useProgressTracking()
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = getBrowserClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          setShowLoginModal(true)
+        } else {
+          setUser(user)
+        }
+        setAuthChecked(true)
+      } catch (error) {
+        console.error('Error checking authentication:', error)
+        setShowLoginModal(true)
+        setAuthChecked(true)
+      }
+    }
+
+    void checkAuth()
+  }, [])
 
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
@@ -701,318 +727,359 @@ export default function ModuleDetailPage() {
     )
   }
 
+  // Don't render content until auth is checked
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
+          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login modal if not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-blue-600 text-6xl mb-4">🔐</div>
+          <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
+          <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Modul zuzugreifen.</p>
+          <Button onClick={() => setShowLoginModal(true)}>
+            Jetzt anmelden
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
-      {/* Continuous Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
-        {/* Right: Progress Bar and User Info */}
-        <div className="flex items-center gap-6 ml-auto">
-          {/* Progress Bar */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#486681]" />
+    <>
+      <div className="h-screen bg-gray-50 flex overflow-hidden">
+        {/* Continuous Header */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
+          {/* Right: Progress Bar and User Info */}
+          <div className="flex items-center gap-6 ml-auto">
+            {/* Progress Bar */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-[#486681]" />
+              </div>
+              <div className="w-32">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-[#486681] h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${getProgressPercentage()}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {completedLessons.size} von {module ? module.courses.reduce((total, course) => total + course.lessons.length, 0) : 0} Lektionen
+                </div>
+              </div>
             </div>
-            <div className="w-32">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-[#486681] h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                ></div>
+
+            {/* User Info */}
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#486681] rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-sm">
+                  <div className="font-medium text-gray-900">
+                    {user.user_metadata?.full_name || user.email || 'Student'}
+                  </div>
+                  <div className="text-gray-500 text-xs">Student</div>
+                </div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {completedLessons.size} von {module ? module.courses.reduce((total, course) => total + course.lessons.length, 0) : 0} Lektionen
-              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Back to Modules Link - Above Sidebar */}
+        <div className="fixed top-16 left-0 w-96 bg-white border-b border-gray-200 z-40">
+          <div className="p-4">
+            <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+              Zurück zu Modulen
+            </Link>
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0 mt-28">
+
+          {/* Module Name */}
+          <div className="p-4 border-b border-gray-200 bg-white">
+            <h1 className="font-bold text-xl text-gray-800">{module.title}</h1>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-gray-600 text-sm">{getTotalLessons()} Lektionen</span>
             </div>
           </div>
 
-          {/* User Info */}
-          {user && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#486681] rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <div className="text-sm">
-                <div className="font-medium text-gray-900">
-                  {user.user_metadata?.full_name || user.email || 'Student'}
+          {/* Course List Navigation */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 space-y-4">
+
+              {module.courses.map((course, index) => (
+                <div key={course.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Course Header */}
+                  <button
+                    onClick={() => toggleCourseExpansion(course.id)}
+                    className="w-full px-4 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 bg-[#de0449] text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-gray-800 text-sm leading-tight">
+                          {course.title}
+                        </h3>
+                      </div>
+                    </div>
+                    {expandedCourses.has(course.id) ? (
+                      <ChevronUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    )}
+                  </button>
+
+                  {/* Expanded Course Content */}
+                  {expandedCourses.has(course.id) && (
+                    <div className="bg-white">
+                      <div className="px-4 py-2 space-y-1">
+                        {/* Lessons */}
+                        {course.lessons
+                          .sort((a, b) => (a.order || 0) - (b.order || 0))
+                          .map((lesson, _lessonIndex) => {
+                            const isCompleted = completedLessons.has(lesson.id)
+                            return (
+                              <div key={lesson.id}>
+                                <button
+                                  onClick={() => selectLesson(lesson)}
+                                  disabled={isMarking}
+                                  className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                    selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
+                                  } ${isCompleted ? 'text-green-700' : ''} ${isMarking ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                  {isCompleted ? (
+                                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                  ) : (
+                                    <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                  )}
+                                  <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                    isCompleted ? 'text-green-700' : 'text-[#de0449]'
+                                  }`}>
+                                    {lesson.title}
+                                  </span>
+                                  {isCompleted && (
+                                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                      ✓ Abgeschlossen
+                                    </span>
+                                  )}
+                                  {isMarking && selectedLesson?.id === lesson.id && (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#486681]"></div>
+                                  )}
+                                </button>
+
+                                {/* Quizzes for this lesson */}
+                                {course.quizzes
+                                  .filter(quiz => quiz.lesson_id === lesson.id)
+                                  .map((quiz) => (
+                                    <button
+                                      key={quiz.id}
+                                      onClick={() => selectQuiz(quiz)}
+                                      className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                        selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                      }`}
+                                    >
+                                      <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                      <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
+                                        {quiz.title}
+                                      </span>
+                                    </button>
+                                  ))}
+                              </div>
+                            )
+                          })}
+
+                        {/* Course-level quizzes */}
+                        {course.quizzes
+                          .filter(quiz => !quiz.lesson_id)
+                          .map((quiz) => (
+                            <button
+                              key={quiz.id}
+                              onClick={() => selectQuiz(quiz)}
+                              className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
+                                selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                              }`}
+                            >
+                              <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                              <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
+                                {quiz.title}
+                              </span>
+                            </button>
+                          ))}
+
+                        {/* Empty state for courses with no content */}
+                        {course.lessons.length === 0 && course.quizzes.length === 0 && (
+                          <div className="px-2 py-4 text-center text-gray-500 text-sm">
+                            Noch keine Inhalte verfügbar
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="text-gray-500 text-xs">Student</div>
+              ))}
+
+
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden mt-32">
+          {selectedLesson ? (
+            <div className="flex-1 overflow-y-auto">
+              {/* Enhanced Lesson Header */}
+              <div className="bg-white border-b border-gray-200 px-8 py-8">
+                {/* Centered Breadcrumb */}
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
+                  <Link
+                    href="/"
+                    className="hover:text-[#486681] transition-colors font-medium hover:underline"
+                  >
+                    {module.title}
+                  </Link>
+                  <span className="text-gray-400">›</span>
+                  <span className="text-gray-600 font-medium">
+                    {selectedCourse?.title || 'Kurs'}
+                  </span>
+                  <span className="text-gray-400">›</span>
+                  <span className="text-gray-800 font-semibold">
+                    {selectedLesson.title}
+                  </span>
+                </div>
+
+                {/* Centered Lesson Title */}
+                <div className="text-center mb-6">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                    {selectedLesson.title}
+                  </h1>
+                  <div className="flex items-center justify-center gap-4 text-gray-600">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
+                      Lektion {selectedLesson.order}
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
+                      {selectedLesson.duration_minutes || 0} Min
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Lesson Content */}
+              <div className="px-8 py-8 overflow-y-auto bg-gray-50">
+                {selectedLesson.content ? (
+                  <div className="max-w-4xl mx-auto">
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                      <div className="p-8 prose prose-lg max-w-none">
+                        <div
+                          className="text-gray-800 leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-4xl mx-auto">
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+                      <div className="text-gray-400 text-6xl mb-4">📚</div>
+                      <h2 className="text-xl font-semibold text-gray-600 mb-2">Kein Inhalt verfügbar</h2>
+                      <p className="text-gray-500">Diese Lektion hat noch keinen Inhalt.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : selectedQuiz ? (
+            <div className="flex-1 overflow-y-auto">
+              {/* Enhanced Quiz Header */}
+              <div className="bg-white border-b border-gray-200 px-8 py-8">
+                {/* Centered Breadcrumb */}
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
+                  <Link
+                    href="/"
+                    className="hover:text-[#486681] transition-colors font-medium hover:underline"
+                  >
+                    {module.title}
+                  </Link>
+                  <span className="text-gray-400">›</span>
+                  <span className="text-gray-600 font-medium">
+                    {selectedCourse?.title || 'Kurs'}
+                  </span>
+                  <span className="text-gray-400">›</span>
+                  <span className="text-gray-800 font-semibold">
+                    {selectedQuiz.title}
+                  </span>
+                </div>
+
+                {/* Centered Quiz Title */}
+                <div className="text-center mb-6">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                    {selectedQuiz.title}
+                  </h1>
+                  <div className="flex items-center justify-center gap-4 text-gray-600">
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                      Quiz
+                    </span>
+                    {selectedQuiz.description && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-600">
+                          {selectedQuiz.description}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Quiz Content */}
+              <div className="px-8 py-8 overflow-y-auto bg-gray-50">
+                <div className="max-w-4xl mx-auto">
+                  {selectedQuiz && <QuizContent quiz={selectedQuiz} onBack={() => setSelectedQuiz(null)} />}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-gray-400 text-6xl mb-4">📚</div>
+                <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion oder ein Quiz aus</h2>
+                <p className="text-gray-500">Klicke auf eine Lektion oder ein Quiz in der Seitenleiste, um den Inhalt anzuzeigen.</p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Back to Modules Link - Above Sidebar */}
-      <div className="fixed top-16 left-0 w-96 bg-white border-b border-gray-200 z-40">
-        <div className="p-4">
-          <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-            Zurück zu Modulen
-          </Link>
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0 mt-28">
-
-        {/* Module Name */}
-        <div className="p-4 border-b border-gray-200 bg-white">
-          <h1 className="font-bold text-xl text-gray-800">{module.title}</h1>
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-gray-600 text-sm">{getTotalLessons()} Lektionen</span>
-          </div>
-        </div>
-
-        {/* Course List Navigation */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-4">
-
-            {module.courses.map((course, index) => (
-              <div key={course.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                {/* Course Header */}
-                <button
-                  onClick={() => toggleCourseExpansion(course.id)}
-                  className="w-full px-4 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-8 h-8 bg-[#de0449] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {index + 1}
-                    </span>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-gray-800 text-sm leading-tight">
-                        {course.title}
-                      </h3>
-                    </div>
-                  </div>
-                  {expandedCourses.has(course.id) ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                  )}
-                </button>
-
-                {/* Expanded Course Content */}
-                {expandedCourses.has(course.id) && (
-                  <div className="bg-white">
-                    <div className="px-4 py-2 space-y-1">
-                      {/* Lessons */}
-                      {course.lessons
-                        .sort((a, b) => (a.order || 0) - (b.order || 0))
-                        .map((lesson, _lessonIndex) => {
-                          const isCompleted = completedLessons.has(lesson.id)
-                          return (
-                            <div key={lesson.id}>
-                              <button
-                                onClick={() => selectLesson(lesson)}
-                                disabled={isMarking}
-                                className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                  selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
-                                } ${isCompleted ? 'text-green-700' : ''} ${isMarking ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              >
-                                {isCompleted ? (
-                                  <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                                ) : (
-                                  <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                                )}
-                                <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
-                                  isCompleted ? 'text-green-700' : 'text-[#de0449]'
-                                }`}>
-                                  {lesson.title}
-                                </span>
-                                {isCompleted && (
-                                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                                    ✓ Abgeschlossen
-                                  </span>
-                                )}
-                                {isMarking && selectedLesson?.id === lesson.id && (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#486681]"></div>
-                                )}
-                              </button>
-
-                              {/* Quizzes for this lesson */}
-                              {course.quizzes
-                                .filter(quiz => quiz.lesson_id === lesson.id)
-                                .map((quiz) => (
-                                  <button
-                                    key={quiz.id}
-                                    onClick={() => selectQuiz(quiz)}
-                                    className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                      selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
-                                    }`}
-                                  >
-                                    <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                                    <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                                      {quiz.title}
-                                    </span>
-                                  </button>
-                                ))}
-                            </div>
-                          )
-                        })}
-
-                      {/* Course-level quizzes */}
-                      {course.quizzes
-                        .filter(quiz => !quiz.lesson_id)
-                        .map((quiz) => (
-                          <button
-                            key={quiz.id}
-                            onClick={() => selectQuiz(quiz)}
-                            className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                              selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
-                            }`}
-                          >
-                            <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
-                            <span className="text-[#de0449] font-medium text-sm group-hover:text-[#b8043a] flex-1">
-                              {quiz.title}
-                            </span>
-                          </button>
-                        ))}
-
-                      {/* Empty state for courses with no content */}
-                      {course.lessons.length === 0 && course.quizzes.length === 0 && (
-                        <div className="px-2 py-4 text-center text-gray-500 text-sm">
-                          Noch keine Inhalte verfügbar
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-
-
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden mt-32">
-        {selectedLesson ? (
-          <div className="flex-1 overflow-y-auto">
-            {/* Enhanced Lesson Header */}
-            <div className="bg-white border-b border-gray-200 px-8 py-8">
-              {/* Centered Breadcrumb */}
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
-                <Link
-                  href="/"
-                  className="hover:text-[#486681] transition-colors font-medium hover:underline"
-                >
-                  {module.title}
-                </Link>
-                <span className="text-gray-400">›</span>
-                <span className="text-gray-600 font-medium">
-                  {selectedCourse?.title || 'Kurs'}
-                </span>
-                <span className="text-gray-400">›</span>
-                <span className="text-gray-800 font-semibold">
-                  {selectedLesson.title}
-                </span>
-              </div>
-
-              {/* Centered Lesson Title */}
-              <div className="text-center mb-6">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                  {selectedLesson.title}
-                </h1>
-                <div className="flex items-center justify-center gap-4 text-gray-600">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
-                    Lektion {selectedLesson.order}
-                  </span>
-                  <span className="text-gray-400">•</span>
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
-                    {selectedLesson.duration_minutes || 0} Min
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Lesson Content */}
-            <div className="px-8 py-8 overflow-y-auto bg-gray-50">
-              {selectedLesson.content ? (
-                <div className="max-w-4xl mx-auto">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                    <div className="p-8 prose prose-lg max-w-none">
-                      <div
-                        className="text-gray-800 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="max-w-4xl mx-auto">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
-                    <div className="text-gray-400 text-6xl mb-4">📚</div>
-                    <h2 className="text-xl font-semibold text-gray-600 mb-2">Kein Inhalt verfügbar</h2>
-                    <p className="text-gray-500">Diese Lektion hat noch keinen Inhalt.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : selectedQuiz ? (
-          <div className="flex-1 overflow-y-auto">
-            {/* Enhanced Quiz Header */}
-            <div className="bg-white border-b border-gray-200 px-8 py-8">
-              {/* Centered Breadcrumb */}
-              <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
-                <Link
-                  href="/"
-                  className="hover:text-[#486681] transition-colors font-medium hover:underline"
-                >
-                  {module.title}
-                </Link>
-                <span className="text-gray-400">›</span>
-                <span className="text-gray-600 font-medium">
-                  {selectedCourse?.title || 'Kurs'}
-                </span>
-                <span className="text-gray-400">›</span>
-                <span className="text-gray-800 font-semibold">
-                  {selectedQuiz.title}
-                </span>
-              </div>
-
-              {/* Centered Quiz Title */}
-              <div className="text-center mb-6">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                  {selectedQuiz.title}
-                </h1>
-                <div className="flex items-center justify-center gap-4 text-gray-600">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                    Quiz
-                  </span>
-                  {selectedQuiz.description && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-gray-600">
-                        {selectedQuiz.description}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Quiz Content */}
-            <div className="px-8 py-8 overflow-y-auto bg-gray-50">
-              <div className="max-w-4xl mx-auto">
-                <QuizContent quiz={selectedQuiz} onBack={() => setSelectedQuiz(null)} />
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-gray-400 text-6xl mb-4">📚</div>
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion oder ein Quiz aus</h2>
-              <p className="text-gray-500">Klicke auf eine Lektion oder ein Quiz in der Seitenleiste, um den Inhalt anzuzeigen.</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false)
+          // If user is still not logged in after modal closes, redirect to home
+          if (!user) {
+            router.push('/')
+          }
+        }}
+      />
+    </>
   )
 }
