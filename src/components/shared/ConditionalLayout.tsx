@@ -38,11 +38,11 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   }
 
   // After hydration, render with AuthProvider and RealtimeProvider
-  // Exclude SessionBootstrap for admin pages to prevent duplicate token refresh
+  // Include SessionBootstrap for all pages to ensure proper auth sync
   return (
     <AuthProvider>
       <RealtimeProvider>
-        {!isAdminPage && <SessionBootstrap />}
+        <SessionBootstrap />
         <div className="min-h-screen">
           {!isModulePage && !isAdminPage && <Navbar />}
           <main className={`flex-1 ${!isModulePage && !isAdminPage ? 'pt-24' : ''}`}>{children}</main>

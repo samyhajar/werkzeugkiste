@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
@@ -18,9 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [authCheckInProgress, setAuthCheckInProgress] = useState(false)
-  const [lastAuthCheck, setLastAuthCheck] = useState(0)
-  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null)
+  const initialized = useRef(false)
 
   const refreshSession = async () => {
     try {
@@ -47,24 +45,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Skip auth context for admin pages
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+    // Prevent duplicate initialization
+    if (initialized.current) {
       return
     }
-
-    // Prevent duplicate auth checks
-    if (authCheckInProgress) {
-      return
-    }
-
-    // Debounce auth checks
-    const now = Date.now()
-    if (now - lastAuthCheck < 1000) {
-      return
-    }
-
-    setAuthCheckInProgress(true)
-    setLastAuthCheck(now)
+    initialized.current = true
 
     const getInitialSession = async () => {
       try {
@@ -85,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('[AuthContext] Exception getting session:', error)
       } finally {
-        setAuthCheckInProgress(false)
         setLoading(false)
       }
     }
@@ -113,13 +97,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }, 5000)
 
-    setLoadingTimeout(timeout)
-
     return () => {
       subscription.unsubscribe()
-      if (timeout) clearTimeout(timeout)
+      clearTimeout(timeout)
     }
-  }, [authCheckInProgress, lastAuthCheck])
+  }, [])
 
   const signOut = async () => {
     try {

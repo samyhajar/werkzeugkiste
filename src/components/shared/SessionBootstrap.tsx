@@ -12,26 +12,21 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
  */
 export default function SessionBootstrap() {
   const syncInProgress = useRef(false)
-  const lastSyncTime = useRef<number>(0)
   const hasRun = useRef(false)
   const supabase = useRef(getBrowserClient())
 
   const syncAuthState = useCallback(async () => {
     // Prevent duplicate sync operations
-    if (syncInProgress.current) {
-      return
-    }
-
-    // Debounce sync operations
-    const now = Date.now()
-    if (now - lastSyncTime.current < 2000) {
+    if (syncInProgress.current || hasRun.current) {
       return
     }
 
     syncInProgress.current = true
-    lastSyncTime.current = now
+    hasRun.current = true
 
     try {
+      console.log('[SessionBootstrap] Starting auth state sync...')
+
       // Check for auth cookies
       const cookies = document.cookie.split(';')
       const authCookies = cookies.filter(cookie =>
@@ -39,14 +34,26 @@ export default function SessionBootstrap() {
         cookie.trim().startsWith('supabase-auth-token')
       )
 
+      console.log('[SessionBootstrap] Found auth cookies:', authCookies.length)
+
       if (authCookies.length > 0) {
         // Force session refresh if cookies are present
-        const { error: refreshError } = await supabase.current.auth.refreshSession()
+        const { data, error: refreshError } = await supabase.current.auth.refreshSession()
 
         if (refreshError) {
+          console.error('[SessionBootstrap] Refresh error:', refreshError)
           // Try getSession as fallback
-          await supabase.current.auth.getSession()
+          const { data: sessionData, error: sessionError } = await supabase.current.auth.getSession()
+          if (sessionError) {
+            console.error('[SessionBootstrap] Get session error:', sessionError)
+          } else {
+            console.log('[SessionBootstrap] Session retrieved:', sessionData.session?.user?.email || 'no session')
+          }
+        } else {
+          console.log('[SessionBootstrap] Session refreshed successfully:', data.session?.user?.email || 'no session')
         }
+      } else {
+        console.log('[SessionBootstrap] No auth cookies found')
       }
     } catch (error) {
       console.error('[SessionBootstrap] Error syncing auth state:', error)
@@ -58,11 +65,6 @@ export default function SessionBootstrap() {
   useEffect(() => {
     // Only run in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') {
-      return
-    }
-
-    // Only run once per component mount
-    if (hasRun.current) {
       return
     }
 

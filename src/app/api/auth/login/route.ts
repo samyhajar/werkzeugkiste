@@ -80,6 +80,19 @@ export async function POST(request: NextRequest) {
       // Continue with default values if profile not found
     }
 
+    // Get the session after successful login
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      console.error('[Login API] No session found after login')
+      return NextResponse.json(
+        { success: false, error: 'Session creation failed' },
+        { status: 500 }
+      )
+    }
+
     // Create response with proper cookies
     const response = NextResponse.json({
       success: true,
@@ -91,30 +104,22 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Ensure cookies are properly set for the client
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (session) {
-      console.log('[Login API] Setting session cookies')
-      // Set the session cookies
-      response.cookies.set('sb-access-token', session.access_token, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-      response.cookies.set('sb-refresh-token', session.refresh_token, {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        path: '/',
-      })
-    } else {
-      console.error('[Login API] No session found after login')
-    }
+    // Set the session cookies with proper configuration
+    console.log('[Login API] Setting session cookies')
+    response.cookies.set('sb-access-token', session.access_token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
+    response.cookies.set('sb-refresh-token', session.refresh_token, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    })
 
     console.log('[Login API] Login process completed successfully')
     return response

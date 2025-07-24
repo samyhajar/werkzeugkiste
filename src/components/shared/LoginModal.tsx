@@ -49,12 +49,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   }, [isOpen])
 
-    const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-        try {
+    try {
       console.log('[LoginModal] Starting login request')
       console.log('[LoginModal] Request data:', { email: signInEmail, password: '***' })
 
@@ -67,6 +67,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
         },
+        credentials: 'include', // Important: include cookies
         body: JSON.stringify({ email: signInEmail, password: signInPassword }),
       })
 
@@ -119,9 +120,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       setSuccess('Anmeldung erfolgreich!')
       setLoading(false)
 
-        if (data.success && data.user) {
+      if (data.success && data.user) {
         // Add a small delay to ensure cookies are properly set
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise(resolve => setTimeout(resolve, 200))
 
         // Refresh the session to update the auth context
         await refreshSession()
@@ -129,9 +130,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         // Close modal and let AuthContext handle the session
         onClose()
 
+        // Add another delay before redirect to ensure state is updated
+        await new Promise(resolve => setTimeout(resolve, 100))
+
         // Redirect based on user role
         if (data.user.role === 'admin') {
           router.push('/admin')
+        } else {
+          router.push('/dashboard')
         }
       }
     } catch (err) {
