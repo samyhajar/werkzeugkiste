@@ -1,16 +1,16 @@
 import Image from 'next/image'
 
 const topRowLogos = [
-  { src: '/small_arbeitplus_NOe.jpg', alt: 'arbeit plus NÖ' },
-  { src: '/small_fhstp.jpg', alt: 'FH St. Pölten' },
-  { src: '/ak-noe-logo-e1644578170238.jpg', alt: 'AK Niederösterreich' },
-  { src: '/small_AK_EXTRA_LOGO_JPG.jpg', alt: 'AK extra' },
+  { src: '/small_arbeitplus_NOe.jpg', alt: 'arbeit plus NÖ', width: 220, height: 100 },
+  { src: '/small_fhstp.jpg', alt: 'FH St. Pölten', width: 220, height: 100 },
+  { src: '/ak-noe-logo-e1644578170238.jpg', alt: 'AK Niederösterreich', width: 220, height: 100 },
+  { src: '/small_AK_EXTRA_LOGO_JPG.jpg', alt: 'AK extra', width: 220, height: 100 },
 ]
 
 const bottomRowLogos = [
-  { src: '/DSM-Mini-Web-Banner_quer_de_klein.png', alt: 'Digital Skills Map' },
-  { src: '/B-WISE-Banner-mini.png', alt: 'B-WISE' },
-  { src: '/erwachsenenbildung-Banner.png', alt: 'erwachsenenbildung.at' },
+  { src: '/DSM-Mini-Web-Banner_quer_de_klein.png', alt: 'Digital Skills Map', width: 260, height: 100 },
+  { src: '/B-WISE-Banner-mini.png', alt: 'B-WISE', width: 260, height: 100 },
+  { src: '/erwachsenenbildung-Banner.png', alt: 'erwachsenenbildung.at', width: 260, height: 100 },
 ]
 
 export default function PartnerSection() {
@@ -23,10 +23,9 @@ export default function PartnerSection() {
             key={logo.src}
             src={logo.src}
             alt={logo.alt}
-            width={220}
-            height={100}
+            width={logo.width}
+            height={logo.height}
             className="object-contain h-20 md:h-24 w-auto max-w-[160px] md:max-w-[220px]"
-            style={{ height: 'auto' }}
           />
         ))}
       </div>
@@ -48,10 +47,9 @@ export default function PartnerSection() {
             key={logo.src}
             src={logo.src}
             alt={logo.alt}
-            width={260}
-            height={100}
+            width={logo.width}
+            height={logo.height}
             className="object-contain h-24 w-auto max-w-[200px] md:max-w-[260px]"
-            style={{ height: 'auto' }}
           />
         ))}
       </div>

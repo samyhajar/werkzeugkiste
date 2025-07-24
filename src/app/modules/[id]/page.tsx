@@ -80,16 +80,25 @@ export default function ModuleDetailPage() {
     lastFetchTime.current = now
 
     try {
+      setLoading(true)
+      setError(null)
+
       const response = await fetch(`/api/modules/${moduleId}`)
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
           setModule(data.module)
+        } else {
+          setError(data.error || 'Failed to load module')
         }
+      } else {
+        setError(`HTTP ${response.status}: ${response.statusText}`)
       }
     } catch (err) {
       console.error('Error fetching module:', err)
+      setError('Failed to load module')
     } finally {
+      setLoading(false)
       fetchInProgress.current = false
     }
   }, [moduleId])
