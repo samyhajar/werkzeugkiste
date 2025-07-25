@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Award, BookOpen, CheckCircle, TrendingUp, User, Calendar } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
-import LoginModal from '@/components/shared/LoginModal'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 interface DashboardStats {
@@ -38,39 +38,17 @@ export default function StudentDashboard() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const { user, loading: authLoading } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
   const router = useRouter()
-
-  // Check authentication on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const supabase = getBrowserClient()
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-          setShowLoginModal(true)
-        } else {
-          setUser(user)
-        }
-        setAuthChecked(true)
-      } catch (error) {
-        console.error('Error checking authentication:', error)
-        setShowLoginModal(true)
-        setAuthChecked(true)
-      }
-    }
-
-    void checkAuth()
-  }, [])
 
   useEffect(() => {
     if (user) {
-      void fetchDashboardData()
+      fetchDashboardData()
+    } else if (!authLoading) {
+      setLoading(false)
     }
-  }, [user])
+  }, [user, authLoading])
 
   const fetchDashboardData = async () => {
     try {
@@ -141,19 +119,18 @@ export default function StudentDashboard() {
     }
   }
 
-  // Don't render content until auth is checked
-  if (!authChecked) {
+  // Show login modal if not authenticated
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-          <p className="text-gray-600">Überprüfe Anmeldung...</p>
+          <p className="text-gray-600">Lade...</p>
         </div>
       </div>
     )
   }
 
-  // Show login modal if not authenticated
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -344,16 +321,7 @@ export default function StudentDashboard() {
         </Card>
       </main>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => {
-          setShowLoginModal(false)
-          // If user is still not logged in after modal closes, redirect to home
-          if (!user) {
-            router.push('/')
-          }
-        }}
-      />
+      {/* Removed LoginModal component as it's now handled by useAuth */}
     </div>
   )
 }

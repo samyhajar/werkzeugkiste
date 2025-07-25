@@ -151,14 +151,14 @@ export default async function AdminDashboard() {
     totalCertificates: certificates?.length || 0,
     recentActivity: [
       ...(lessonActivities?.map((activity: any) => ({
-        id: `lesson-${activity.lesson_id}`,
+        id: `lesson-${activity.lesson_id}-${activity.student_id}`,
         type: 'lesson_completed',
         description: `${activity.profiles?.full_name || 'Student'} completed "${activity.lessons?.title || 'Lesson'}"`,
         timestamp: activity.completed_at,
         user: activity.profiles?.full_name,
       })) || []),
       ...(quizActivities?.map((activity: any) => ({
-        id: `quiz-${activity.quiz_id}`,
+        id: `quiz-${activity.quiz_id}-${activity.user_id}`,
         type: 'quiz_completed',
         description: `${activity.profiles?.full_name || 'Student'} completed "${activity.enhanced_quizzes?.title || 'Quiz'}"`,
         timestamp: activity.completed_at,

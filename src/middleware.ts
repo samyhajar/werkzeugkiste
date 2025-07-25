@@ -82,8 +82,8 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // If user is authenticated but on auth pages, redirect based on role
-  if (user && isAuthPage) {
+  // If user is authenticated but on auth pages (excluding set-password), redirect based on role
+  if (user && isAuthPage && request.nextUrl.pathname !== '/auth/set-password') {
     const url = request.nextUrl.clone()
     if (userRole === 'admin') {
       url.pathname = '/admin'

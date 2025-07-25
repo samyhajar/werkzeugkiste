@@ -136,12 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string, retryCount = 0) => {
     if (!supabase) return
 
     try {
       setProfileLoading(true)
-      console.log('[AuthContext] Fetching user profile for:', userId)
+      console.log('[AuthContext] Fetching user profile for:', userId, 'retry:', retryCount)
 
       const { data, error } = await supabase
         .from('profiles')
@@ -151,30 +151,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('[AuthContext] Profile fetch error:', error)
-        // If profile doesn't exist, create a basic one from user metadata
+        console.error('[AuthContext] Error details - code:', error.code, 'message:', error.message, 'details:', error.details)
+
+        // If profile doesn't exist and we haven't retried too many times, wait and retry
+        if (error.code === 'PGRST116' && retryCount < 3) {
+          console.log('[AuthContext] Profile not found, retrying in 1 second... (attempt', retryCount + 1, 'of 3)')
+          setTimeout(() => {
+            fetchUserProfile(userId, retryCount + 1)
+          }, 1000)
+          return
+        }
+
+        // If profile doesn't exist after retries, create a basic one from user metadata
         if (error.code === 'PGRST116') {
+          console.log('[AuthContext] Profile not found after retries, creating default profile from user metadata')
+          const userData = user || session?.user
+          if (userData) {
+            // Try to create the profile in the database
+            const newProfileData = {
+              id: userData.id,
+              email: userData.email,
+              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+              role: userData.user_metadata?.role || 'student'
+            }
+
+            console.log('[AuthContext] Attempting to create profile:', newProfileData)
+
+            const { data: createdProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert(newProfileData)
+              .select()
+              .single()
+
+            if (createError) {
+              console.error('[AuthContext] Error creating profile:', createError)
+              console.error('[AuthContext] Create error details - code:', createError.code, 'message:', createError.message, 'details:', createError.details)
+
+              // Fall back to creating a local profile object
+              const defaultProfile: UserProfile = {
+                id: userData.id,
+                email: userData.email!,
+                full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+                role: userData.user_metadata?.role || 'student',
+                first_name: userData.user_metadata?.first_name || null,
+                created_at: userData.created_at || null,
+                updated_at: userData.updated_at || null
+              }
+              console.log('[AuthContext] Using fallback profile:', defaultProfile)
+              setProfile(defaultProfile)
+            } else {
+              console.log('[AuthContext] Profile created successfully:', createdProfile)
+              const profileData: UserProfile = {
+                id: createdProfile.id,
+                email: userData.email || '',
+                full_name: createdProfile.full_name,
+                role: (createdProfile.role as 'admin' | 'student') || 'student',
+                first_name: createdProfile.first_name || null,
+                created_at: createdProfile.created_at,
+                updated_at: createdProfile.updated_at
+              }
+              setProfile(profileData)
+            }
+          }
+        } else {
+          // For other errors, try to create a fallback profile
+          console.log('[AuthContext] Other profile error, creating fallback profile')
           const userData = user || session?.user
           if (userData) {
             const defaultProfile: UserProfile = {
               id: userData.id,
               email: userData.email!,
-              full_name: userData.user_metadata?.full_name || null,
+              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
               role: userData.user_metadata?.role || 'student',
               first_name: userData.user_metadata?.first_name || null,
               created_at: userData.created_at || null,
               updated_at: userData.updated_at || null
             }
+            console.log('[AuthContext] Using fallback profile for other error:', defaultProfile)
             setProfile(defaultProfile)
           }
         }
         return
       }
 
-      console.log('[AuthContext] Profile fetched successfully:', data.email)
+      console.log('[AuthContext] Profile fetched successfully:', data.id)
       // Ensure type safety when setting profile
       const profileData: UserProfile = {
         id: data.id,
-        email: data.email || user?.email || session?.user?.email || '',
+        email: user?.email || session?.user?.email || data.email || '',
         full_name: data.full_name,
         role: (data.role as 'admin' | 'student') || 'student',
         first_name: data.first_name,
@@ -184,14 +248,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(profileData)
     } catch (error) {
       console.error('[AuthContext] Exception fetching profile:', error)
+      console.error('[AuthContext] Exception details:', JSON.stringify(error, null, 2))
+
+      // Create fallback profile even on exceptions
+      const userData = user || session?.user
+      if (userData) {
+        const defaultProfile: UserProfile = {
+          id: userData.id,
+          email: userData.email!,
+          full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+          role: userData.user_metadata?.role || 'student',
+          first_name: userData.user_metadata?.first_name || null,
+          created_at: userData.created_at || null,
+          updated_at: userData.updated_at || null
+        }
+        console.log('[AuthContext] Using fallback profile after exception:', defaultProfile)
+        setProfile(defaultProfile)
+      }
     } finally {
-      setProfileLoading(false)
+      // Only set loading to false if this is not a retry
+      if (retryCount === 0) {
+        setProfileLoading(false)
+      }
     }
   }
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserProfile(user.id)
+      await fetchUserProfile(user.id, 0)
     }
   }
 
@@ -264,6 +348,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('[AuthContext] SIGNED_OUT - forcing immediate redirect')
           window.location.href = '/'
                         } else if (event === 'SIGNED_IN' && session) {
+          // Prevent redirecting away from the set-password page
+          if (window.location.pathname === '/auth/set-password') {
+            console.log('[AuthContext] On set-password page, skipping redirect.');
+            setSession(session);
+            setUser(session.user);
+            return;
+          }
           setUser(session.user)
           setSession(session)
 

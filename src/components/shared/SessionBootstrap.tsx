@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 /**
@@ -14,6 +15,7 @@ export default function SessionBootstrap() {
   const syncInProgress = useRef(false)
   const hasRun = useRef(false)
   const supabase = useRef<ReturnType<typeof getBrowserClient> | null>(null)
+  const pathname = usePathname()
 
   const syncAuthState = useCallback(async () => {
     // Prevent duplicate sync operations
@@ -77,6 +79,12 @@ export default function SessionBootstrap() {
     // Only run in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       return
+    }
+
+    // Do not sync auth state on the set-password page
+    if (pathname === '/auth/set-password') {
+      console.log('[SessionBootstrap] On set-password page, skipping auth sync to allow password update.');
+      return;
     }
 
     // Initialize Supabase client

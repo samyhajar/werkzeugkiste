@@ -187,7 +187,21 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
         const response = await fetch(`/api/quizzes/${quiz.id}`)
         const data = await response.json()
 
-                if (response.ok && data.success) {
+        console.log('Quiz data received:', data)
+        console.log('Questions data:', data.quiz?.questions)
+        if (data.quiz?.questions) {
+          data.quiz.questions.forEach((q: any, i: number) => {
+            console.log(`Question ${i + 1}:`, {
+              id: q.id,
+              type: q.type,
+              question_html: q.question_html,
+              quiz_answers: q.quiz_answers,
+              quiz_answers_count: q.quiz_answers?.length || 0
+            })
+          })
+        }
+
+        if (response.ok && data.success) {
           setQuestions(data.quiz.questions || [])
         } else {
           setError(data.error || 'Failed to load quiz content')
