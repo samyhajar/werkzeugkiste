@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-// import { getBrowserClient } from '@/lib/supabase/browser-client'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { X } from 'lucide-react'
-import { AuthResponse } from '@/types/api'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface LoginModalProps {
@@ -16,420 +14,250 @@ interface LoginModalProps {
 }
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const [signInEmail, setSignInEmail] = useState('')
-  const [signInPassword, setSignInPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
-  const [signUpEmail, setSignUpEmail] = useState('')
-  const [signUpPassword, setSignUpPassword] = useState('')
-  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('')
-
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [role, setRole] = useState('student')
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const router = useRouter()
-  const { refreshSession } = useAuth()
-  // const supabase = getBrowserClient()
+  const [activeTab, setActiveTab] = useState('login')
 
-  // Reset form when modal opens/closes
-  useEffect(() => {
-    if (!isOpen) {
-      setSignInEmail('')
-      setSignInPassword('')
-      setRememberMe(false)
-      setSignUpEmail('')
-      setSignUpPassword('')
-      setSignUpConfirmPassword('')
-      setError('')
-      setSuccess('')
-      setLoading(false)
-    }
-  }, [isOpen])
+    const { refreshSession } = useAuth()
+
+  const resetForm = () => {
+    setEmail('')
+    setPassword('')
+    setFullName('')
+    setRole('student')
+    setError('')
+    setIsLoading(false)
+    setActiveTab('login')
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (!email || !password) {
+      setError('Email and password are required')
+      return
+    }
+
+    setIsLoading(true)
     setError('')
 
     try {
-      console.log('[LoginModal] Starting login request')
-      console.log('[LoginModal] Request data:', { email: signInEmail, password: '***' })
-
-      // Use server-side login API that sets proper cookies
-      const response = await fetch(`/api/auth/login?t=${Date.now()}`, {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
         },
-        credentials: 'include', // Important: include cookies
-        body: JSON.stringify({ email: signInEmail, password: signInPassword }),
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
       })
 
-      console.log('[LoginModal] Response status:', response.status)
-      console.log('[LoginModal] Response headers:', Object.fromEntries(response.headers.entries()))
+      const data = await response.json()
 
-      // Check if response is ok before trying to parse JSON
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Login API error response:', errorText)
-        console.error('Login API error response length:', errorText.length)
-        console.error('Login API error response first 100 chars:', errorText.substring(0, 100))
+                  if (data.success) {
+        console.log('[LoginModal] Login successful, refreshing session...')
 
-        // Try to parse as JSON, fallback to text
-        let errorData: { error?: string } | null = null
-        try {
-          errorData = JSON.parse(errorText) as { error?: string }
-          console.log('[LoginModal] Parsed error data:', errorData)
-        } catch (parseError) {
-          console.error('[LoginModal] Failed to parse error response as JSON:', parseError)
-          // If it's not JSON, it might be an HTML error page
-          setError('Server error occurred. Please try again.')
-          setLoading(false)
-          return
-        }
-
-        setError(errorData?.error || 'Anmeldung fehlgeschlagen')
-        setLoading(false)
-        return
-      }
-
-      let data: AuthResponse
-      try {
-        const responseText = await response.text()
-        console.log('[LoginModal] Response text:', responseText)
-        data = JSON.parse(responseText) as AuthResponse
-      } catch (parseError) {
-        console.error('Failed to parse login response:', parseError)
-        setError('Invalid response from server. Please try again.')
-        setLoading(false)
-        return
-      }
-
-      if (!data.success) {
-        setError(data.error || 'Anmeldung fehlgeschlagen')
-        setLoading(false)
-        return
-      }
-
-      setSuccess('Anmeldung erfolgreich!')
-      setLoading(false)
-
-      if (data.success && data.user) {
-        // Add a small delay to ensure cookies are properly set
-        await new Promise(resolve => setTimeout(resolve, 200))
-
-        // Refresh the session to update the auth context
+        // Refresh the auth context session to get updated user data
         await refreshSession()
 
-        // Close modal and let AuthContext handle the session
-        onClose()
+        console.log('[LoginModal] Session refreshed, closing modal...')
 
-        // Add another delay before redirect to ensure state is updated
-        await new Promise(resolve => setTimeout(resolve, 100))
+        // Close modal
+        handleClose()
 
-        // Redirect based on user role
-        if (data.user.role === 'admin') {
-          router.push('/admin')
-        } else {
-          // Students stay on the landing page after login
-          router.push('/')
-        }
+        // Force page refresh to ensure UI updates
+        console.log('[LoginModal] Forcing page refresh...')
+        setTimeout(() => {
+          window.location.reload()
+        }, 100)
+      } else {
+        setError(data.error || 'Login failed')
       }
-    } catch (err) {
-      console.error('Login error:', err)
+    } catch (error) {
+      console.error('Login error:', error)
       setError('Login failed. Please try again.')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!email || !password || !fullName) {
+      setError('All fields are required')
+      return
+    }
+
+    setIsLoading(true)
     setError('')
-    setSuccess('')
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(signUpEmail)) {
-      setError('Bitte geben Sie eine gültige E-Mail-Adresse ein')
-      return
-    }
-
-    // Password validation
-    if (signUpPassword.length < 6) {
-      setError('Passwort muss mindestens 6 Zeichen lang sein')
-      return
-    }
-
-    if (signUpPassword !== signUpConfirmPassword) {
-      setError('Passwörter stimmen nicht überein')
-      return
-    }
-
-    setLoading(true)
 
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          email: signUpEmail,
-          password: signUpPassword,
-          role: 'student'
+          email,
+          password,
+          full_name: fullName,
+          role
         }),
+        credentials: 'include'
       })
 
-      // Check if response is ok before trying to parse JSON
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Signup API error response:', errorText)
-
-        // Try to parse as JSON, fallback to text
-        let errorData: { error?: string } | null = null
-        try {
-          errorData = JSON.parse(errorText) as { error?: string }
-        } catch {
-          // If it's not JSON, it might be an HTML error page
-          setError('Server error occurred. Please try again.')
-          setLoading(false)
-          return
-        }
-
-        setError(errorData?.error || 'Registrierung fehlgeschlagen')
-        setLoading(false)
-        return
-      }
-
-      let data: AuthResponse
-      try {
-        data = await response.json() as AuthResponse
-      } catch (parseError) {
-        console.error('Failed to parse signup response:', parseError)
-        setError('Invalid response from server. Please try again.')
-        setLoading(false)
-        return
-      }
+      const data = await response.json()
 
       if (data.success) {
-        setSuccess('Registrierung erfolgreich! Sie können sich jetzt anmelden.')
-        setSignUpEmail('')
-        setSignUpPassword('')
-        setSignUpConfirmPassword('')
+        // Refresh the auth context session to get updated user data
+        await refreshSession()
+
+        // Close modal - AuthContext will handle role-based redirection
+        handleClose()
       } else {
-        setError(data.error || 'Registrierung fehlgeschlagen')
+        setError(data.error || 'Signup failed')
       }
-    } catch (_err) {
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+    } catch (error) {
+      console.error('Signup error:', error)
+      setError('Signup failed. Please try again.')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg p-0 bg-white pointer-events-auto select-text">
-        <div className="p-8 pointer-events-auto">
-          <DialogHeader className="mb-8">
-            <DialogTitle className="text-3xl font-normal text-gray-700 text-left">
-              Willkommen
-            </DialogTitle>
-            <DialogDescription className="text-gray-500 text-left">
-              Melden Sie sich an oder erstellen Sie ein neues Konto
-            </DialogDescription>
-            <button
-              onClick={onClose}
-              className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center text-xl font-semibold">
+            Welcome to Werkzeugkiste
+          </DialogTitle>
+        </DialogHeader>
 
-          <Tabs
-            defaultValue="signin"
-            className="w-full"
-            onValueChange={() => {
-              // Clear messages when switching tabs
-              setError('')
-              setSuccess('')
-            }}
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-50 rounded-lg p-1 h-12">
-              <TabsTrigger
-                value="signin"
-                className="text-sm font-medium rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 transition-all duration-200"
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="login" className="space-y-4">
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="login-email">Email</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="login-password">Password</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              {error && (
+                <div className="text-red-600 text-sm text-center">{error}</div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-[#6e859a] hover:bg-[#5a7388]"
+                disabled={isLoading}
               >
-                Einloggen
-              </TabsTrigger>
-              <TabsTrigger
-                value="signup"
-                className="text-sm font-medium rounded-md data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 transition-all duration-200"
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup" className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signup-name">Full Name</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-role">Role</Label>
+                <select
+                  id="signup-role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#6e859a] focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="student">Student</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              {error && (
+                <div className="text-red-600 text-sm text-center">{error}</div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-[#6e859a] hover:bg-[#5a7388]"
+                disabled={isLoading}
               >
-                Registrieren
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin" className="space-y-6 mt-0">
-              <form onSubmit={handleSignIn} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="signin-email" className="text-gray-600 font-normal text-sm">
-                    Benutzername oder E-Mail
-                  </label>
-                  <input
-                    id="signin-email"
-                    type="email"
-                    value={signInEmail}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignInEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                    autoComplete="username"
-                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="signin-password" className="text-gray-600 font-normal text-sm">
-                    Passwort
-                  </label>
-                  <input
-                    id="signin-password"
-                    type="password"
-                    value={signInPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignInPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
-                    autoComplete="current-password"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <input
-                    id="remember-me"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
-                    disabled={loading}
-                    className="h-4 w-4 text-[#de0449] border-gray-300 rounded focus:ring-[#de0449] focus:ring-2"
-                  />
-                  <label htmlFor="remember-me" className="text-gray-600 font-normal text-sm select-text pointer-events-auto">
-                    Meine Eingaben speichern
-                  </label>
-                </div>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    className="text-gray-500 underline text-sm hover:text-gray-700"
-                  >
-                    Passwort vergessen? Hier klicken!
-                  </button>
-                </div>
-
-                {error && (
-                  <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
-                )}
-
-                {success && (
-                  <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md font-medium">{success}</div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full bg-[#de0449] hover:bg-[#c5043e] text-white py-3 rounded-md font-normal text-lg"
-                  disabled={loading}
-                >
-                  {loading ? 'Wird angemeldet...' : 'Einloggen'}
-                </Button>
-
-
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-6 mt-0">
-              <form onSubmit={handleSignUp} className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="signup-email" className="text-gray-600 font-normal text-sm">
-                    E-Mail-Adresse
-                  </label>
-                  <input
-                    id="signup-email"
-                    type="email"
-                    value={signUpEmail}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="signup-password" className="text-gray-600 font-normal text-sm">
-                    Passwort
-                  </label>
-                  <input
-                    id="signup-password"
-                    type="password"
-                    value={signUpPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    minLength={6}
-                    autoComplete="new-password"
-                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="signup-confirm-password" className="text-gray-600 font-normal text-sm">
-                    Passwort bestätigen
-                  </label>
-                  <input
-                    id="signup-confirm-password"
-                    type="password"
-                    value={signUpConfirmPassword}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignUpConfirmPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    autoComplete="new-password"
-                    className="w-full border-0 border-b border-gray-300 rounded-none px-0 py-3 focus:border-gray-500 focus:ring-0 bg-transparent focus:outline-none focus:ring-0 select-text pointer-events-auto text-gray-900 placeholder-gray-400 [&:-webkit-autofill]:bg-transparent [&:-webkit-autofill]:shadow-[0_0_0_30px_transparent_inset] [&:-webkit-autofill]:text-gray-900"
-                  />
-                </div>
-
-
-
-                {error && (
-                  <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">{error}</div>
-                )}
-
-                {success && (
-                  <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md font-medium">{success}</div>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full bg-[#de0449] hover:bg-[#c5043e] text-white py-3 rounded-md font-normal text-lg"
-                  disabled={loading}
-                >
-                  {loading ? 'Wird registriert...' : 'Konto erstellen'}
-                </Button>
-
-                <div className="text-center text-sm text-gray-500">
-                  Mit der Registrierung stimmen Sie unseren{' '}
-                  <button type="button" className="text-gray-600 underline hover:text-gray-800">
-                    Nutzungsbedingungen
-                  </button>{' '}
-                  und{' '}
-                  <button type="button" className="text-gray-600 underline hover:text-gray-800">
-                    Datenschutzbestimmungen
-                  </button>{' '}
-                  zu.
-                </div>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </div>
+                {isLoading ? 'Creating account...' : 'Create Account'}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

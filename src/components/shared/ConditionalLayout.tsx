@@ -38,27 +38,18 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     )
   }
 
-  // During SSR or before hydration, render a minimal layout without AuthProvider
-  if (!isClient) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        {/* Only render Navbar and other auth-dependent components after hydration */}
-        <main className="flex-1">{children}</main>
-        {!isModulePage && <Footer />}
-        {!isModulePage && <ScrollToTopButton />}
-      </div>
-    )
-  }
-
-  // After hydration, render with AuthProvider and RealtimeProvider
-  // Include SessionBootstrap for all pages to ensure proper auth sync
+  // Always wrap in AuthProvider to prevent useAuth hook errors
+  // But conditionally render components based on hydration status
   return (
     <AuthProvider>
       <RealtimeProvider>
         <SessionBootstrap />
         <div className="min-h-screen">
+          {/* Always render Navbar (it handles its own hydration) to ensure LoginModal has AuthProvider context */}
           {!isModulePage && <Navbar />}
-          <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>{children}</main>
+          <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>
+            {children}
+          </main>
           {!isModulePage && <Footer />}
           {!isModulePage && <ScrollToTopButton />}
         </div>
