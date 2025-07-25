@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,9 +13,10 @@ import { X } from 'lucide-react'
 interface LoginModalProps {
   isOpen: boolean
   onClose: () => void
+  initialTab?: 'login' | 'signup'
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: LoginModalProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -23,7 +24,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('login')
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   const { refreshSession } = useAuth()
 
@@ -35,7 +36,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setRememberMe(false)
     setError('')
     setIsLoading(false)
-    setActiveTab('login')
+    setActiveTab(initialTab)
   }
 
   const handleClose = () => {
@@ -150,18 +151,18 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </button>
 
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <DialogHeader className="px-8 pt-8 pb-6 text-center">
+          <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
             Willkommen
-          </h2>
-          <p className="text-gray-600 text-sm">
+          </DialogTitle>
+          <DialogDescription className="text-gray-600 text-sm">
             Melden Sie sich an oder erstellen Sie ein neues Konto
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
         {/* Content */}
         <div className="px-8 pb-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'signup')} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-xl p-1 mb-6">
               <TabsTrigger
                 value="login"
@@ -191,6 +192,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     placeholder=""
                     required
                     disabled={isLoading}
+                    autoComplete="email"
                     className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
                   />
                 </div>
@@ -207,6 +209,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     placeholder=""
                     required
                     disabled={isLoading}
+                    autoComplete="current-password"
                     className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
                   />
                 </div>
@@ -268,6 +271,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     placeholder=""
                     required
                     disabled={isLoading}
+                    autoComplete="name"
                     className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
                   />
                 </div>
@@ -284,6 +288,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     placeholder=""
                     required
                     disabled={isLoading}
+                    autoComplete="email"
                     className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
                   />
                 </div>
@@ -300,6 +305,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     placeholder=""
                     required
                     disabled={isLoading}
+                    autoComplete="new-password"
                     className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
                   />
                 </div>

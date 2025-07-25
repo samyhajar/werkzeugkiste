@@ -7,6 +7,15 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     console.log('[Logout API] Starting logout process')
+
+    // Handle both regular fetch requests and sendBeacon FormData
+    const contentType = request.headers.get('content-type')
+    if (contentType?.includes('multipart/form-data')) {
+      console.log('[Logout API] Received sendBeacon FormData request')
+    } else {
+      console.log('[Logout API] Received regular fetch request')
+    }
+
     const supabase = await createClient()
 
     const { error } = await supabase.auth.signOut()

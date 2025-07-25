@@ -509,6 +509,7 @@ export default function Navbar() {
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
+        initialTab="login"
       />
     </>
   )

@@ -508,8 +508,8 @@ export default function QuizzesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Enhanced Quizzes</h1>
-          <p className="text-white mt-2">Manage course and lesson quizzes with advanced features</p>
+          <h1 className="text-4xl font-bold text-white">Quizzes</h1>
+          <p className="text-white mt-2">Verwalten Sie Kurs- und Lektions-Quizzes mit erweiterten Funktionen</p>
         </div>
         <Button
           onClick={() => setIsCreateDialogOpen(true)}

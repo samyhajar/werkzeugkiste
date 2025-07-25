@@ -11,7 +11,7 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -210,6 +210,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Link</DialogTitle>
+              <DialogDescription>
+                Add a hyperlink to your content
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -243,6 +246,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Image</DialogTitle>
+              <DialogDescription>
+                Add an image to your content
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">

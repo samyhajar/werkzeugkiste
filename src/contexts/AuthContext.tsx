@@ -354,15 +354,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Just force page refresh immediately - let the server handle the rest
       console.log('[AuthContext] Forcing immediate page refresh and redirect...')
 
-      // Call logout API and redirect simultaneously
-      fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      }).catch(error => {
-        console.error('[AuthContext] Logout API error (non-blocking):', error)
-      })
+      // Use sendBeacon for reliable logout API call that won't be interrupted by navigation
+      if (navigator.sendBeacon) {
+        // sendBeacon is perfect for this - it's designed to send data when page is unloading
+        const logoutData = new FormData()
+        logoutData.append('action', 'logout')
+        navigator.sendBeacon('/api/auth/logout', logoutData)
+      } else {
+        // Fallback for older browsers - try normal fetch but don't wait
+        fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(error => {
+          // This error is expected and non-blocking since we're navigating away
+          console.log('[AuthContext] Logout API call interrupted by navigation (expected)')
+        })
+      }
 
-      // Immediate redirect - don't wait for API response to avoid race conditions
+      // Immediate redirect - now the API call won't be interrupted
       window.location.href = '/'
 
       console.log('[AuthContext] Sign out completed')

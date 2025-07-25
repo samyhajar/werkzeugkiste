@@ -103,9 +103,9 @@ export default function StudentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Students</h1>
+          <h1 className="text-4xl font-bold text-white">Teilnehmer</h1>
           <p className="text-white mt-2">
-            Manage student accounts and progress
+            Verwalten Sie Teilnehmerkonten und Fortschritte
           </p>
         </div>
         <div className="flex items-center gap-2">

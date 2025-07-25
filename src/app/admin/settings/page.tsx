@@ -39,9 +39,9 @@ export default function AdminSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Settings</h1>
-          <p className="text-gray-600 mt-2">
-            Manage platform settings, branding, and admin users
+          <h1 className="text-4xl font-bold text-white">Einstellungen</h1>
+          <p className="text-white mt-2">
+            Verwalten Sie Plattform-Einstellungen, Branding und Admin-Benutzer
           </p>
         </div>
                  <Button className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm">

@@ -316,7 +316,7 @@ export default function CertificatesPage() {
     <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Zertifikate</h1>
+        <h1 className="text-4xl font-bold text-white">Zertifikate</h1>
         <p className="text-white mt-2">
           Verwalten Sie Zertifikate und Vorlagen für Ihre Kurse.
         </p>

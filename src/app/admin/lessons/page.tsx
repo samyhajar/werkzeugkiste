@@ -381,8 +381,8 @@ export default function LessonsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Lektionen</h1>
-          <p className="text-gray-600 text-sm">
+          <h1 className="text-4xl font-bold text-white mb-2">Lektionen</h1>
+          <p className="text-white text-sm">
             Lektionen in allen Kursen verwalten
           </p>
         </div>
