@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { formatDistanceToNow } from 'date-fns'
 import { useRouter } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
 
 interface Course {
   id: string
@@ -1052,7 +1053,7 @@ export default function QuizzesPage() {
                 </>
               ) : (
                 <>
-                  <span className="mr-2">🗑️</span>
+                  <Trash2 className="mr-2 h-4 w-4" />
                   Delete Quiz
                 </>
               )}
@@ -1191,7 +1192,7 @@ export default function QuizzesPage() {
                           className="border-red-500 text-red-500 hover:bg-red-50 shadow-sm"
                           onClick={() => openDeleteDialog(quiz)}
                         >
-                          🗑️
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </td>
