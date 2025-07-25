@@ -178,75 +178,24 @@ export async function DELETE(
       )
     }
 
-    // Get all courses in this module to delete them first
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id')
-      .eq('module_id', moduleId)
+    // Use the database function to safely delete the module with all cascade
+    const { data: result, error: deleteError } = await supabase.rpc(
+      'delete_module_with_cascade',
+      { module_id: moduleId }
+    )
 
-    if (coursesError) {
-      console.error('Error fetching courses:', coursesError)
+    if (deleteError) {
+      console.error('Error deleting module with cascade:', deleteError)
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch courses' },
+        {
+          success: false,
+          error: 'Failed to delete module and related content',
+        },
         { status: 500 }
       )
     }
 
-    // Delete all lessons in courses of this module
-    if (courses && courses.length > 0) {
-      const courseIds = courses.map((c: { id: string }) => c.id)
-
-      // Delete lessons
-      const { error: lessonsDeleteError } = await supabase
-        .from('lessons')
-        .delete()
-        .in('course_id', courseIds)
-
-      if (lessonsDeleteError) {
-        console.error('Error deleting lessons:', lessonsDeleteError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to delete lessons' },
-          { status: 500 }
-        )
-      }
-
-      // Delete quizzes
-      const { error: quizzesDeleteError } = await supabase
-        .from('quizzes')
-        .delete()
-        .in('course_id', courseIds)
-
-      if (quizzesDeleteError) {
-        console.error('Error deleting quizzes:', quizzesDeleteError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to delete quizzes' },
-          { status: 500 }
-        )
-      }
-
-      // Delete courses
-      const { error: coursesDeleteError } = await supabase
-        .from('courses')
-        .delete()
-        .eq('module_id', moduleId)
-
-      if (coursesDeleteError) {
-        console.error('Error deleting courses:', coursesDeleteError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to delete courses' },
-          { status: 500 }
-        )
-      }
-    }
-
-    // Finally, delete the module
-    const { error: moduleDeleteError } = await supabase
-      .from('modules')
-      .delete()
-      .eq('id', moduleId)
-
-    if (moduleDeleteError) {
-      console.error('Error deleting module:', moduleDeleteError)
+    if (!result) {
       return NextResponse.json(
         { success: false, error: 'Failed to delete module' },
         { status: 500 }

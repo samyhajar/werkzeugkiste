@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: '12.2.3 (519615d)'
   }
   public: {
     Tables: {
@@ -32,25 +32,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "answers_attempt_id_fkey"
-            columns: ["attempt_id"]
+            foreignKeyName: 'answers_attempt_id_fkey'
+            columns: ['attempt_id']
             isOneToOne: false
-            referencedRelation: "quiz_attempts"
-            referencedColumns: ["id"]
+            referencedRelation: 'quiz_attempts'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "answers_option_id_fkey"
-            columns: ["option_id"]
+            foreignKeyName: 'answers_option_id_fkey'
+            columns: ['option_id']
             isOneToOne: false
-            referencedRelation: "options"
-            referencedColumns: ["id"]
+            referencedRelation: 'options'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "answers_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: 'answers_question_id_fkey'
+            columns: ['question_id']
             isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedRelation: 'questions'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -87,11 +87,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "certificates_module_id_fkey"
-            columns: ["module_id"]
+            foreignKeyName: 'certificates_module_id_fkey'
+            columns: ['module_id']
             isOneToOne: false
-            referencedRelation: "modules"
-            referencedColumns: ["id"]
+            referencedRelation: 'modules'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -137,18 +137,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "courses_admin_id_fkey"
-            columns: ["admin_id"]
+            foreignKeyName: 'courses_admin_id_fkey'
+            columns: ['admin_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "courses_module_id_fkey"
-            columns: ["module_id"]
+            foreignKeyName: 'courses_module_id_fkey'
+            columns: ['module_id']
             isOneToOne: false
-            referencedRelation: "modules"
-            referencedColumns: ["id"]
+            referencedRelation: 'modules'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -191,18 +191,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "enhanced_quiz_attempts_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'enhanced_quiz_attempts_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "enhanced_quizzes"
-            referencedColumns: ["id"]
+            referencedRelation: 'enhanced_quizzes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "enhanced_quiz_attempts_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'enhanced_quiz_attempts_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "quiz_details"
-            referencedColumns: ["id"]
+            referencedRelation: 'quiz_details'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -212,14 +212,14 @@ export type Database = {
           created_at: string | null
           description: string | null
           feedback_mode:
-            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | Database['public']['Enums']['quiz_feedback_mode']
             | null
           id: string
           legacy_id: string | null
           lesson_id: string | null
           max_points: number | null
           pass_percent: number | null
-          scope: Database["public"]["Enums"]["quiz_scope"]
+          scope: Database['public']['Enums']['quiz_scope']
           settings: Json | null
           sort_order: number | null
           title: string
@@ -230,14 +230,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           feedback_mode?:
-            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | Database['public']['Enums']['quiz_feedback_mode']
             | null
           id?: string
           legacy_id?: string | null
           lesson_id?: string | null
           max_points?: number | null
           pass_percent?: number | null
-          scope: Database["public"]["Enums"]["quiz_scope"]
+          scope: Database['public']['Enums']['quiz_scope']
           settings?: Json | null
           sort_order?: number | null
           title: string
@@ -248,14 +248,14 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           feedback_mode?:
-            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | Database['public']['Enums']['quiz_feedback_mode']
             | null
           id?: string
           legacy_id?: string | null
           lesson_id?: string | null
           max_points?: number | null
           pass_percent?: number | null
-          scope?: Database["public"]["Enums"]["quiz_scope"]
+          scope?: Database['public']['Enums']['quiz_scope']
           settings?: Json | null
           sort_order?: number | null
           title?: string
@@ -263,18 +263,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "enhanced_quizzes_course_id_fkey"
-            columns: ["course_id"]
+            foreignKeyName: 'enhanced_quizzes_course_id_fkey'
+            columns: ['course_id']
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "enhanced_quizzes_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'enhanced_quizzes_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -293,11 +293,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "legacy_course_mapping_new_id_fkey"
-            columns: ["new_id"]
+            foreignKeyName: 'legacy_course_mapping_new_id_fkey'
+            columns: ['new_id']
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -316,11 +316,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "legacy_lesson_mapping_new_id_fkey"
-            columns: ["new_id"]
+            foreignKeyName: 'legacy_lesson_mapping_new_id_fkey'
+            columns: ['new_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -354,18 +354,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lesson_progress_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'lesson_progress_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lesson_progress_student_id_fkey"
-            columns: ["student_id"]
+            foreignKeyName: 'lesson_progress_student_id_fkey'
+            columns: ['student_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -408,11 +408,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lessons_course_id_fkey"
-            columns: ["course_id"]
+            foreignKeyName: 'lessons_course_id_fkey'
+            columns: ['course_id']
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -476,11 +476,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "options_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: 'options_question_id_fkey'
+            columns: ['question_id']
             isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
+            referencedRelation: 'questions'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -541,11 +541,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "questions_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'questions_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "quizzes"
-            referencedColumns: ["id"]
+            referencedRelation: 'quizzes'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -588,11 +588,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_answers_question_id_fkey"
-            columns: ["question_id"]
+            foreignKeyName: 'quiz_answers_question_id_fkey'
+            columns: ['question_id']
             isOneToOne: false
-            referencedRelation: "quiz_questions"
-            referencedColumns: ["id"]
+            referencedRelation: 'quiz_questions'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -641,25 +641,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_attempts_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'quiz_attempts_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "quizzes"
-            referencedColumns: ["id"]
+            referencedRelation: 'quizzes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "quiz_attempts_student_id_fkey"
-            columns: ["student_id"]
+            foreignKeyName: 'quiz_attempts_student_id_fkey'
+            columns: ['student_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "quiz_attempts_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: 'quiz_attempts_user_id_fkey'
+            columns: ['user_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -674,7 +674,7 @@ export type Database = {
           question_html: string
           quiz_id: string
           sort_order: number | null
-          type: Database["public"]["Enums"]["question_type"]
+          type: Database['public']['Enums']['question_type']
         }
         Insert: {
           category?: string | null
@@ -686,7 +686,7 @@ export type Database = {
           question_html: string
           quiz_id: string
           sort_order?: number | null
-          type: Database["public"]["Enums"]["question_type"]
+          type: Database['public']['Enums']['question_type']
         }
         Update: {
           category?: string | null
@@ -698,22 +698,22 @@ export type Database = {
           question_html?: string
           quiz_id?: string
           sort_order?: number | null
-          type?: Database["public"]["Enums"]["question_type"]
+          type?: Database['public']['Enums']['question_type']
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_questions_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'quiz_questions_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "enhanced_quizzes"
-            referencedColumns: ["id"]
+            referencedRelation: 'enhanced_quizzes'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "quiz_questions_quiz_id_fkey"
-            columns: ["quiz_id"]
+            foreignKeyName: 'quiz_questions_quiz_id_fkey'
+            columns: ['quiz_id']
             isOneToOne: false
-            referencedRelation: "quiz_details"
-            referencedColumns: ["id"]
+            referencedRelation: 'quiz_details'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -747,18 +747,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "quizzes_course_id_fkey"
-            columns: ["course_id"]
+            foreignKeyName: 'quizzes_course_id_fkey'
+            columns: ['course_id']
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "quizzes_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'quizzes_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -920,7 +920,7 @@ export type Database = {
           course_title: string | null
           description: string | null
           feedback_mode:
-            | Database["public"]["Enums"]["quiz_feedback_mode"]
+            | Database['public']['Enums']['quiz_feedback_mode']
             | null
           id: string | null
           lesson_id: string | null
@@ -928,23 +928,23 @@ export type Database = {
           max_points: number | null
           pass_percent: number | null
           question_count: number | null
-          scope: Database["public"]["Enums"]["quiz_scope"] | null
+          scope: Database['public']['Enums']['quiz_scope'] | null
           title: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "enhanced_quizzes_course_id_fkey"
-            columns: ["course_id"]
+            foreignKeyName: 'enhanced_quizzes_course_id_fkey'
+            columns: ['course_id']
             isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
+            referencedRelation: 'courses'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "enhanced_quizzes_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'enhanced_quizzes_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -963,18 +963,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "lesson_progress_lesson_id_fkey"
-            columns: ["lesson_id"]
+            foreignKeyName: 'lesson_progress_lesson_id_fkey'
+            columns: ['lesson_id']
             isOneToOne: false
-            referencedRelation: "lessons"
-            referencedColumns: ["id"]
+            referencedRelation: 'lessons'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "lesson_progress_student_id_fkey"
-            columns: ["student_id"]
+            foreignKeyName: 'lesson_progress_student_id_fkey'
+            columns: ['student_id']
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1011,9 +1011,13 @@ export type Database = {
         }
         Returns: string
       }
+      delete_module_with_cascade: {
+        Args: { module_id: string }
+        Returns: boolean
+      }
       determine_quiz_scope: {
         Args: { course_id_text: string; lesson_id_text: string }
-        Returns: Database["public"]["Enums"]["quiz_scope"]
+        Returns: Database['public']['Enums']['quiz_scope']
       }
       get_user_total_xp: {
         Args: { user_uuid: string }
@@ -1021,7 +1025,7 @@ export type Database = {
       }
       normalize_question_type: {
         Args: { ld_type: string }
-        Returns: Database["public"]["Enums"]["question_type"]
+        Returns: Database['public']['Enums']['question_type']
       }
       reorder_lessons_in_course: {
         Args: { course_id_param: string }
@@ -1059,16 +1063,16 @@ export type Database = {
     }
     Enums: {
       question_type:
-        | "single"
-        | "multiple"
-        | "true_false"
-        | "free_text"
-        | "fill_blank"
-        | "sorting"
-        | "matching"
-        | "matrix"
-      quiz_feedback_mode: "per_question" | "at_end" | "none"
-      quiz_scope: "course" | "lesson"
+        | 'single'
+        | 'multiple'
+        | 'true_false'
+        | 'free_text'
+        | 'fill_blank'
+        | 'sorting'
+        | 'matching'
+        | 'matrix'
+      quiz_feedback_mode: 'per_question' | 'at_end' | 'none'
+      quiz_scope: 'course' | 'lesson'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1076,33 +1080,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1111,23 +1115,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1136,23 +1140,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1161,53 +1165,53 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
     Enums: {
       question_type: [
-        "single",
-        "multiple",
-        "true_false",
-        "free_text",
-        "fill_blank",
-        "sorting",
-        "matching",
-        "matrix",
+        'single',
+        'multiple',
+        'true_false',
+        'free_text',
+        'fill_blank',
+        'sorting',
+        'matching',
+        'matrix',
       ],
-      quiz_feedback_mode: ["per_question", "at_end", "none"],
-      quiz_scope: ["course", "lesson"],
+      quiz_feedback_mode: ['per_question', 'at_end', 'none'],
+      quiz_scope: ['course', 'lesson'],
     },
   },
 } as const
