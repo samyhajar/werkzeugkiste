@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
     const { error: insertError } = await supabase.from('certificates').insert({
       user_id: user.id,
       module_id: module_id,
+      pdf_url: 'pending-generation', // Placeholder until PDF is generated
+      issued_at: new Date().toISOString(),
     })
 
     if (insertError) {
