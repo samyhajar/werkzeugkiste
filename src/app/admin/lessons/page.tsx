@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Trash2, ChevronUp, ChevronDown } from 'lucide-react'
+import RichTextEditor from '@/components/ui/rich-text-editor'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -140,9 +141,7 @@ export default function LessonsPage() {
     setNewLesson(prev => ({ ...prev, title: e.target.value }))
   }, [])
 
-  const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewLesson(prev => ({ ...prev, content: e.target.value }))
-  }, [])
+
 
   const handleCourseChange = useCallback((value: string) => {
     setNewLesson(prev => ({ ...prev, course_id: value }))
@@ -405,7 +404,7 @@ export default function LessonsPage() {
             />
 
             {/* Modal Content */}
-            <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[85vh] flex flex-col">
+            <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
@@ -479,14 +478,12 @@ export default function LessonsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="lesson-content-textarea" className="text-xs font-semibold text-gray-700 block">Lesson Content</label>
-                      <textarea
-                        id="lesson-content-textarea"
-                        value={newLesson.content}
-                        onChange={(e) => setNewLesson(prev => ({ ...prev, content: e.target.value }))}
+                      <label htmlFor="lesson-content-editor" className="text-xs font-semibold text-gray-700 block">Lesson Content</label>
+                      <RichTextEditor
+                        content={newLesson.content}
+                        onChange={(content) => setNewLesson(prev => ({ ...prev, content }))}
                         placeholder="Write your lesson content here. You can include text, links, and instructions..."
-                        rows={4}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white resize-none"
+                        className="min-h-[200px]"
                       />
                       <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
                     </div>
@@ -704,22 +701,41 @@ export default function LessonsPage() {
       </Dialog>
 
       {/* Edit Lesson Modal */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
-          <DialogHeader className="text-center pb-4 flex-shrink-0">
-            <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
-              <span className="text-white text-lg">✏️</span>
-            </div>
-            <DialogTitle className="text-xl font-bold text-gray-900">Lektion bearbeiten</DialogTitle>
-            <DialogDescription className="text-sm text-gray-600">
-              Bearbeiten Sie die Informationen der Lektion &quot;{editingLesson?.title}&quot;
-            </DialogDescription>
-          </DialogHeader>
+      {isEditDialogOpen && editingLesson && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsEditDialogOpen(false)}
+          />
 
-          {editingLesson && (
-            <div className="space-y-4 overflow-y-auto flex-1 pr-2 -mr-2">
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center">
+                  <span className="text-white text-lg">✏️</span>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Lektion bearbeiten</h2>
+                  <p className="text-sm text-gray-600">Bearbeiten Sie die Informationen der Lektion &quot;{editingLesson.title}&quot;</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditDialogOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Course Selection Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-orange-600 rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📚</span>
@@ -732,7 +748,7 @@ export default function LessonsPage() {
                   <select
                     id="edit-course-select"
                     value={editingLesson.course_id}
-                    onChange={(e) => setEditingLesson({ ...editingLesson, course_id: e.target.value })}
+                    onChange={(e) => editingLesson && setEditingLesson({ ...editingLesson, course_id: e.target.value })}
                     className="w-full h-9 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white"
                   >
                     <option value="">Wählen Sie einen Kurs für diese Lektion</option>
@@ -747,7 +763,7 @@ export default function LessonsPage() {
               </div>
 
               {/* Lesson Info Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-6 h-6 bg-[#486681] rounded-md flex items-center justify-center">
                     <span className="text-white text-xs">📝</span>
@@ -762,85 +778,62 @@ export default function LessonsPage() {
                       id="edit-title-input"
                       type="text"
                       value={editingLesson.title}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLesson({ ...editingLesson, title: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => editingLesson && setEditingLesson({ ...editingLesson, title: e.target.value })}
                       placeholder="e.g., Introduction to Social Media Marketing"
                       className="w-full h-9 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="edit-content-textarea" className="text-xs font-semibold text-gray-700 block">Lektion Inhalt</label>
-                    <textarea
-                      id="edit-content-textarea"
-                      value={editingLesson.content || ''}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditingLesson({ ...editingLesson, content: e.target.value })}
+                    <label htmlFor="edit-content-editor" className="text-xs font-semibold text-gray-700 block">Lektion Inhalt</label>
+                    <RichTextEditor
+                      content={editingLesson.content || ''}
+                      onChange={(content) => setEditingLesson({ ...editingLesson!, content })}
                       placeholder="Schreiben Sie Ihren Lektionsinhalt hier. Sie können Text, Links und Anweisungen einbeziehen..."
-                      rows={3}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white resize-none"
+                      className="min-h-[200px]"
                     />
                     <p className="text-xs text-gray-500">Dieser Inhalt wird den Studenten angezeigt, wenn sie auf die Lektion zugreifen</p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Organization Card */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📋</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Organisation</h3>
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="edit-order-input" className="text-xs font-semibold text-gray-700 block">Sortierreihenfolge</label>
-                  <input
-                    id="edit-order-input"
-                    type="number"
-                    value={editingLesson.sort_order}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingLesson({ ...editingLesson, sort_order: parseInt(e.target.value) || 0 })}
-                    placeholder="0"
-                    className="w-full h-9 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white"
-                  />
-                  <p className="text-xs text-gray-500">Niedrigere Zahlen erscheinen zuerst (0 = erste Lektion, 1 = zweite, usw.)</p>
-                </div>
+            {/* Action Buttons - Fixed Footer */}
+            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex-shrink-0 mt-6">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false)
+                    setEditingLesson(null)
+                  }}
+                  disabled={editing}
+                  className="sm:w-auto w-full h-11 px-6 text-base font-medium border-gray-300 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="mr-2">❌</span>
+                  Abbrechen
+                </Button>
+                <Button
+                  onClick={() => void updateLesson()}
+                  disabled={editing || !editingLesson?.title.trim() || !editingLesson?.course_id}
+                  className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-11 px-8 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  {editing ? (
+                    <>
+                      <span className="mr-2 animate-spin">⏳</span>
+                      Wird aktualisiert...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">💾</span>
+                      Änderungen speichern
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
-          )}
-
-          {/* Action Buttons - Fixed Footer */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100 flex-shrink-0 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditDialogOpen(false)
-                setEditingLesson(null)
-              }}
-              disabled={editing}
-              className="sm:w-auto w-full h-9 text-sm"
-            >
-              <span className="mr-2">❌</span>
-              Abbrechen
-            </Button>
-            <Button
-              onClick={() => void updateLesson()}
-              disabled={editing || !editingLesson?.title.trim() || !editingLesson?.course_id}
-              className="bg-[#486681] hover:bg-[#3e5570] text-white sm:w-auto w-full h-9 text-sm"
-            >
-              {editing ? (
-                <>
-                  <span className="mr-2 animate-spin">⏳</span>
-                  Wird aktualisiert...
-                </>
-              ) : (
-                <>
-                  <span className="mr-2">💾</span>
-                  Änderungen speichern
-                </>
-              )}
-            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   )
 }
