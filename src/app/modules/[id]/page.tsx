@@ -542,31 +542,40 @@ export default function ModuleDetailPage() {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
 
-      if (user && moduleId) {
-        // Fetch completed lessons for this module
+      if (user && moduleId && module) {
+        // Get all lesson IDs that belong to this module
+        const moduleLessonIds = module.courses.flatMap(course =>
+          course.lessons.map(lesson => lesson.id)
+        )
+
+        // Fetch completed lessons for this module only
         const { data: progressData } = await supabase
           .from('lesson_progress')
           .select('lesson_id, completed_at')
           .eq('student_id', user.id)
+          .in('lesson_id', moduleLessonIds)
 
         if (progressData) {
           const completedIds = new Set(progressData.map(p => p.lesson_id))
           setCompletedLessons(completedIds)
         }
 
-        // Fetch passed quizzes for this module
-        if (module) {
-          const courseIds = module.courses.map(c => c.id)
-          const { data: quizAttempts } = await supabase
-            .from('enhanced_quiz_attempts')
-            .select('quiz_id, passed')
-            .eq('user_id', user.id)
-            .eq('passed', true)
+        // Fetch passed quizzes for this module only
+        const courseIds = module.courses.map(c => c.id)
+        const moduleQuizIds = module.courses.flatMap(course =>
+          course.quizzes.map(quiz => quiz.id)
+        )
 
-          if (quizAttempts) {
-            const passedQuizIds = new Set(quizAttempts.map(a => a.quiz_id))
-            setPassedQuizzes(passedQuizIds)
-          }
+        const { data: quizAttempts } = await supabase
+          .from('enhanced_quiz_attempts')
+          .select('quiz_id, passed')
+          .eq('user_id', user.id)
+          .eq('passed', true)
+          .in('quiz_id', moduleQuizIds)
+
+        if (quizAttempts) {
+          const passedQuizIds = new Set(quizAttempts.map(a => a.quiz_id))
+          setPassedQuizzes(passedQuizIds)
         }
       }
     } catch (error) {
@@ -574,12 +583,31 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId, module])
 
-  // Calculate progress percentage
-  const getProgressPercentage = () => {
-    if (!module) return 0
+    // Helper function to get module-specific progress data
+  const getModuleProgressData = () => {
+    if (!module) return { totalLessons: 0, completedLessons: 0, percentage: 0 }
+
     const totalLessons = module.courses.reduce((total, course) => total + course.lessons.length, 0)
-    if (totalLessons === 0) return 0
-    return Math.round((completedLessons.size / totalLessons) * 100)
+    if (totalLessons === 0) return { totalLessons: 0, completedLessons: 0, percentage: 0 }
+
+    // Only count completed lessons that belong to this module
+    const moduleLessonIds = module.courses.flatMap(course =>
+      course.lessons.map(lesson => lesson.id)
+    )
+    const completedModuleLessons = Array.from(completedLessons).filter(lessonId =>
+      moduleLessonIds.includes(lessonId)
+    )
+
+    return {
+      totalLessons,
+      completedLessons: completedModuleLessons.length,
+      percentage: Math.round((completedModuleLessons.length / totalLessons) * 100)
+    }
+  }
+
+  // Calculate progress percentage for this module only
+  const getProgressPercentage = () => {
+    return getModuleProgressData().percentage
   }
 
   // Update progress display when completedLessons changes
@@ -783,7 +811,7 @@ export default function ModuleDetailPage() {
         <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
           {/* Right: Progress Bar and User Info */}
           <div className="flex items-center gap-6 ml-auto">
-            {/* Progress Bar */}
+                        {/* Module-specific Progress Bar */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-[#486681]" />
@@ -796,7 +824,10 @@ export default function ModuleDetailPage() {
                   ></div>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {completedLessons.size} von {module ? module.courses.reduce((total, course) => total + course.lessons.length, 0) : 0} Lektionen
+                  {(() => {
+                    const { completedLessons, totalLessons } = getModuleProgressData()
+                    return `${completedLessons} von ${totalLessons} Lektionen`
+                  })()}
                 </div>
               </div>
             </div>

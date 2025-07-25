@@ -181,29 +181,6 @@ export async function POST(request: NextRequest) {
         .eq('id', moduleId)
         .single()
 
-      // Get available certificate templates from storage
-      const { data: templates, error: templatesError } = await supabase.storage
-        .from('certificates')
-        .list('templates', {
-          limit: 100,
-          offset: 0,
-        })
-
-      if (templatesError) {
-        console.error('Error fetching templates:', templatesError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to fetch certificate templates' },
-          { status: 500 }
-        )
-      }
-
-      // Use the first available template, or fallback to the default
-      const templatePath =
-        templates && templates.length > 0
-          ? `templates/${templates[0].name}`
-          : 'templates/zertifikat-leer-3.jpg'
-
-      // Generate certificate for the completed module
       // Check if certificate already exists
       const { data: existingCertificate } = await supabase
         .from('certificates')
@@ -222,43 +199,9 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Fetch the certificate template
-        const { data: signedUrlData, error: signedUrlError } =
-          await supabase.storage
-            .from('certificates')
-            .createSignedUrl(templatePath, 3600)
-
-        if (signedUrlError || !signedUrlData?.signedUrl) {
-          console.error('Error accessing template:', signedUrlError)
-          return NextResponse.json(
-            { success: false, error: 'Failed to access certificate template' },
-            { status: 500 }
-          )
-        }
-
-        const templateResponse = await fetch(signedUrlData.signedUrl)
-        if (!templateResponse.ok) {
-          console.error('Error fetching template')
-          return NextResponse.json(
-            { success: false, error: 'Failed to fetch certificate template' },
-            { status: 500 }
-          )
-        }
-
-        const templateBytes = await templateResponse.arrayBuffer()
-
-        // Generate PDF certificate
+        // Generate a simple PDF certificate without background image for now
         const pdf = await PDFDocument.create()
         const page = pdf.addPage([595.28, 841.89]) // A4 portrait
-
-        // Embed the background image
-        const bgImage = await pdf.embedJpg(templateBytes)
-        page.drawImage(bgImage, {
-          x: 0,
-          y: 0,
-          width: page.getWidth(),
-          height: page.getHeight(),
-        })
 
         // Add text to the certificate
         const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold)
