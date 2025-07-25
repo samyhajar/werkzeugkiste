@@ -61,7 +61,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       const data = await response.json()
 
-                  if (data.success) {
+                        if (data.success) {
         console.log('[LoginModal] Login successful, refreshing session...')
 
         // Refresh the auth context session to get updated user data
@@ -69,14 +69,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         console.log('[LoginModal] Session refreshed, closing modal...')
 
-        // Close modal
+        // Close modal - AuthContext will handle redirection automatically
         handleClose()
 
-        // Force page refresh to ensure UI updates
-        console.log('[LoginModal] Forcing page refresh...')
-        setTimeout(() => {
-          window.location.reload()
-        }, 100)
+        console.log('[LoginModal] Login process completed')
       } else {
         setError(data.error || 'Login failed')
       }

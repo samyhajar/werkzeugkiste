@@ -2,10 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { ChevronDown, User, LogOut, Award } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useAuth } from '@/contexts/AuthContext'
 import LoginModal from './LoginModal'
 import { useRouter } from 'next/navigation'
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/digi-sammlung', label: 'Digi-Sammlung' },
+  { href: '/fragen', label: 'Fragen' },
+  { href: '/ueber-uns', label: 'Über uns' },
+]
 
 interface ModuleData {
   id: string
@@ -152,23 +161,16 @@ export default function Navbar() {
     }
   }
 
-  // Don't render during SSR or if not mounted yet
+  // Don't render during SSR/build time - now using conditional rendering instead of early return
   if (!mounted) {
     return (
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 transition-shadow duration-200 ${isScrolled ? 'shadow-md' : ''}`}>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex-shrink-0">
-                <img
-                  className="h-8 w-auto"
-                  src="/Logo-digi-CMYK.png"
-                  alt="Logo"
-                />
+            <div className="flex-shrink-0">
+              <Link href="/" className="text-xl font-bold text-gray-900">
+                Werkzeugkiste
               </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6e859a]"></div>
             </div>
           </div>
         </div>
@@ -178,148 +180,187 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 transition-shadow duration-200 ${isScrolled ? 'shadow-md' : ''}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex-shrink-0">
-                <img
-                  className="h-8 w-auto"
-                  src="/Logo-digi-CMYK.png"
-                  alt="Logo"
-                />
-              </Link>
-            </div>
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <nav
+          className={`bg-brand-primary transition-all duration-300 ease-in-out ${
+            isScrolled
+              ? 'shadow-xl border-b-2 border-gray-400'
+              : 'shadow-none border-b-0'
+          }`}
+          style={{
+            boxShadow: isScrolled
+              ? '0 6px 16px -3px rgba(0, 0, 0, 0.2), 0 3px 8px -2px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+              : 'none',
+            border: 'none',
+            outline: 'none'
+          }}
+        >
+        <div className="w-full px-8">
+          <div className="flex justify-between items-center h-24">
+            {/* Logo */}
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/Logo-digi-CMYK.png"
+                alt="Digi+ Logo"
+                width={80}
+                height={80}
+                className="rounded-full"
+              />
+            </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-8">
-                <Link href="/" className="text-gray-900 hover:text-[#6e859a] px-3 py-2 text-sm font-medium transition-colors duration-200">
-                  Home
+            <div className="hidden md:flex items-center space-x-8">
+              {links.slice(0, 1).map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
+                >
+                  {link.label}
                 </Link>
+              ))}
 
-                {/* Modules Dropdown */}
-                <div className="relative" ref={modulesRef}>
-                  <button
-                    onClick={() => setIsModulesOpen(!isModulesOpen)}
-                    className="text-gray-900 hover:text-[#6e859a] px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center"
+              {/* Lernmodule Dropdown */}
+              <div className="relative" ref={modulesRef}>
+                <button
+                  onClick={() => setIsModulesOpen(!isModulesOpen)}
+                  onMouseEnter={() => setIsModulesOpen(true)}
+                  className="flex items-center text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
+                >
+                  Lernmodule
+                  <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isModulesOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isModulesOpen && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-96 bg-brand-primary rounded-lg shadow-xl border border-brand-primary-hover z-50"
+                    onMouseEnter={() => setIsModulesOpen(true)}
+                    onMouseLeave={() => setIsModulesOpen(false)}
                   >
-                    Module
-                    <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {isModulesOpen && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1">
-                        {modulesLoading ? (
-                          <div className="px-4 py-3 text-sm text-gray-500">Loading modules...</div>
-                        ) : modules.length > 0 ? (
-                          modules.map((module) => (
-                            <Link
-                              key={module.id}
-                              href={`/modules/${module.id}`}
-                              onClick={(e) => handleModuleClick(e, module.id)}
-                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
-                            >
-                              <div className="font-medium">{module.title}</div>
-                              {module.description && (
-                                <div className="text-xs text-gray-500 mt-1">{module.description}</div>
-                              )}
-                            </Link>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 text-sm text-gray-500">No modules available</div>
-                        )}
-                      </div>
+                    <div className="py-3">
+                      {modulesLoading ? (
+                        <div className="px-6 py-4 text-blue-100 text-sm">
+                          Module werden geladen...
+                        </div>
+                      ) : modules.length > 0 ? (
+                        modules.map((module) => (
+                          <Link
+                            key={module.id}
+                            href={user ? `/modules/${module.id}` : '#'}
+                            onClick={(e) => handleModuleClick(e, module.id)}
+                            className="block px-6 py-4 text-white hover:text-blue-100 hover:bg-brand-primary-hover transition-colors text-lg font-semibold"
+                          >
+                            {module.title}
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-6 py-4 text-blue-200 text-sm">
+                          Keine Module verfügbar
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                <Link href="/digi-sammlung" className="text-gray-900 hover:text-[#6e859a] px-3 py-2 text-sm font-medium transition-colors duration-200">
-                  DigiSammlung
-                </Link>
-                <Link href="/ueber-uns" className="text-gray-900 hover:text-[#6e859a] px-3 py-2 text-sm font-medium transition-colors duration-200">
-                  Über uns
-                </Link>
-                <Link href="/fragen" className="text-gray-900 hover:text-[#6e859a] px-3 py-2 text-sm font-medium transition-colors duration-200">
-                  Fragen
-                </Link>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Desktop User Menu */}
-            <div className="hidden md:flex items-center space-x-4">
+              {links.slice(1).map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* User Menu or Login Button */}
               {loading && !forceShowButton ? (
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6e859a]"></div>
+                <div className="bg-gray-300 animate-pulse h-10 w-24 rounded-lg"></div>
               ) : user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="bg-[#6e859a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5a7388] transition-colors duration-200 flex items-center space-x-2"
+                    className="flex items-center space-x-2 bg-white text-brand-primary hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200 border border-gray-200"
                   >
+                    <User className="h-4 w-4" />
                     <span>{getDisplayName()}</span>
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1">
-                        <div className="px-4 py-2 text-sm text-gray-500 border-b">
-                          <div className="font-medium">{getDisplayName()}</div>
-                          <div className="text-xs">{user.email}</div>
-                          <div className="text-xs capitalize">{getUserRole()}</div>
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                      <div className="py-2">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <div className="font-medium text-gray-900">
+                            {getDisplayName()}
+                          </div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-xs text-gray-400 capitalize">
+                            {getUserRole()}
+                          </div>
                         </div>
 
                         {isAdmin() ? (
                           <Link
                             href="/admin"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            Admin Dashboard
+                            <User className="h-4 w-4 mr-2" />
+                            Admin Panel
                           </Link>
                         ) : (
                           <Link
                             href="/dashboard"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                            className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
+                            <User className="h-4 w-4 mr-2" />
                             Dashboard
                           </Link>
                         )}
 
                         <Link
                           href="/certificates"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                          className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
-                          My Certificates
+                          <Award className="h-4 w-4 mr-2" />
+                          Zertifikate
                         </Link>
 
                         <button
-                          onClick={() => {
-                            void handleLogout()
-                            setIsUserMenuOpen(false)
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition-colors duration-200"
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
                         >
-                          Sign Out
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Abmelden
                         </button>
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="bg-[#6e859a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5a7388] transition-colors duration-200"
-                >
-                  Login
-                </button>
+                <div className="flex items-center space-x-8">
+                  <button
+                    onClick={() => {
+                      setIsLoginModalOpen(true)
+                    }}
+                    className="text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 cursor-pointer text-lg"
+                    style={{
+                      backgroundColor: '#de0446',
+                      borderColor: '#de0446'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#c5043e'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#de0446'
+                    }}
+                  >
+                    Einloggen
+                  </button>
+                </div>
               )}
             </div>
 
@@ -327,105 +368,92 @@ export default function Navbar() {
             <div className="md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#6e859a]"
+                className="text-white hover:text-blue-100 focus:outline-none focus:text-blue-100 transition-colors duration-200"
               >
-                <span className="sr-only">Open main menu</span>
-                {!isOpen ? (
-                  <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                ) : (
-                  <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d={isOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                  />
+                </svg>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Mobile Navigation Menu */}
-        {isOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
-              <Link href="/" className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200">
-                Home
-              </Link>
+          {/* Mobile Navigation */}
+          {isOpen && (
+            <div ref={menuRef} className="md:hidden">
+              <div className="px-2 pt-2 pb-3 space-y-1 bg-brand-primary border-t border-brand-primary-hover">
+                {links.slice(0, 1).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-xl font-semibold"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
 
-              {/* Mobile Modules */}
-              <div>
-                <button
-                  onClick={() => setIsModulesOpen(!isModulesOpen)}
-                  className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left flex items-center justify-between"
-                >
-                  Module
-                  <svg className={`h-4 w-4 transform transition-transform ${isModulesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                {/* Mobile Lernmodule Section */}
+                <div className="border-t border-brand-primary-hover pt-2 mt-2">
+                  <div className="px-3 py-2 text-blue-100 text-xl font-semibold">Lernmodule</div>
+                  {modules.length > 0 ? (
+                    modules.map((module) => (
+                      <Link
+                        key={module.id}
+                        href={user ? `/modules/${module.id}` : '#'}
+                        onClick={(e) => handleModuleClick(e, module.id)}
+                        className="block px-6 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-lg font-semibold"
+                      >
+                        {module.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-6 py-2 text-blue-200 text-sm">
+                      Keine Module verfügbar
+                    </div>
+                  )}
+                </div>
 
-                {isModulesOpen && (
-                  <div className="pl-6 space-y-1">
-                    {modulesLoading ? (
-                      <div className="px-3 py-2 text-sm text-gray-500">Loading modules...</div>
-                    ) : modules.length > 0 ? (
-                      modules.map((module) => (
-                        <Link
-                          key={module.id}
-                          href={`/modules/${module.id}`}
-                          onClick={(e) => {
-                            handleModuleClick(e, module.id)
-                            setIsOpen(false)
-                          }}
-                          className="block px-3 py-2 text-sm text-gray-600 hover:text-[#6e859a] hover:bg-gray-50 transition-colors duration-200"
-                        >
-                          {module.title}
-                        </Link>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500">No modules available</div>
-                    )}
-                  </div>
-                )}
-              </div>
+                {links.slice(1).map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-xl font-semibold"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
 
-              <Link href="/digi-sammlung" className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200">
-                DigiSammlung
-              </Link>
-              <Link href="/ueber-uns" className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200">
-                Über uns
-              </Link>
-              <Link href="/fragen" className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200">
-                Fragen
-              </Link>
-
-              {/* Mobile User Section */}
-              <div className="border-t pt-4">
-                {loading && !forceShowButton ? (
-                  <div className="px-3 py-2 flex items-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#6e859a]"></div>
-                    <span className="ml-2 text-sm text-gray-500">Loading...</span>
-                  </div>
-                ) : user ? (
-                  <div className="space-y-1">
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      <div className="font-medium">{getDisplayName()}</div>
-                      <div className="text-xs">{user.email}</div>
-                      <div className="text-xs capitalize">{getUserRole()}</div>
+                {/* Mobile User Section */}
+                {user ? (
+                  <div className="border-t border-brand-primary-hover pt-2 mt-2">
+                    <div className="px-3 py-2 text-white">
+                      <div className="font-medium">
+                        {getDisplayName()}
+                      </div>
+                      <div className="text-sm text-blue-200">{user.email}</div>
+                      <div className="text-xs text-blue-300 capitalize">
+                        {getUserRole()}
+                      </div>
                     </div>
 
                     {isAdmin() ? (
                       <Link
                         href="/admin"
-                        className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200"
+                        className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
                         onClick={() => setIsOpen(false)}
                       >
-                        Admin Dashboard
+                        Admin Panel
                       </Link>
                     ) : (
                       <Link
                         href="/dashboard"
-                        className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200"
+                        className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
                         onClick={() => setIsOpen(false)}
                       >
                         Dashboard
@@ -434,38 +462,48 @@ export default function Navbar() {
 
                     <Link
                       href="/certificates"
-                      className="text-gray-900 hover:text-[#6e859a] block px-3 py-2 text-base font-medium transition-colors duration-200"
+                      className="block px-3 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 mb-2"
                       onClick={() => setIsOpen(false)}
                     >
-                      My Certificates
+                      Zertifikate
                     </Link>
 
                     <button
                       onClick={() => {
-                        void handleLogout()
                         setIsOpen(false)
+                        handleLogout()
                       }}
-                      className="text-red-700 hover:text-red-800 block px-3 py-2 text-base font-medium transition-colors duration-200 w-full text-left"
+                      className="block w-full text-left px-3 py-2 text-white hover:text-red-200 hover:bg-red-600 rounded-md transition-colors duration-200"
                     >
-                      Sign Out
+                      Abmelden
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={() => {
-                      setIsLoginModalOpen(true)
                       setIsOpen(false)
+                      setIsLoginModalOpen(true)
                     }}
-                    className="bg-[#6e859a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#5a7388] transition-colors duration-200 w-full"
+                    className="block w-full text-left px-3 py-2 text-white font-semibold rounded-lg transition-colors duration-200 mt-2 text-lg"
+                    style={{
+                      backgroundColor: '#de0446'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#c5043e'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#de0446'
+                    }}
                   >
-                    Login
+                    Einloggen
                   </button>
                 )}
               </div>
             </div>
-          </div>
-        )}
-      </nav>
+          )}
+        </div>
+        </nav>
+      </div>
 
       {/* Login Modal */}
       <LoginModal

@@ -21,6 +21,8 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
+            // Check if we're in a context that allows cookie modification
+            // This will throw an error if we're not in a Server Action or Route Handler
             cookiesToSet.forEach(({ name, value, options }) => {
               // Ensure cookies persist and are accessible to client
               const cookieOptions = {
@@ -34,8 +36,9 @@ export async function createClient() {
               cookieStore.set(name, value, cookieOptions)
             })
           } catch (error) {
-            console.error('Error setting cookies:', error)
-            /* Called from a Server Component – safe to ignore. */
+            // Silently ignore cookie setting errors when not in proper context
+            // This is expected behavior when called from Server Components
+            // The client-side authentication will handle session persistence
           }
         },
       },
