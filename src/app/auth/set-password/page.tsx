@@ -68,22 +68,49 @@ export default function SetPasswordPage() {
     } else {
       setSuccess('Passwort erfolgreich aktualisiert!')
 
-      // Get the current user to determine their role
+      // Get the current session and user to determine their role
+      const { data: { session } } = await supabase.auth.getSession()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Determine redirect based on user role
-      let redirectPath = '/'
-      if (user?.user_metadata?.role === 'admin') {
-        redirectPath = '/admin'
-      } else {
-        // For students or if no role is specified, go to home page
-        redirectPath = '/'
-      }
+      if (session && user) {
+        // Make API call to establish server-side session cookies
+        try {
+          const response = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            }),
+            credentials: 'include'
+          })
 
-      // Redirect immediately after successful password update
-      setTimeout(() => {
-        router.push(redirectPath)
-      }, 1000) // Brief delay to show success message
+          if (response.ok) {
+            // Session cookies are now set, determine redirect path
+            let redirectPath = '/'
+            if (user?.user_metadata?.role === 'admin') {
+              redirectPath = '/admin'
+            } else {
+              // For students or if no role is specified, go to home page
+              redirectPath = '/'
+            }
+
+            // Redirect after successful session establishment
+            setTimeout(() => {
+              router.push(redirectPath)
+            }, 1000) // Brief delay to show success message
+          } else {
+            setError('Fehler beim Einrichten der Sitzung. Bitte loggen Sie sich erneut ein.')
+          }
+        } catch (sessionError) {
+          console.error('Session establishment error:', sessionError)
+          setError('Fehler beim Einrichten der Sitzung. Bitte loggen Sie sich erneut ein.')
+        }
+      } else {
+        setError('Keine gültige Sitzung gefunden. Bitte loggen Sie sich erneut ein.')
+      }
     }
 
     setLoading(false)
