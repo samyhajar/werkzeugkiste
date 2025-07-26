@@ -404,9 +404,9 @@ export default function LessonsPage() {
             />
 
             {/* Modal Content */}
-            <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] flex flex-col">
+            <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] min-h-[500px] flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center">
                     <span className="text-white text-lg">📖</span>
@@ -426,8 +426,8 @@ export default function LessonsPage() {
                 </button>
               </div>
 
-              {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Modal Body - Scrollable */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6" style={{ minHeight: 0 }}>
                 {/* Course Selection Card */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center gap-3 mb-3">
@@ -479,12 +479,14 @@ export default function LessonsPage() {
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="lesson-content-editor" className="text-xs font-semibold text-gray-700 block">Lesson Content</label>
-                      <RichTextEditor
-                        content={newLesson.content}
-                        onChange={(content) => setNewLesson(prev => ({ ...prev, content }))}
-                        placeholder="Write your lesson content here. You can include text, links, and instructions..."
-                        className="min-h-[200px]"
-                      />
+                      <div className="max-h-[300px] overflow-hidden">
+                        <RichTextEditor
+                          content={newLesson.content}
+                          onChange={(content) => setNewLesson(prev => ({ ...prev, content }))}
+                          placeholder="Write your lesson content here. You can include text, links, and instructions..."
+                          className="min-h-[200px]"
+                        />
+                      </div>
                       <p className="text-xs text-gray-500">This content will be displayed to students when they access the lesson</p>
                     </div>
                   </div>
@@ -493,8 +495,8 @@ export default function LessonsPage() {
 
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+              {/* Footer - Fixed */}
+              <div className="flex-shrink-0 flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-white">
                 <button
                   type="button"
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -710,9 +712,9 @@ export default function LessonsPage() {
           />
 
           {/* Modal Content */}
-          <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] flex flex-col">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[85vh] min-h-[500px] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex-shrink-0 flex items-center justify-between p-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center">
                   <span className="text-white text-lg">✏️</span>
@@ -732,8 +734,8 @@ export default function LessonsPage() {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Modal Body - Scrollable */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-6" style={{ minHeight: 0 }}>
               {/* Course Selection Card */}
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-3 mb-3">
@@ -785,12 +787,14 @@ export default function LessonsPage() {
                   </div>
                   <div className="space-y-1">
                     <label htmlFor="edit-content-editor" className="text-xs font-semibold text-gray-700 block">Lektion Inhalt</label>
-                    <RichTextEditor
-                      content={editingLesson.content || ''}
-                      onChange={(content) => setEditingLesson({ ...editingLesson!, content })}
-                      placeholder="Schreiben Sie Ihren Lektionsinhalt hier. Sie können Text, Links und Anweisungen einbeziehen..."
-                      className="min-h-[200px]"
-                    />
+                    <div className="max-h-[300px] overflow-hidden">
+                      <RichTextEditor
+                        content={editingLesson.content || ''}
+                        onChange={(content) => setEditingLesson({ ...editingLesson!, content })}
+                        placeholder="Schreiben Sie Ihren Lektionsinhalt hier. Sie können Text, Links und Anweisungen einbeziehen..."
+                        className="min-h-[200px]"
+                      />
+                    </div>
                     <p className="text-xs text-gray-500">Dieser Inhalt wird den Studenten angezeigt, wenn sie auf die Lektion zugreifen</p>
                   </div>
                 </div>
@@ -798,7 +802,7 @@ export default function LessonsPage() {
             </div>
 
             {/* Action Buttons - Fixed Footer */}
-            <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex-shrink-0 mt-6">
+            <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-6 py-4">
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-4">
                 <Button
                   variant="outline"
