@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { User, Mail, Calendar, BookOpen, Award } from 'lucide-react'
+import { User, Calendar, Award } from 'lucide-react'
 import { formatDistance } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -101,18 +101,11 @@ export default function StudentsPage() {
   return (
     <div className="w-full px-8 py-8 space-y-8 bg-[#6e859a] min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white">Teilnehmer</h1>
-          <p className="text-white mt-2">
-            Verwalten Sie Teilnehmerkonten und Fortschritte
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-[#486681]/10 text-[#486681] border-[#486681]/20">
-            {filteredStudents.length} students
-          </Badge>
-        </div>
+      <div>
+        <h1 className="text-4xl font-bold text-white">Teilnehmer</h1>
+        <p className="text-white mt-2">
+          Verwalten Sie Teilnehmerkonten und Fortschritte
+        </p>
       </div>
 
       {/* Statistics Cards */}

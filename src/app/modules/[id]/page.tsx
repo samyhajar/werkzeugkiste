@@ -1068,11 +1068,6 @@ export default function ModuleDetailPage() {
                       <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
                       Lektion {selectedLesson.order}
                     </span>
-                    <span className="text-gray-400">•</span>
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
-                      {selectedLesson.duration_minutes || 0} Min
-                    </span>
                   </div>
                 </div>
               </div>
