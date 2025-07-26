@@ -50,7 +50,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none',
+        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none prose-headings:font-bold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h1:mb-4 prose-h2:mb-3 prose-h3:mb-2 prose-p:mb-2',
       },
     },
   })
@@ -79,6 +79,17 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     <div className={`border border-gray-300 rounded-md ${className}`}>
       {/* Toolbar */}
       <div className="border-b border-gray-200 p-3 flex flex-wrap gap-1">
+        {/* Paragraph */}
+        <Button
+          variant={!editor.isActive('heading') && !editor.isActive('bulletList') && !editor.isActive('orderedList') && !editor.isActive('blockquote') ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().setParagraph().run()}
+        >
+          P
+        </Button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
         {/* Text formatting */}
         <Button
           variant={editor.isActive('bold') ? 'default' : 'ghost'}
@@ -312,7 +323,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="focus:outline-none"
+          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
         />
       </div>
     </div>
