@@ -226,7 +226,7 @@ export default function ModulesPage() {
     setNewModule({
       title: module.title,
       description: module.description || '',
-      hero_image: module.hero_image || ''
+      hero_image: module.hero_image ?? ''
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
@@ -462,7 +462,7 @@ export default function ModulesPage() {
                     value={newModule.hero_image}
                     onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
                     placeholder="https://example.com/module-image.jpg (optional)"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9 placeholder:text-gray-400"
                   />
                   <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
                 </div>
