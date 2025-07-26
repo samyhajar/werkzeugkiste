@@ -7,7 +7,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { answers } = await request.json()
+    const { answers, textAnswers = {} } = await request.json()
     const supabase = await createClient()
 
     // Get current user
@@ -65,11 +65,29 @@ export async function POST(
       const correctAnswers =
         question.quiz_answers?.filter(a => a.is_correct) || []
       const studentAnswerIds = answers[question.id] || []
+      const studentTextAnswer = textAnswers[question.id] || ''
 
       totalPoints += question.points || 1
 
       let isCorrect = false
-      if (question.type === 'multiple') {
+      let studentAnswerData: any = studentAnswerIds
+      let correctAnswerData: any = correctAnswers.map(a => a.id)
+
+      if (question.type === 'free_text' || question.type === 'fill_blank') {
+        // For text questions, check if there's a correct answer in quiz_answers
+        if (correctAnswers.length > 0) {
+          // Compare text answer with the first correct answer (case insensitive, trimmed)
+          const expectedAnswer =
+            correctAnswers[0].answer_html?.toLowerCase().trim() || ''
+          const givenAnswer = studentTextAnswer.toLowerCase().trim()
+          isCorrect = expectedAnswer === givenAnswer
+        } else {
+          // If no correct answer is defined, mark as correct if text is provided
+          isCorrect = studentTextAnswer.trim().length > 0
+        }
+        studentAnswerData = studentTextAnswer
+        correctAnswerData = correctAnswers.map(a => a.answer_html)
+      } else if (question.type === 'multiple') {
         // For multiple choice, all correct answers must be selected and no incorrect ones
         const correctAnswerIds = correctAnswers.map(a => a.id)
         isCorrect =
@@ -87,8 +105,8 @@ export async function POST(
       questionResults.push({
         question_id: question.id,
         is_correct: isCorrect,
-        student_answers: studentAnswerIds,
-        correct_answers: correctAnswers.map(a => a.id),
+        student_answers: studentAnswerData,
+        correct_answers: correctAnswerData,
         points: question.points || 1,
         earned_points: isCorrect ? question.points || 1 : 0,
       })
@@ -108,10 +126,13 @@ export async function POST(
         score_points: earnedPoints,
         score_percent: scorePercentage,
         passed: passed,
-        raw_answers: answers,
+        raw_answers: { answers, textAnswers },
         meta: {
           total_questions: questions?.length || 0,
-          answered_questions: Object.keys(answers).length,
+          answered_questions:
+            Object.keys(answers).length +
+            Object.keys(textAnswers).filter(id => textAnswers[id].trim() !== '')
+              .length,
           question_results: questionResults,
         },
       })
@@ -136,7 +157,10 @@ export async function POST(
         passed: passed,
         question_results: questionResults,
         total_questions: questions?.length || 0,
-        answered_questions: Object.keys(answers).length,
+        answered_questions:
+          Object.keys(answers).length +
+          Object.keys(textAnswers).filter(id => textAnswers[id].trim() !== '')
+            .length,
       },
     })
   } catch (error) {

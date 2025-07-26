@@ -75,6 +75,7 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string[]>>({})
+  const [textAnswers, setTextAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState<any>(null)
@@ -144,6 +145,14 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
     })
   }
 
+  // Handle text answer changes
+  const handleTextAnswerChange = (questionId: string, value: string) => {
+    setTextAnswers(prev => ({
+      ...prev,
+      [questionId]: value
+    }))
+  }
+
   // Handle quiz submission
   const handleSubmitQuiz = async () => {
     try {
@@ -156,6 +165,7 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
         },
         body: JSON.stringify({
           answers: studentAnswers,
+          textAnswers: textAnswers,
         }),
       })
 
@@ -414,6 +424,8 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={4}
                     placeholder="Ihre Antwort hier..."
+                    value={textAnswers[question.id] || ''}
+                    onChange={(e) => handleTextAnswerChange(question.id, e.target.value)}
                   />
                 </div>
               )}
@@ -424,6 +436,8 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
                     type="text"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Lücken füllen..."
+                    value={textAnswers[question.id] || ''}
+                    onChange={(e) => handleTextAnswerChange(question.id, e.target.value)}
                   />
                 </div>
               )}
@@ -439,7 +453,7 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
           </Button>
           <Button
             onClick={handleSubmitQuiz}
-            disabled={submitting || Object.keys(studentAnswers).length === 0}
+            disabled={submitting || (Object.keys(studentAnswers).length === 0 && Object.keys(textAnswers).filter(id => textAnswers[id].trim() !== '').length === 0)}
             className={submitting ? 'opacity-50 cursor-not-allowed' : ''}
           >
             {submitting ? 'Wird eingereicht...' : 'Quiz abschließen'}
