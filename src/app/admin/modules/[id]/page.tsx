@@ -269,8 +269,8 @@ export default function ModuleDetailsPage() {
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
               <DialogTrigger asChild>
                 <Button
-                  variant="destructive"
                   disabled={saving || deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   Delete Module
                 </Button>
@@ -296,12 +296,12 @@ export default function ModuleDetailsPage() {
                     Cancel
                   </Button>
                   <Button
-                    variant="destructive"
                     onClick={() => {
                       setShowDeleteDialog(false)
                       handleDelete()
                     }}
                     disabled={deleting}
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     {deleting ? 'Deleting...' : 'Delete Module'}
                   </Button>

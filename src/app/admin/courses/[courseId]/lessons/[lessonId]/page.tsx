@@ -246,8 +246,8 @@ export default function LessonDetailsPage() {
           <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <DialogTrigger asChild>
               <Button
-                variant="destructive"
                 disabled={saving || deleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 Delete Lesson
               </Button>
@@ -273,12 +273,12 @@ export default function LessonDetailsPage() {
                   Cancel
                 </Button>
                 <Button
-                  variant="destructive"
                   onClick={() => {
                     setShowDeleteDialog(false)
                     void handleDelete()
                   }}
                   disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   {deleting ? 'Deleting...' : 'Delete Lesson'}
                 </Button>

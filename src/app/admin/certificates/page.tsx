@@ -483,12 +483,12 @@ export default function CertificatesPage() {
                   )}
                   <Button
                     size="sm"
-                    variant="destructive"
                     onClick={() => void deleteCertificate(
                       certificate.user_id && certificate.module_id
                         ? `${certificate.user_id}-${certificate.module_id}`
                         : `certificate-${index}`
                     )}
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     Löschen
                   </Button>

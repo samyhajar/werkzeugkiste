@@ -280,7 +280,11 @@ export default function UsersPage() {
           </DialogHeader>
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Abbrechen</Button>
-            <Button variant="destructive" onClick={() => void deleteUser()} disabled={deleting}>
+            <Button
+              onClick={() => void deleteUser()}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
               {deleting ? 'Wird gelöscht...' : 'Ja, endgültig löschen'}
             </Button>
           </div>
