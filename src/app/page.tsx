@@ -26,9 +26,9 @@ export const revalidate = 60 // ISR every minute
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string }>
+  searchParams: Promise<{ code?: string; error?: string; error_description?: string }>
 }) {
-  const { code } = await searchParams
+  const { code, error, error_description } = await searchParams
   if (code) {
     redirect(`/auth/callback?code=${code}`)
   }
@@ -172,6 +172,37 @@ export default async function Home({
           className="w-full h-auto object-cover max-h-[50vh] sm:max-h-[60vh] -mt-8"
         />
       </section>
+
+      {/* Error Messages */}
+      {error && (
+        <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  {error === 'email_link_expired'
+                    ? 'E-Mail-Link abgelaufen'
+                    : 'Authentifizierungsfehler'
+                  }
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>
+                    {error === 'email_link_expired'
+                      ? 'Der E-Mail-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an oder melden Sie sich direkt an.'
+                      : error_description || 'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
             {/* Modules */}
       <Suspense fallback={
