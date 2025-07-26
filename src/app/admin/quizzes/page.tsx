@@ -189,42 +189,42 @@ export default function QuizzesPage() {
     }))
   }
 
-  const updateOption = (index: number, text: string) => {
+  const updateOption = (questionIndex: number, optionIndex: number, text: string) => {
     setNewQuiz(prev => ({
       ...prev,
       questions: prev.questions.map((q, i) =>
-        i === index ? { ...q, options: q.options.map((opt, j) =>
-          j === 0 ? { ...opt, text } : opt
+        i === questionIndex ? { ...q, options: q.options.map((opt, j) =>
+          j === optionIndex ? { ...opt, text } : opt
         )} : q
       )
     }))
   }
 
-  const toggleCorrectAnswer = (index: number) => {
+  const toggleCorrectAnswer = (questionIndex: number, optionIndex: number) => {
     setNewQuiz(prev => ({
       ...prev,
       questions: prev.questions.map((q, i) =>
-        i === index ? { ...q, options: q.options.map((opt, j) =>
-          j === index ? { ...opt, is_correct: !opt.is_correct } : opt
+        i === questionIndex ? { ...q, options: q.options.map((opt, j) =>
+          j === optionIndex ? { ...opt, is_correct: !opt.is_correct } : opt
         )} : q
       )
     }))
   }
 
-  const addOption = () => {
+  const addOption = (questionIndex: number) => {
     setNewQuiz(prev => ({
       ...prev,
       questions: prev.questions.map((q, i) =>
-        i === prev.questions.length - 1 ? { ...q, options: [...q.options, { text: '', is_correct: false }] } : q
+        i === questionIndex ? { ...q, options: [...q.options, { text: '', is_correct: false }] } : q
       )
     }))
   }
 
-  const removeOption = (index: number) => {
+  const removeOption = (questionIndex: number, optionIndex: number) => {
     setNewQuiz(prev => ({
       ...prev,
       questions: prev.questions.map((q, i) =>
-        i === prev.questions.length - 1 ? { ...q, options: q.options.filter((_, j) => j !== index) } : q
+        i === questionIndex ? { ...q, options: q.options.filter((_, j) => j !== optionIndex) } : q
       )
     }))
   }
@@ -689,12 +689,12 @@ export default function QuizzesPage() {
                               <div key={optionIndex} className="flex items-center gap-2">
                                 <Input
                                   value={option.text}
-                                  onChange={(e) => updateOption(optionIndex, e.target.value)}
+                                  onChange={(e) => updateOption(index, optionIndex, e.target.value)}
                                   placeholder={`Option ${optionIndex + 1}`}
                                   className="flex-1"
                                 />
                           <Button
-                                  onClick={() => toggleCorrectAnswer(optionIndex)}
+                                  onClick={() => toggleCorrectAnswer(index, optionIndex)}
                             variant={option.is_correct ? "default" : "outline"}
                             size="sm"
                           >
@@ -702,7 +702,7 @@ export default function QuizzesPage() {
                           </Button>
                                 {question.options.length > 2 && (
                             <Button
-                                    onClick={() => removeOption(optionIndex)}
+                                    onClick={() => removeOption(index, optionIndex)}
                               variant="outline"
                               size="sm"
                                     className="text-red-600"
@@ -712,7 +712,7 @@ export default function QuizzesPage() {
                           )}
                         </div>
                       ))}
-                            <Button onClick={addOption} variant="outline" size="sm">
+                            <Button onClick={() => addOption(index)} variant="outline" size="sm">
                               Add Option
                   </Button>
                 </div>
