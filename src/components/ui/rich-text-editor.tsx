@@ -194,17 +194,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           </svg>
         </Button>
 
-        <Button
-          variant={editor.isActive('blockquote') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM18 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-          </svg>
-        </Button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Link */}
         <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -302,7 +292,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           disabled={!editor.can().undo()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 10a1 1 0 011-1h3V7a1 1 0 011.707-.707l3 3a1 1 0 010 1.414l-3 3A1 1 0 017 13v-2H4a1 1 0 01-1-1z"/>
+            <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8l3.707-3.707a1 1 0 011.414 0z" clipRule="evenodd"/>
           </svg>
         </Button>
 
@@ -313,7 +303,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           disabled={!editor.can().redo()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M17 10a1 1 0 01-1 1h-3v2a1 1 0 01-1.707.707l-3-3a1 1 0 010-1.414l3-3A1 1 0 0113 7v2h3a1 1 0 011 1z"/>
+            <path fillRule="evenodd" d="M12.293 3.293a1 1 0 011.414 0L17.414 7l-3.707 3.707a1 1 0 01-1.414-1.414L14.586 7H9a5 5 0 00-5 5v2a1 1 0 11-2 0v-2a7 7 0 017-7h5.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"/>
           </svg>
         </Button>
       </div>
@@ -323,7 +313,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
+          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
         />
       </div>
     </div>
