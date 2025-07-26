@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface RichTextEditorProps {
   content: string
@@ -79,14 +80,36 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     <div className={`border border-gray-300 rounded-md ${className}`}>
       {/* Toolbar */}
       <div className="border-b border-gray-200 p-3 flex flex-wrap gap-1">
-        {/* Paragraph */}
-        <Button
-          variant={!editor.isActive('heading') && !editor.isActive('bulletList') && !editor.isActive('orderedList') && !editor.isActive('blockquote') ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => editor.chain().focus().setParagraph().run()}
+        {/* Text Format Dropdown */}
+        <Select
+          value={
+            editor.isActive('heading', { level: 1 }) ? 'h1' :
+            editor.isActive('heading', { level: 2 }) ? 'h2' :
+            editor.isActive('heading', { level: 3 }) ? 'h3' :
+            'paragraph'
+          }
+          onValueChange={(value) => {
+            if (value === 'paragraph') {
+              editor.chain().focus().setParagraph().run()
+            } else if (value === 'h1') {
+              editor.chain().focus().toggleHeading({ level: 1 }).run()
+            } else if (value === 'h2') {
+              editor.chain().focus().toggleHeading({ level: 2 }).run()
+            } else if (value === 'h3') {
+              editor.chain().focus().toggleHeading({ level: 3 }).run()
+            }
+          }}
         >
-          P
-        </Button>
+          <SelectTrigger className="w-32">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="paragraph">Paragraph</SelectItem>
+            <SelectItem value="h1">Heading 1</SelectItem>
+            <SelectItem value="h2">Heading 2</SelectItem>
+            <SelectItem value="h3">Heading 3</SelectItem>
+          </SelectContent>
+        </Select>
 
         <div className="w-px h-6 bg-gray-300 mx-1" />
 
@@ -131,34 +154,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           </svg>
         </Button>
 
-        <div className="w-px h-6 bg-gray-300 mx-1" />
 
-        {/* Headings */}
-        <Button
-          variant={editor.isActive('heading', { level: 1 }) ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        >
-          H1
-        </Button>
-
-        <Button
-          variant={editor.isActive('heading', { level: 2 }) ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        >
-          H2
-        </Button>
-
-        <Button
-          variant={editor.isActive('heading', { level: 3 }) ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        >
-          H3
-        </Button>
-
-        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Lists */}
         <Button
