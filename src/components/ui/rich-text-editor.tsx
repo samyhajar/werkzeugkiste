@@ -77,7 +77,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   }
 
   return (
-    <div className={`border border-gray-300 rounded-md ${className}`}>
+    <div className={`border border-gray-300 rounded-md bg-white ${className}`}>
       {/* Toolbar */}
       <div className="border-b border-gray-200 p-3 flex flex-wrap gap-1">
         {/* Text Format Dropdown */}
@@ -305,7 +305,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       </div>
 
       {/* Editor Content */}
-      <div className="p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+      <div className="p-4 min-h-[200px] max-h-[400px] overflow-y-auto bg-white">
         <EditorContent
           editor={editor}
           placeholder={placeholder}
