@@ -205,3 +205,25 @@ input[type='number'] {
   -ms-user-select: text !important;
   user-select: text !important;
 }
+
+/* Specifically target dialog content to ensure text selection works */
+[data-slot='dialog-content'] input,
+[data-slot='dialog-content'] textarea,
+.dialog input,
+.dialog textarea {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Override any potential Tailwind select-none classes */
+.select-none input,
+.select-none textarea {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}

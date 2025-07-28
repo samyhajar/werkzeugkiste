@@ -6,10 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -372,8 +369,8 @@ export default function CoursesPage() {
     setFormData(prev => ({ ...prev, description: e.target.value }))
   }, [])
 
-  const handleModuleChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, module_id: value }))
+  const handleModuleChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, module_id: e.target.value }))
   }, [])
 
   const handleHeroImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,14 +379,7 @@ export default function CoursesPage() {
 
 
 
-  const moduleOptions = useMemo(() => modules.map((module) => (
-    <SelectItem key={module.id} value={module.id}>
-      <div className="flex items-center gap-2">
-        <span>📦</span>
-        <span>{module.title}</span>
-      </div>
-    </SelectItem>
-  )), [modules])
+
 
   const lessonItems = useMemo(() => courseLessons.map((lesson, index) => (
         <div
@@ -538,25 +528,28 @@ export default function CoursesPage() {
 
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Course Title *</Label>
-                    <Input
+                    <label htmlFor="title" className="text-xs font-semibold text-gray-700">Course Title *</label>
+                    <input
+                      type="text"
                       id="title"
                       value={formData.title}
                       onChange={handleTitleChange}
                       placeholder="e.g., Digital Marketing Fundamentals"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
                       required
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
-                    <Textarea
+                    <label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</label>
+                    <textarea
                       id="description"
                       value={formData.description}
                       onChange={handleDescriptionChange}
                       placeholder="Describe what this course covers and its learning objectives..."
                       rows={3}
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
+                      className="flex w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                      style={{ userSelect: 'text' }}
                     />
                   </div>
                 </div>
@@ -572,32 +565,28 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="module_id" className="text-xs font-semibold text-gray-700">Select Module</Label>
-                  <Select value={formData.module_id} onValueChange={handleModuleChange}>
-                    <SelectTrigger className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 h-9 text-sm">
-                      <SelectValue placeholder="Choose a module for this course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {moduleOptions}
-                    </SelectContent>
-                  </Select>
+                  <label htmlFor="module_id" className="text-xs font-semibold text-gray-700">Select Module</label>
+                  <select
+                    id="module_id"
+                    value={formData.module_id}
+                    onChange={handleModuleChange}
+                    className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ userSelect: 'text' }}
+                  >
+                    <option value="">Choose a module for this course</option>
+                    {modules.map((module) => (
+                      <option key={module.id} value={module.id}>
+                        📦 {module.title}
+                      </option>
+                    ))}
+                  </select>
                   <p className="text-xs text-gray-500">Choose the module where this course should appear</p>
                 </div>
               </div>
 
 
 
-              {/* Status Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">📊</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Course Status</h3>
-                </div>
 
-
-              </div>
 
               {/* Visual Design Card */}
               <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
@@ -609,14 +598,16 @@ export default function CoursesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
-                                      <Input
-                      id="hero_image"
-                      value={formData.hero_image}
-                      onChange={handleHeroImageChange}
-                      placeholder="https://example.com/image.jpg"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
-                    />
+                  <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
+                  <input
+                    type="url"
+                    id="hero_image"
+                    value={formData.hero_image}
+                    onChange={handleHeroImageChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ userSelect: 'text' }}
+                  />
                   <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
                 </div>
               </div>
@@ -684,11 +675,13 @@ export default function CoursesPage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <Input
+            <input
+              type="text"
               placeholder="Kurse suchen..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20"
+              className="flex h-12 w-full min-w-0 rounded-md border border-gray-300 bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ userSelect: 'text' }}
             />
           </div>
 

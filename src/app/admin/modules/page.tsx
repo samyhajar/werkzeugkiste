@@ -423,24 +423,27 @@ export default function ModulesPage() {
 
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <Label htmlFor="title" className="text-xs font-semibold text-gray-700">Module Title *</Label>
-                    <Input
+                    <label htmlFor="title" className="text-xs font-semibold text-gray-700">Module Title *</label>
+                    <input
+                      type="text"
                       id="title"
                       value={newModule.title}
                       onChange={(e) => setNewModule({ ...newModule, title: e.target.value })}
                       placeholder="e.g., Digital Marketing Fundamentals"
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</Label>
-                    <Textarea
+                    <label htmlFor="description" className="text-xs font-semibold text-gray-700">Description</label>
+                    <textarea
                       id="description"
                       value={newModule.description}
                       onChange={(e) => setNewModule({ ...newModule, description: e.target.value })}
                       placeholder="Describe what this module covers and its learning objectives..."
                       rows={2}
-                      className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm resize-none"
+                      className="flex w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                      style={{ userSelect: 'text' }}
                     />
                   </div>
                 </div>
@@ -456,13 +459,15 @@ export default function ModulesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</Label>
-                  <Input
+                  <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
+                  <input
+                    type="url"
                     id="hero_image"
                     value={newModule.hero_image}
                     onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
                     placeholder="https://example.com/module-image.jpg (optional)"
-                    className="border-[#486681]/20 focus:border-[#486681] focus:ring-[#486681]/20 text-sm h-9 placeholder:text-gray-400"
+                    className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{ userSelect: 'text' }}
                   />
                   <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
                 </div>
@@ -558,17 +563,7 @@ export default function ModulesPage() {
                 </div>
               )}
 
-              {/* Settings Card */}
-              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
-                    <span className="text-white text-xs">⚙️</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm">Module Settings</h3>
-                </div>
 
-
-              </div>
             </div>
 
             {/* Action Buttons - Fixed Footer */}
