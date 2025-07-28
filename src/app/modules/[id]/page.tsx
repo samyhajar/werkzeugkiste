@@ -23,7 +23,6 @@ interface Lesson {
   id: string
   title: string
   content: string | null
-  duration_minutes: number | null
   order: number
   course_id: string
   created_at: string
