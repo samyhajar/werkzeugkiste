@@ -154,20 +154,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('[AuthContext] Error details - code:', error.code, 'message:', error.message, 'details:', error.details)
 
         // If profile doesn't exist and we haven't retried too many times, wait and retry
-        if (error.code === 'PGRST116' && retryCount < 3) {
-          console.log('[AuthContext] Profile not found, retrying in 1 second... (attempt', retryCount + 1, 'of 3)')
+        if (error.code === 'PGRST116' && retryCount < 2) { // Reduced from 3 to 2 retries
+          console.log('[AuthContext] Profile not found, retrying in 500ms... (attempt', retryCount + 1, 'of 2)')
           setTimeout(() => {
             fetchUserProfile(userId, retryCount + 1)
-          }, 1000)
+          }, 500) // Reduced from 1000ms to 500ms
           return
         }
 
         // If profile doesn't exist after retries, create a basic one from user metadata
         if (error.code === 'PGRST116') {
-          console.log('[AuthContext] Profile not found after retries, creating default profile from user metadata')
+          console.log('[AuthContext] Profile not found after retries, creating immediate fallback profile')
           const userData = user || session?.user
           if (userData) {
-            // Try to create the profile in the database
+            // Create fallback profile immediately
+            const defaultProfile: UserProfile = {
+              id: userData.id,
+              email: userData.email!,
+              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+              role: userData.user_metadata?.role || 'student',
+              first_name: userData.user_metadata?.first_name || null,
+              created_at: userData.created_at || null,
+              updated_at: userData.updated_at || null
+            }
+            console.log('[AuthContext] Using immediate fallback profile:', defaultProfile)
+            setProfile(defaultProfile)
+
+            // Try to create the profile in the database in the background (non-blocking)
             const newProfileData = {
               id: userData.id,
               email: userData.email,
@@ -175,43 +188,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               role: userData.user_metadata?.role || 'student'
             }
 
-            console.log('[AuthContext] Attempting to create profile:', newProfileData)
-
-            const { data: createdProfile, error: createError } = await supabase
+            console.log('[AuthContext] Creating profile in background:', newProfileData)
+            supabase
               .from('profiles')
               .insert(newProfileData)
               .select()
               .single()
-
-            if (createError) {
-              console.error('[AuthContext] Error creating profile:', createError)
-              console.error('[AuthContext] Create error details - code:', createError.code, 'message:', createError.message, 'details:', createError.details)
-
-              // Fall back to creating a local profile object
-              const defaultProfile: UserProfile = {
-                id: userData.id,
-                email: userData.email!,
-                full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
-                role: userData.user_metadata?.role || 'student',
-                first_name: userData.user_metadata?.first_name || null,
-                created_at: userData.created_at || null,
-                updated_at: userData.updated_at || null
-              }
-              console.log('[AuthContext] Using fallback profile:', defaultProfile)
-              setProfile(defaultProfile)
-            } else {
-              console.log('[AuthContext] Profile created successfully:', createdProfile)
-              const profileData: UserProfile = {
-                id: createdProfile.id,
-                email: userData.email || '',
-                full_name: createdProfile.full_name,
-                role: (createdProfile.role as 'admin' | 'student') || 'student',
-                first_name: createdProfile.first_name || null,
-                created_at: createdProfile.created_at,
-                updated_at: createdProfile.updated_at
-              }
-              setProfile(profileData)
-            }
+              .then(({ data: createdProfile, error: createError }) => {
+                if (createError) {
+                  console.error('[AuthContext] Background profile creation error:', createError)
+                } else {
+                  console.log('[AuthContext] Background profile created successfully:', createdProfile)
+                  // Update the profile with the database version
+                  const profileData: UserProfile = {
+                    id: createdProfile.id,
+                    email: userData.email || '',
+                    full_name: createdProfile.full_name,
+                    role: (createdProfile.role as 'admin' | 'student') || 'student',
+                    first_name: createdProfile.first_name || null,
+                    created_at: createdProfile.created_at,
+                    updated_at: createdProfile.updated_at
+                  }
+                  setProfile(profileData)
+                }
+              })
           }
         } else {
           // For other errors, try to create a fallback profile
@@ -423,14 +423,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set a timeout to force loading to false after 5 seconds
     const timeout = setTimeout(() => {
+      console.log('[AuthContext] Timeout reached - forcing loading to false')
       setLoading(false)
-    }, 5000)
+    }, 3000) // Reduced from 5 seconds to 3 seconds
 
     return () => {
       subscription.unsubscribe()
       clearTimeout(timeout)
     }
   }, [supabase, router])
+
+  // Add additional timeout for profile loading
+  useEffect(() => {
+    if (profileLoading) {
+      const profileTimeout = setTimeout(() => {
+        console.log('[AuthContext] Profile loading timeout - forcing profileLoading to false')
+        setProfileLoading(false)
+      }, 5000)
+
+      return () => clearTimeout(profileTimeout)
+    }
+  }, [profileLoading])
 
     const signOut = async () => {
     try {
