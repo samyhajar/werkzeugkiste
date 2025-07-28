@@ -671,34 +671,46 @@ export default function ModuleDetailPage() {
     // Find the course using the lesson's course_id
     const course = module?.courses.find(c => c.id === lesson.course_id)
     setSelectedCourse(course || null)
+  }
 
-    // Mark lesson as complete when selected (if user is logged in and lesson not already completed)
-    if (user && lesson.id && !completedLessons.has(lesson.id)) {
-      try {
-        const success = await markLessonComplete(lesson.id)
-        if (success) {
-          // Update local state to reflect completion
-          setCompletedLessons(prev => new Set([...prev, lesson.id]))
+  const handleLessonComplete = async (lesson: Lesson) => {
+    if (!user || !lesson.id || completedLessons.has(lesson.id)) {
+      return
+    }
 
-          // Show success feedback (simple toast)
-          const toast = document.createElement('div')
-          toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
-          toast.textContent = `✓ "${lesson.title}" als abgeschlossen markiert`
-          document.body.appendChild(toast)
+    try {
+      const success = await markLessonComplete(lesson.id)
+      if (success) {
+        // Update local state to reflect completion
+        setCompletedLessons(prev => new Set([...prev, lesson.id]))
 
-          // Remove toast after 3 seconds
-          setTimeout(() => {
-            toast.style.opacity = '0'
-            setTimeout(() => document.body.removeChild(toast), 300)
-          }, 3000)
+        // Show success feedback (simple toast)
+        const toast = document.createElement('div')
+        toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
+        toast.textContent = `✓ "${lesson.title}" als abgeschlossen markiert`
+        document.body.appendChild(toast)
 
-          // Check if module is completed after this lesson
-          await checkModuleCompletion()
-        }
-      } catch (error) {
-        console.error('Failed to mark lesson complete:', error)
-        // Don't show error to user as this is a background operation
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+          toast.style.opacity = '0'
+          setTimeout(() => document.body.removeChild(toast), 300)
+        }, 3000)
+
+        // Check if module is completed after this lesson
+        await checkModuleCompletion()
       }
+    } catch (error) {
+      console.error('Failed to mark lesson complete:', error)
+      // Show error feedback
+      const toast = document.createElement('div')
+      toast.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
+      toast.textContent = 'Fehler beim Markieren der Lektion'
+      document.body.appendChild(toast)
+
+      setTimeout(() => {
+        toast.style.opacity = '0'
+        setTimeout(() => document.body.removeChild(toast), 300)
+      }, 3000)
     }
   }
 
@@ -1097,6 +1109,37 @@ export default function ModuleDetailPage() {
                           dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
                         />
                       </div>
+
+                      {/* Lesson Completion Button */}
+                      {user && (
+                        <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
+                          <div className="flex items-center justify-center">
+                            {completedLessons.has(selectedLesson.id) ? (
+                              <div className="flex items-center gap-2 text-green-700">
+                                <CheckCircle className="h-5 w-5" />
+                                <span className="font-medium">Lektion abgeschlossen</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleLessonComplete(selectedLesson)}
+                                disabled={isMarking}
+                                className="flex items-center gap-2 px-6 py-3 bg-[#486681] hover:bg-[#3e5570] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isMarking ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span>Wird markiert...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>Gelesen</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
