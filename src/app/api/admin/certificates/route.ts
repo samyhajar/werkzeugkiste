@@ -8,7 +8,7 @@ type Course = Database['public']['Tables']['courses']['Row']
 
 interface CertificateWithDetails extends Certificate {
   user?: { id: string; full_name: string | null }
-  course?: { id: string; title: string } // Keep as 'course' for API compatibility
+  module?: { id: string; title: string }
 }
 
 export async function GET(_request: NextRequest) {
@@ -91,7 +91,7 @@ export async function GET(_request: NextRequest) {
       certificates?.map((cert: Certificate) => ({
         ...cert,
         user: userMap.get(cert.user_id),
-        course: moduleMap.get(cert.module_id), // Keep as 'course' for API compatibility
+        module: moduleMap.get(cert.module_id),
       })) || []
 
     return NextResponse.json({

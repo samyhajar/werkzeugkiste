@@ -17,22 +17,38 @@ export async function GET() {
     const userIds = users.map(user => user.id)
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, role')
+      .select('id, role, full_name')
       .in('id', userIds)
 
     if (profilesError) {
       throw profilesError
     }
 
-    const profilesMap = new Map(profiles.map(p => [p.id, p.role]))
+    const profilesMap = new Map(
+      profiles.map(p => [p.id, { role: p.role, full_name: p.full_name }])
+    )
 
-    const combinedUsers = users.map(user => ({
-      id: user.id,
-      email: user.email,
-      role: profilesMap.get(user.id) || 'student',
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
-    }))
+    const combinedUsers = users.map(user => {
+      const profile = profilesMap.get(user.id)
+
+      // Try different metadata field names for the user's name
+      let fullName = profile?.full_name
+      if (!fullName && user.user_metadata) {
+        fullName =
+          user.user_metadata.full_name ||
+          user.user_metadata.name ||
+          user.user_metadata.display_name
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        full_name: fullName || null,
+        role: profile?.role || 'student',
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at,
+      }
+    })
 
     return NextResponse.json({ success: true, users: combinedUsers })
   } catch (error: any) {

@@ -241,11 +241,8 @@ export default function CertificatesPage() {
     }
   }
 
-    const deleteCertificate = async (certificateId: string) => {
+    const deleteCertificate = async (userId: string, moduleId: string) => {
     try {
-      // Parse the certificate ID to get user_id and module_id
-      const [userId, moduleId] = certificateId.split('-')
-
       const response = await fetch(`/api/admin/certificates/delete`, {
         method: 'DELETE',
         headers: {
@@ -452,10 +449,7 @@ export default function CertificatesPage() {
             .filter(certificate => certificate.user_id && certificate.module_id)
             .map((certificate, index) => (
               <div
-                key={certificate.user_id && certificate.module_id
-                  ? `${certificate.user_id}-${certificate.module_id}`
-                  : `certificate-${index}`
-                }
+                key={certificate.id || `certificate-${index}`}
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50"
               >
                 <div className="flex-1">
@@ -483,11 +477,7 @@ export default function CertificatesPage() {
                   )}
                   <Button
                     size="sm"
-                    onClick={() => void deleteCertificate(
-                      certificate.user_id && certificate.module_id
-                        ? `${certificate.user_id}-${certificate.module_id}`
-                        : `certificate-${index}`
-                    )}
+                    onClick={() => void deleteCertificate(certificate.user_id, certificate.module_id)}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     Löschen

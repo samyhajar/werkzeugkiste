@@ -28,7 +28,12 @@ export default function StudentsPage() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch('/api/admin/users')
+        const response = await fetch(`/api/admin/users?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
@@ -166,7 +171,7 @@ export default function StudentsPage() {
                   placeholder="Search students by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-12 text-base border-gray-300 focus:border-[#486681] focus:ring-[#486681]/20 pl-10"
+                  className="w-full h-12 text-base border border-gray-300 rounded-md focus:border-[#486681] focus:ring-[#486681]/20 pl-10 pr-4"
                 />
               </div>
             </div>
@@ -219,9 +224,6 @@ export default function StudentsPage() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-white tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -244,7 +246,7 @@ export default function StudentsPage() {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {student.full_name || 'No Name'}
+                            {student.full_name && student.full_name.trim() !== '' ? student.full_name : 'No Name'}
                           </div>
                           <div className="text-sm text-gray-500">
                             Student ID: {student.id.slice(0, 8)}...
@@ -275,23 +277,6 @@ export default function StudentsPage() {
                           ? new Date(student.created_at).toLocaleDateString()
                           : 'Unknown'
                         }
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          size="sm"
-                          className="bg-[#486681] hover:bg-[#3e5570] text-white shadow-sm"
-                        >
-                          Progress
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-[#486681] text-[#486681] hover:bg-[#486681]/10 shadow-sm"
-                        >
-                          Message
-                        </Button>
                       </div>
                     </td>
                   </tr>
