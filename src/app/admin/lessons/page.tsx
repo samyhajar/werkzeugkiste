@@ -787,7 +787,7 @@ export default function LessonsPage() {
                   </div>
                   <div className="space-y-1">
                     <label htmlFor="edit-content-editor" className="text-xs font-semibold text-gray-700 block">Lektion Inhalt</label>
-                    <div className="max-h-[300px] overflow-hidden">
+                    <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-md">
                       <RichTextEditor
                         content={editingLesson.content || ''}
                         onChange={(content) => setEditingLesson({ ...editingLesson!, content })}
