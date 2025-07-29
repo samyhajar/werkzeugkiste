@@ -28,7 +28,11 @@ export default [
       '@typescript-eslint': typescriptEslint,
     },
     rules: {
-      // Disable all problematic rules for deployment
+      // Next.js recommended rules
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+
+      // Disable problematic rules for development
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -60,7 +64,6 @@ export default [
       'no-implied-eval': 'off',
       'no-new-func': 'off',
       'no-obj-calls': 'off',
-      'no-redeclare': 'off',
       'no-self-compare': 'off',
       'no-sequences': 'off',
       'no-throw-literal': 'off',
