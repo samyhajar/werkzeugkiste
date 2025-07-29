@@ -156,65 +156,79 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-lg border border-gray-100"
           disabled={isLoading}
         >
-          <X className="w-4 h-4 text-gray-600" />
+          <X className="w-5 h-5 text-gray-500" />
         </button>
 
-        {/* Header */}
-        <DialogHeader className="px-8 pt-8 pb-6 text-center">
-          <DialogTitle className="text-2xl font-bold text-gray-900 mb-2">
-            Willkommen
-          </DialogTitle>
-          <DialogDescription className="text-gray-600 text-sm">
-            Melden Sie sich an oder erstellen Sie ein neues Konto
-          </DialogDescription>
-        </DialogHeader>
+        {/* Header with Gradient */}
+        <div className="relative bg-gradient-to-br from-[#486681] via-[#5a7a95] to-[#486681] px-8 pt-12 pb-8">
+          <div className="absolute inset-0 bg-black/5"></div>
+          <div className="relative text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <DialogTitle className="text-3xl font-bold text-white mb-3">
+              Willkommen
+            </DialogTitle>
+            <DialogDescription className="text-white/90 text-base font-medium">
+              Melden Sie sich an oder erstellen Sie ein neues Konto
+            </DialogDescription>
+          </div>
+        </div>
 
         {/* Content */}
-        <div className="px-8 pb-8">
+        <div className="px-8 py-8">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'signup')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 rounded-xl p-1 mb-6">
+            <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-1.5 mb-8 shadow-inner border border-gray-200/50">
               <TabsTrigger
                 value="login"
-                className="rounded-lg py-2.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                className="rounded-xl py-3 px-4 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#486681]/10 data-[state=active]:text-[#486681] data-[state=active]:border data-[state=active]:border-[#486681]/20 transition-all duration-200 text-gray-600 hover:text-gray-800"
               >
                 Einloggen
               </TabsTrigger>
               <TabsTrigger
                 value="signup"
-                className="rounded-lg py-2.5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                className="rounded-xl py-3 px-4 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#486681]/10 data-[state=active]:text-[#486681] data-[state=active]:border data-[state=active]:border-[#486681]/20 transition-all duration-200 text-gray-600 hover:text-gray-800"
               >
                 Registrieren
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login" className="space-y-5 mt-0">
-              <form onSubmit={handleSignIn} className="space-y-5">
+            <TabsContent value="login" className="space-y-6 mt-0">
+              <form onSubmit={handleSignIn} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email" className="text-sm font-medium text-gray-700">
-                    Benutzername oder E-Mail
+                  <Label htmlFor="login-email" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                    E-Mail-Adresse
                   </Label>
                   <Input
                     id="login-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder=""
+                    placeholder="ihre@email.com"
                     required
                     disabled={isLoading}
                     autoComplete="email"
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
+                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="login-password" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
                     Passwort
                   </Label>
                   <Input
@@ -222,61 +236,75 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder=""
+                    placeholder="••••••••"
                     required
                     disabled={isLoading}
                     autoComplete="current-password"
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
+                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember-me"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                    disabled={isLoading}
-                    className="border-gray-300 data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary"
-                  />
-                  <Label
-                    htmlFor="remember-me"
-                    className="text-sm text-gray-600 cursor-pointer"
-                  >
-                    Meine Eingaben speichern
-                  </Label>
-                </div>
-
-                <div className="text-center">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      id="remember-me"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                      disabled={isLoading}
+                      className="border-2 border-gray-300 data-[state=checked]:bg-[#486681] data-[state=checked]:border-[#486681] rounded-md"
+                    />
+                    <Label
+                      htmlFor="remember-me"
+                      className="text-sm text-gray-700 cursor-pointer font-medium"
+                    >
+                      Angemeldet bleiben
+                    </Label>
+                  </div>
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-sm text-brand-primary hover:text-brand-primary/80 transition-colors"
+                    className="text-sm text-[#486681] hover:text-[#3e5570] transition-colors font-semibold"
                     disabled={isLoading}
                   >
-                    Passwort vergessen? Hier klicken!
+                    Passwort vergessen?
                   </button>
                 </div>
 
                 {error && (
-                  <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+                  <div className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium">
                     {error}
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-brand-primary hover:bg-brand-primary/90 text-white font-medium rounded-xl transition-colors shadow-sm"
+                  className="w-full h-14 bg-gradient-to-r from-[#486681] to-[#5a7a95] hover:from-[#3e5570] hover:to-[#4a6b7f] text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg shadow-[#486681]/25 hover:shadow-xl hover:shadow-[#486681]/30 border-0 text-base"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Wird angemeldet...' : 'Einloggen'}
+                  {isLoading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Wird angemeldet...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                      </svg>
+                      Einloggen
+                    </div>
+                  )}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="signup" className="space-y-5 mt-0">
-              <form onSubmit={handleSignUp} className="space-y-5">
+            <TabsContent value="signup" className="space-y-6 mt-0">
+              <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="signup-name" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     Vollständiger Name
                   </Label>
                   <Input
@@ -284,16 +312,19 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder=""
+                    placeholder="Max Mustermann"
                     required
                     disabled={isLoading}
                     autoComplete="name"
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
+                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="signup-email" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
                     E-Mail-Adresse
                   </Label>
                   <Input
@@ -301,16 +332,19 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder=""
+                    placeholder="ihre@email.com"
                     required
                     disabled={isLoading}
                     autoComplete="email"
-                    className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors"
+                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="signup-password" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
                     Passwort
                   </Label>
                   <div className="relative">
@@ -319,16 +353,16 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder=""
+                      placeholder="••••••••"
                       required
                       disabled={isLoading}
                       autoComplete="new-password"
-                      className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors pr-12"
+                      className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium pr-14"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
                       disabled={isLoading}
                     >
                       {showPassword ? (
@@ -346,7 +380,10 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password" className="text-sm font-medium text-gray-700">
+                  <Label htmlFor="signup-confirm-password" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     Passwort bestätigen
                   </Label>
                   <div className="relative">
@@ -355,16 +392,16 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder=""
+                      placeholder="••••••••"
                       required
                       disabled={isLoading}
                       autoComplete="new-password"
-                      className="h-12 rounded-xl border-gray-200 focus:border-brand-primary focus:ring-brand-primary/20 transition-colors pr-12"
+                      className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium pr-14"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
                       disabled={isLoading}
                     >
                       {showConfirmPassword ? (
@@ -384,17 +421,29 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                 {/* Role is automatically set to 'student' - Admin accounts can only be created by admin invitation */}
 
                 {error && (
-                  <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+                  <div className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium">
                     {error}
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-brand-primary hover:bg-brand-primary/90 text-white font-medium rounded-xl transition-colors shadow-sm"
+                  className="w-full h-14 bg-gradient-to-r from-[#486681] to-[#5a7a95] hover:from-[#3e5570] hover:to-[#4a6b7f] text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg shadow-[#486681]/25 hover:shadow-xl hover:shadow-[#486681]/30 border-0 text-base"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Konto wird erstellt...' : 'Konto erstellen'}
+                  {isLoading ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Konto wird erstellt...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Konto erstellen
+                    </div>
+                  )}
                 </Button>
               </form>
             </TabsContent>
