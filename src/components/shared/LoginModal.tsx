@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -156,7 +157,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+      <DialogContent showCloseButton={false} className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
         {/* Close Button */}
         <button
           onClick={handleClose}
@@ -170,10 +171,8 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
         <div className="relative bg-gradient-to-br from-[#486681] via-[#5a7a95] to-[#486681] px-8 pt-12 pb-8">
           <div className="absolute inset-0 bg-black/5"></div>
           <div className="relative text-center">
-            <div className="mx-auto mb-4 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+            <div className="mx-auto mb-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center p-1">
+              <Image src="/Logo-digi-CMYK.png" alt="Logo" width={72} height={72} className="rounded-full" />
             </div>
             <DialogTitle className="text-3xl font-bold text-white mb-3">
               Willkommen
@@ -187,18 +186,28 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
         {/* Content */}
         <div className="px-8 py-8">
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'signup')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-1.5 mb-8 shadow-inner border border-gray-200/50">
+            <TabsList className="grid w-full grid-cols-2 gap-x-4 mb-8">
               <TabsTrigger
                 value="login"
-                className="rounded-xl py-3 px-4 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#486681]/10 data-[state=active]:text-[#486681] data-[state=active]:border data-[state=active]:border-[#486681]/20 transition-all duration-200 text-gray-600 hover:text-gray-800"
+                className="w-full justify-center rounded-xl py-3 px-4 text-sm font-semibold transition-all duration-200 border shadow-sm data-[state=active]:bg-gray-100 data-[state=active]:text-gray-800 data-[state=active]:border-gray-100 bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
               >
-                Einloggen
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  Einloggen
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="signup"
-                className="rounded-xl py-3 px-4 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:shadow-[#486681]/10 data-[state=active]:text-[#486681] data-[state=active]:border data-[state=active]:border-[#486681]/20 transition-all duration-200 text-gray-600 hover:text-gray-800"
+                className="w-full justify-center rounded-xl py-3 px-4 text-sm font-semibold transition-all duration-200 border shadow-sm data-[state=active]:bg-gray-100 data-[state=active]:text-gray-800 data-[state=active]:border-gray-100 bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
               >
-                Registrieren
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  Registrieren
+                </span>
               </TabsTrigger>
             </TabsList>
 
