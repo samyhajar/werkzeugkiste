@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { CustomInput } from '@/components/ui/CustomInput'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -220,7 +220,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     </svg>
                     E-Mail-Adresse
                   </Label>
-                  <Input
+                  <CustomInput
                     id="login-email"
                     type="email"
                     value={email}
@@ -229,7 +229,6 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     required
                     disabled={isLoading}
                     autoComplete="email"
-                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
@@ -240,7 +239,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     </svg>
                     Passwort
                   </Label>
-                  <Input
+                  <CustomInput
                     id="login-password"
                     type="password"
                     value={password}
@@ -249,7 +248,6 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     required
                     disabled={isLoading}
                     autoComplete="current-password"
-                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
@@ -316,7 +314,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     </svg>
                     Vollständiger Name
                   </Label>
-                  <Input
+                  <CustomInput
                     id="signup-name"
                     type="text"
                     value={fullName}
@@ -325,7 +323,6 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     required
                     disabled={isLoading}
                     autoComplete="name"
-                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
@@ -336,7 +333,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     </svg>
                     E-Mail-Adresse
                   </Label>
-                  <Input
+                  <CustomInput
                     id="signup-email"
                     type="email"
                     value={email}
@@ -345,7 +342,6 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     required
                     disabled={isLoading}
                     autoComplete="email"
-                    className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium"
                   />
                 </div>
 
@@ -357,7 +353,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     Passwort
                   </Label>
                   <div className="relative">
-                    <Input
+                    <CustomInput
                       id="signup-password"
                       type={showPassword ? "text" : "password"}
                       value={password}
@@ -366,7 +362,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                       required
                       disabled={isLoading}
                       autoComplete="new-password"
-                      className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium pr-14"
+                      className="pr-14"
                     />
                     <button
                       type="button"
@@ -396,7 +392,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                     Passwort bestätigen
                   </Label>
                   <div className="relative">
-                    <Input
+                    <CustomInput
                       id="signup-confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       value={confirmPassword}
@@ -405,7 +401,7 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
                       required
                       disabled={isLoading}
                       autoComplete="new-password"
-                      className="h-14 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-[#486681] focus:bg-white focus:ring-4 focus:ring-[#486681]/10 transition-all duration-200 text-gray-800 placeholder:text-gray-400 font-medium pr-14"
+                      className="pr-14"
                     />
                     <button
                       type="button"
