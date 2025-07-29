@@ -1090,7 +1090,6 @@ export default function ModuleDetailPage() {
                   </h1>
                   <div className="flex items-center justify-center gap-4 text-gray-600">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-[#486681] rounded-full"></span>
                       Lektion {selectedLesson.order}
                     </span>
                   </div>
@@ -1181,7 +1180,6 @@ export default function ModuleDetailPage() {
                   </h1>
                   <div className="flex items-center justify-center gap-4 text-gray-600">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
                       Quiz
                     </span>
                     {selectedQuiz.description && (

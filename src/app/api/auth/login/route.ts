@@ -104,23 +104,6 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Set the session cookies with proper configuration
-    console.log('[Login API] Setting session cookies')
-    response.cookies.set('sb-access-token', session.access_token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-    response.cookies.set('sb-refresh-token', session.refresh_token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
     console.log('[Login API] Login process completed successfully')
     return response
   } catch (error) {

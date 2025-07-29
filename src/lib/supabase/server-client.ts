@@ -2,13 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
 
-/**
- * Server‑side Supabase client with cookie support.
- * Note: In some Next.js versions `cookies()` is asynchronous, returning a
- * `Promise<ReadonlyRequestCookies>`.  Therefore this helper is **async** and
- * callers must `await createClient()`.
- */
-export async function createClient() {
+export const createClient = async () => {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
@@ -16,34 +10,27 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll()
+        get(name: string) {
+          return cookieStore.get(name)?.value
         },
-        setAll(cookiesToSet) {
+        set(name: string, value: string, options) {
           try {
-            // Check if we're in a context that allows cookie modification
-            // This will throw an error if we're not in a Server Action or Route Handler
-            cookiesToSet.forEach(({ name, value, options }) => {
-              // Ensure cookies persist and are accessible to client
-              const cookieOptions = {
-                ...options,
-                maxAge: 60 * 60 * 24 * 7, // 7 days
-                httpOnly: false, // Allow client-side access
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax' as const,
-                path: '/',
-              }
-              cookieStore.set(name, value, cookieOptions)
-            })
+            cookieStore.set({ name, value, ...options })
           } catch (error) {
-            // Silently ignore cookie setting errors when not in proper context
-            // This is expected behavior when called from Server Components
-            // The client-side authentication will handle session persistence
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
           }
         },
-      },
-      auth: {
-        flowType: 'pkce',
+        remove(name: string, options) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
       },
     }
   )
