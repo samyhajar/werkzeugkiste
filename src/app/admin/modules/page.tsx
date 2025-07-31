@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import type { Database } from '@/types/supabase'
+import RichTextEditor from '@/components/ui/rich-text-editor'
 
 type Module = Database['public']['Tables']['modules']['Row']
 
@@ -52,7 +53,9 @@ export default function ModulesPage() {
   const [newModule, setNewModule] = useState({
     title: '',
     description: '',
-    hero_image: ''
+    hero_image: '',
+    presenter_materials_content: '',
+    presenter_materials_url: ''
   })
   const [moduleCourses, setModuleCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
   const [reorderingCourses, setReorderingCourses] = useState(false)
@@ -134,7 +137,9 @@ export default function ModulesPage() {
           body: JSON.stringify({
             title: newModule.title,
             description: newModule.description,
-            hero_image: newModule.hero_image
+            hero_image: newModule.hero_image,
+            presenter_materials_content: newModule.presenter_materials_content,
+            presenter_materials_url: newModule.presenter_materials_url
           }),
         })
 
@@ -146,7 +151,7 @@ export default function ModulesPage() {
 
         if (data.success) {
           setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
-          setNewModule({ title: '', description: '', hero_image: '' })
+          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_url: '' })
           setIsCreateDialogOpen(false)
           setEditingModule(null)
         } else {
@@ -171,7 +176,7 @@ export default function ModulesPage() {
 
         if (data.success && data.module) {
           setModules([data.module, ...modules])
-          setNewModule({ title: '', description: '', hero_image: '' })
+          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_url: '' })
           setIsCreateDialogOpen(false)
         } else {
           throw new Error(data.error || 'Failed to create module')
@@ -226,7 +231,9 @@ export default function ModulesPage() {
     setNewModule({
       title: module.title,
       description: module.description || '',
-      hero_image: module.hero_image ?? ''
+      hero_image: module.hero_image ?? '',
+      presenter_materials_content: module.presenter_materials_content || '',
+      presenter_materials_url: module.presenter_materials_url || ''
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
@@ -342,7 +349,6 @@ export default function ModulesPage() {
 
 
 
-
   useEffect(() => {
     void fetchModules()
     void fetchCourses()
@@ -398,7 +404,7 @@ export default function ModulesPage() {
               Neues Modul erstellen
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col mx-4">
+          <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col mx-4">
             <DialogHeader className="text-center pb-4 flex-shrink-0">
               <div className="mx-auto w-12 h-12 bg-gradient-to-br from-[#486681] to-[#3e5570] rounded-full flex items-center justify-center mb-3">
                 <span className="text-white text-lg">📦</span>
@@ -473,7 +479,39 @@ export default function ModulesPage() {
                 </div>
               </div>
 
+              {/* Presenter Materials Card */}
+              <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-6 h-6 bg-purple-600 rounded-md flex items-center justify-center">
+                    <span className="text-white text-xs">🧑‍🏫</span>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 text-sm">Presenter Materials</h3>
+                </div>
 
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label htmlFor="presenter_materials_content" className="text-xs font-semibold text-gray-700">Content</label>
+                    <RichTextEditor
+                      content={newModule.presenter_materials_content}
+                      onChange={(content) => setNewModule({ ...newModule, presenter_materials_content: content })}
+                      placeholder="Add rich text content for presenters..."
+                      className="min-h-[200px]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="presenter_materials_url" className="text-xs font-semibold text-gray-700">PDF URL</label>
+                    <input
+                      type="url"
+                      id="presenter_materials_url"
+                      value={newModule.presenter_materials_url}
+                      onChange={(e) => setNewModule({ ...newModule, presenter_materials_url: e.target.value })}
+                      placeholder="https://example.com/materials.pdf"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
+                    />
+                  </div>
+                </div>
+              </div>
 
               {/* Module Courses List Card */}
               {editingModule && (

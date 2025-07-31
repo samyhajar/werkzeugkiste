@@ -489,8 +489,9 @@ export default function ModuleDetailPage() {
 
   // Check authentication on component mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndFetchData = async () => {
       try {
+        setAuthChecked(false)
         const supabase = getBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
 
@@ -498,17 +499,21 @@ export default function ModuleDetailPage() {
           setShowLoginModal(true)
         } else {
           setUser(user)
+          if (moduleId) {
+            await fetchModule()
+            await fetchUserAndProgress()
+          }
         }
-        setAuthChecked(true)
       } catch (error) {
         console.error('Error checking authentication:', error)
         setShowLoginModal(true)
+      } finally {
         setAuthChecked(true)
       }
     }
 
-    void checkAuth()
-  }, [])
+    void checkAuthAndFetchData()
+  }, [moduleId])
 
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests

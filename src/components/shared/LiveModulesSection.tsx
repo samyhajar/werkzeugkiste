@@ -4,7 +4,12 @@ import { useState, useCallback, useRef } from 'react'
 import ModuleCard from './ModuleCard'
 import { Tables } from '@/types/supabase'
 
-type Module = Tables<'modules'> & { courses?: unknown[] }
+type Module = Tables<'modules'> & {
+  courses: (Tables<'courses'> & {
+    lessons: Tables<'lessons'>[]
+    quizzes: Tables<'enhanced_quizzes'>[]
+  })[]
+}
 
 interface LiveModulesSectionProps {
   initialModules: Module[]
