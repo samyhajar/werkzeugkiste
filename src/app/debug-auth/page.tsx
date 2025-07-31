@@ -22,7 +22,7 @@ export default function DebugAuthPage() {
 
     // Check client-side session
     const supabase = getBrowserClient()
-    supabase.auth.getSession().then(({ data, error }) => {
+    supabase.auth.getSession().then(({ data, error }: { data: any; error: any }) => {
       setClientSession({ data, error })
     })
 
