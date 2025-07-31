@@ -4,9 +4,9 @@ import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Tables } from '@/types/supabase'
-import LoginModal from './LoginModal'
+import LoginModal, { LoginModalRef } from './LoginModal'
 import ModuleOverlay from './ModuleOverlay'
 
 type Module = Tables<'modules'> & {
@@ -23,32 +23,25 @@ interface ModuleCardProps {
 }
 
 export default function ModuleCard({ module, progress = 0, isLoggedIn = false }: ModuleCardProps) {
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [showOverlay, setShowOverlay] = useState(false)
+  const loginModalRef = useRef<LoginModalRef>(null)
+
+  const handleShowLogin = () => {
+    loginModalRef.current?.show('login', `/modules/${module.id}`)
+  }
 
   const handleCardClick = (e: React.MouseEvent) => {
     // If the click is on the link, let the link's handler take over
     if ((e.target as HTMLElement).closest('a')) {
       return
     }
-
-    if (!isLoggedIn) {
-      e.preventDefault()
-      setShowLoginModal(true)
-    } else {
-      e.preventDefault()
-      setShowOverlay(true)
-    }
+    e.preventDefault()
+    setShowOverlay(true)
   }
 
   const handleStartModuleClick = (e: React.MouseEvent) => {
-    if (!isLoggedIn) {
-      e.preventDefault()
-      setShowLoginModal(true)
-    } else {
-      e.preventDefault() // Explicitly prevent navigation
-      setShowOverlay(true)
-    }
+    e.preventDefault() // Explicitly prevent navigation
+    setShowOverlay(true)
   }
 
   return (
@@ -98,7 +91,7 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
             <div className="mt-auto">
               <p className="text-lg font-semibold text-gray-600 mb-4 text-right">Kostenlos</p>
               <Link
-                href={isLoggedIn ? `/modules/${module.id}` : '#'}
+                href={`/modules/${module.id}`}
                 onClick={handleStartModuleClick}
                 className="block w-full border-2 border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:text-gray-800 text-center py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50"
               >
@@ -109,15 +102,14 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
         </Card>
       </div>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-      />
+      <LoginModal ref={loginModalRef} />
 
       <ModuleOverlay
         module={module}
         isOpen={showOverlay}
         onClose={() => setShowOverlay(false)}
+        isLoggedIn={isLoggedIn}
+        onStartLogin={handleShowLogin}
       />
     </>
   )

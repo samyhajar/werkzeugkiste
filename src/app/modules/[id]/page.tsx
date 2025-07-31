@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
+import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import LoginModal from '@/components/shared/LoginModal'
+import LoginModal, { LoginModalRef } from '@/components/shared/LoginModal'
 
 interface Course {
   id: string
@@ -476,44 +477,39 @@ export default function ModuleDetailPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
-  const [user, setUser] = useState<any>(null)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
   const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set())
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [authChecked, setAuthChecked] = useState(false)
+  const loginModalRef = useRef<LoginModalRef>(null)
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+
+  // Use AuthContext for authentication state
+  const { user, loading: authLoading } = useAuth()
 
   // Add progress tracking hook
   const { markLessonComplete, isMarking } = useProgressTracking()
 
-  // Check authentication on component mount
+    // Handle authentication and data fetching
   useEffect(() => {
-    const checkAuthAndFetchData = async () => {
-      try {
-        setAuthChecked(false)
-        const supabase = getBrowserClient()
-        const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-          setShowLoginModal(true)
-        } else {
-          setUser(user)
-          if (moduleId) {
-            await fetchModule()
-            await fetchUserAndProgress()
-          }
-        }
-      } catch (error) {
-        console.error('Error checking authentication:', error)
-        setShowLoginModal(true)
-      } finally {
-        setAuthChecked(true)
-      }
+    if (authLoading) {
+      console.log('[ModulePage] Auth still loading...')
+      return
     }
 
-    void checkAuthAndFetchData()
-  }, [moduleId])
+    console.log('[ModulePage] Auth loaded, user:', !!user)
+
+    if (!user) {
+      console.log('[ModulePage] No user found, showing login modal')
+      loginModalRef.current?.show('login', window.location.href)
+      return
+    }
+
+    if (moduleId) {
+      console.log('[ModulePage] User authenticated, fetching module and progress...')
+      void fetchModule()
+      void fetchUserAndProgress()
+    }
+  }, [user, authLoading, moduleId])
 
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
@@ -570,11 +566,9 @@ export default function ModuleDetailPage() {
   // Fetch user and progress data
   const fetchUserAndProgress = useCallback(async () => {
     try {
-      const supabase = getBrowserClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-
       if (user && moduleId && module) {
+        const supabase = getBrowserClient()
+
         // Get all lesson IDs that belong to this module
         const moduleLessonIds = module.courses.flatMap(course =>
           course.lessons.map(lesson => lesson.id)
@@ -613,7 +607,7 @@ export default function ModuleDetailPage() {
     } catch (error) {
       console.error('Error fetching user and progress:', error)
     }
-  }, [moduleId, module])
+  }, [user, moduleId, module])
 
     // Helper function to get module-specific progress data
   const getModuleProgressData = () => {
@@ -795,12 +789,15 @@ export default function ModuleDetailPage() {
     return module.courses.reduce((total, course) => total + course.lessons.length, 0)
   }
 
-  if (loading) {
+  // Show loading while auth or module is loading
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-          <p className="text-gray-600">Modul wird geladen...</p>
+          <p className="text-gray-600">
+            {authLoading ? 'Überprüfe Anmeldung...' : 'Modul wird geladen...'}
+          </p>
         </div>
       </div>
     )
@@ -820,19 +817,7 @@ export default function ModuleDetailPage() {
     )
   }
 
-  // Don't render content until auth is checked
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-          <p className="text-gray-600">Überprüfe Anmeldung...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show login modal if not authenticated
+  // Show login prompt if not authenticated
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -840,7 +825,7 @@ export default function ModuleDetailPage() {
           <div className="text-blue-600 text-6xl mb-4">🔐</div>
           <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
           <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Modul zuzugreifen.</p>
-          <Button onClick={() => setShowLoginModal(true)}>
+          <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
             Jetzt anmelden
           </Button>
         </div>
@@ -1227,16 +1212,7 @@ export default function ModuleDetailPage() {
         </div>
       </div>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => {
-          setShowLoginModal(false)
-          // If user is still not logged in after modal closes, redirect to home
-          if (!user) {
-            router.push('/')
-          }
-        }}
-      />
+      <LoginModal ref={loginModalRef} />
     </>
   )
 }

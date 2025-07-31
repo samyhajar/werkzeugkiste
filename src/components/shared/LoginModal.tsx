@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -11,13 +11,17 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/contexts/AuthContext'
 import { X } from 'lucide-react'
 
+export interface LoginModalRef {
+  show: (tab?: 'login' | 'signup', redirectUrl?: string) => void
+  hide: () => void
+}
+
 interface LoginModalProps {
-  isOpen: boolean
-  onClose: () => void
   initialTab?: 'login' | 'signup'
 }
 
-export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: LoginModalProps) {
+const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'login' }, ref) => {
+  const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -29,8 +33,21 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
   const [activeTab, setActiveTab] = useState(initialTab)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [redirectUrl, setRedirectUrl] = useState<string | undefined>()
 
   const { refreshSession } = useAuth()
+
+  useImperativeHandle(ref, () => ({
+    show: (tab = 'login', url) => {
+      setActiveTab(tab)
+      setRedirectUrl(url)
+      setIsOpen(true)
+    },
+    hide: () => {
+      setIsOpen(false)
+      resetForm()
+    }
+  }))
 
   const resetForm = () => {
     setEmail('')
@@ -44,11 +61,12 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
     setActiveTab(initialTab)
     setShowPassword(false)
     setShowConfirmPassword(false)
+    setRedirectUrl(undefined)
   }
 
   const handleClose = () => {
+    setIsOpen(false)
     resetForm()
-    onClose()
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -81,8 +99,11 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
 
         console.log('[LoginModal] Session refreshed, closing modal...')
 
-        // Close modal - AuthContext will handle redirection automatically
-        handleClose()
+        if (redirectUrl) {
+          window.location.href = redirectUrl
+        } else {
+          handleClose()
+        }
 
         console.log('[LoginModal] Login process completed')
       } else {
@@ -137,8 +158,11 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
         // Refresh the auth context session to get updated user data
         await refreshSession()
 
-        // Close modal - AuthContext will handle role-based redirection
-        handleClose()
+        if (redirectUrl) {
+          window.location.href = redirectUrl
+        } else {
+          handleClose()
+        }
       } else {
         setError(data.error || 'Registrierung fehlgeschlagen')
       }
@@ -155,9 +179,13 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
     alert('Passwort-Zurücksetzen-Funktion wird bald verfügbar sein.')
   }
 
+  if (!isOpen) {
+    return null
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent showCloseButton={false} className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+      <DialogContent showCloseButton={false} className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden z-50">
         {/* Close Button */}
         <button
           onClick={handleClose}
@@ -457,4 +485,8 @@ export default function LoginModal({ isOpen, onClose, initialTab = 'login' }: Lo
       </DialogContent>
     </Dialog>
   )
-}
+})
+
+LoginModal.displayName = 'LoginModal'
+
+export default LoginModal

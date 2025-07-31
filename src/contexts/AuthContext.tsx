@@ -282,7 +282,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Initialize Supabase client only in browser
     if (typeof window !== 'undefined') {
-      setSupabase(getBrowserClient())
+      try {
+        setSupabase(getBrowserClient())
+      } catch (error) {
+        console.error('[AuthContext] Failed to initialize Supabase client:', error)
+      }
     }
   }, [])
 
