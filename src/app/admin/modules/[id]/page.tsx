@@ -187,7 +187,7 @@ export default function ModuleDetailsPage() {
           .order('order', { ascending: true })
 
         if (!coursesError && coursesData) {
-          const coursesWithStats = coursesData.map(course => ({
+          const coursesWithStats = coursesData.map((course: CourseWithLessons) => ({
             ...course,
             lesson_count: course.lessons ? course.lessons.length : 0,
             lessons: course.lessons || []
