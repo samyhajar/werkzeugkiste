@@ -148,13 +148,28 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
               <div className="prose max-w-none">
                 {module.presenter_materials_content || 'Für dieses Modul sind keine besonderen Materialien für Vortragende verfügbar.'}
               </div>
-              {module.presenter_materials_url && (
-                <div className="mt-8">
-                  <Button asChild className="w-full bg-[#c53030] hover:bg-[#c53030]/90 text-white font-bold py-3">
-                    <a href={module.presenter_materials_url} download>
-                      PDF Herunterladen
-                    </a>
-                  </Button>
+              {module.presenter_materials_urls && Array.isArray(module.presenter_materials_urls) && module.presenter_materials_urls.length > 0 && (
+                <div className="mt-8 space-y-3">
+                  <h3 className="text-lg font-semibold text-gray-800">PDF Materialien</h3>
+                  {module.presenter_materials_urls
+                    .filter((item): item is { url: string; title: string } => 
+                      typeof item === 'object' && item !== null && 
+                      typeof (item as any).url === 'string' && 
+                      typeof (item as any).title === 'string' &&
+                      (item as any).url.trim() !== ''
+                    )
+                    .map((pdf, index) => (
+                      <Button 
+                        key={index} 
+                        asChild 
+                        className="w-full bg-[#c53030] hover:bg-[#c53030]/90 text-white font-bold py-3 justify-start"
+                      >
+                        <a href={pdf.url} download>
+                          📄 {pdf.title || `PDF ${index + 1}`}
+                        </a>
+                      </Button>
+                    ))
+                  }
                 </div>
               )}
             </div>

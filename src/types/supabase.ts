@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       answers: {
@@ -425,7 +450,7 @@ export type Database = {
           legacy_id: number | null
           order: number | null
           presenter_materials_content: string | null
-          presenter_materials_url: string | null
+          presenter_materials_urls: Json | null
           title: string
           updated_at: string | null
         }
@@ -437,7 +462,7 @@ export type Database = {
           legacy_id?: number | null
           order?: number | null
           presenter_materials_content?: string | null
-          presenter_materials_url?: string | null
+          presenter_materials_urls?: Json | null
           title: string
           updated_at?: string | null
         }
@@ -449,7 +474,7 @@ export type Database = {
           legacy_id?: number | null
           order?: number | null
           presenter_materials_content?: string | null
-          presenter_materials_url?: string | null
+          presenter_materials_urls?: Json | null
           title?: string
           updated_at?: string | null
         }
@@ -1208,6 +1233,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       question_type: [
