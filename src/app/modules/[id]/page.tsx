@@ -582,7 +582,7 @@ export default function ModuleDetailPage() {
           .in('lesson_id', moduleLessonIds)
 
         if (progressData) {
-          const completedIds = new Set(progressData.map(p => p.lesson_id))
+          const completedIds = new Set(progressData.map((p: { lesson_id: string }) => p.lesson_id))
           setCompletedLessons(completedIds)
         }
 
