@@ -21,6 +21,10 @@ import { ChevronUp, ChevronDown } from 'lucide-react'
 type Course = Tables<'courses'>
 type Lesson = Tables<'lessons'>
 
+interface LessonWithQuizzes extends Lesson {
+  quizzes: { id: string }[]
+}
+
 interface LessonWithQuizCount extends Lesson {
   quiz_count: number
 }
@@ -77,7 +81,7 @@ export default function CourseDetailsPage() {
         if (lessonsError) throw lessonsError
 
         // Format lessons data
-        const lessonsWithQuizCount = lessonsData.map(lesson => ({
+        const lessonsWithQuizCount = lessonsData.map((lesson: LessonWithQuizzes) => ({
           ...lesson,
           quiz_count: lesson.quizzes ? lesson.quizzes.length : 0
         }))

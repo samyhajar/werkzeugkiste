@@ -76,7 +76,7 @@ export default function QuizDetailsPage() {
 
         const transformedQuiz = {
           ...quizData,
-          questions: quizData.questions.map(q => ({
+          questions: quizData.questions.map((q: QuestionWithOptions) => ({
             ...q,
             options: q.options
           }))
