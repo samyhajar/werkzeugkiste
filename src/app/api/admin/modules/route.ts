@@ -8,6 +8,8 @@ interface CreateModuleRequest {
   title: string
   description?: string
   hero_image?: string
+  presenter_materials_content?: string
+  presenter_materials_urls?: { url: string; title: string }[]
 }
 
 export async function GET(_request: NextRequest) {
@@ -97,7 +99,13 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = (await request.json()) as CreateModuleRequest
-    const { title, description, hero_image } = body
+    const {
+      title,
+      description,
+      hero_image,
+      presenter_materials_content,
+      presenter_materials_urls,
+    } = body
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -111,6 +119,8 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
+      presenter_materials_content: presenter_materials_content?.trim() || null,
+      presenter_materials_urls: presenter_materials_urls || [],
     }
 
     const { data: module, error } = await supabase

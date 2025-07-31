@@ -17,7 +17,9 @@ import { de } from 'date-fns/locale'
 import type { Database } from '@/types/supabase'
 import RichTextEditor from '@/components/ui/rich-text-editor'
 
-type Module = Database['public']['Tables']['modules']['Row']
+type Module = Database['public']['Tables']['modules']['Row'] & {
+  presenter_materials_urls?: { url: string; title: string }[]
+}
 
 interface ApiResponse<T> {
   success: boolean
@@ -55,7 +57,7 @@ export default function ModulesPage() {
     description: '',
     hero_image: '',
     presenter_materials_content: '',
-    presenter_materials_url: ''
+    presenter_materials_urls: [{ url: '', title: '' }]
   })
   const [moduleCourses, setModuleCourses] = useState<Database['public']['Tables']['courses']['Row'][]>([])
   const [reorderingCourses, setReorderingCourses] = useState(false)
@@ -139,7 +141,7 @@ export default function ModulesPage() {
             description: newModule.description,
             hero_image: newModule.hero_image,
             presenter_materials_content: newModule.presenter_materials_content,
-            presenter_materials_url: newModule.presenter_materials_url
+            presenter_materials_urls: newModule.presenter_materials_urls
           }),
         })
 
@@ -151,7 +153,7 @@ export default function ModulesPage() {
 
         if (data.success) {
           setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
-          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_url: '' })
+          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
           setIsCreateDialogOpen(false)
           setEditingModule(null)
         } else {
@@ -176,7 +178,7 @@ export default function ModulesPage() {
 
         if (data.success && data.module) {
           setModules([data.module, ...modules])
-          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_url: '' })
+          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
           setIsCreateDialogOpen(false)
         } else {
           throw new Error(data.error || 'Failed to create module')
@@ -228,12 +230,23 @@ export default function ModulesPage() {
   }
 
   const openEditDialog = (module: Module) => {
+    // Handle both old single URL format and new multiple URLs format
+    let presenterUrls = [{ url: '', title: '' }]
+
+    if (module.presenter_materials_urls && Array.isArray(module.presenter_materials_urls)) {
+      // New format: JSON array
+      presenterUrls = module.presenter_materials_urls.length > 0 ? module.presenter_materials_urls : [{ url: '', title: '' }]
+    } else if (module.presenter_materials_url) {
+      // Old format: single URL string - convert to new format
+      presenterUrls = [{ url: module.presenter_materials_url, title: 'Module Materials' }]
+    }
+
     setNewModule({
       title: module.title,
       description: module.description || '',
       hero_image: module.hero_image ?? '',
       presenter_materials_content: module.presenter_materials_content || '',
-      presenter_materials_url: module.presenter_materials_url || ''
+      presenter_materials_urls: presenterUrls
     })
     setEditingModule(module)
     setIsCreateDialogOpen(true)
@@ -498,17 +511,76 @@ export default function ModulesPage() {
                       className="min-h-[200px]"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label htmlFor="presenter_materials_url" className="text-xs font-semibold text-gray-700">PDF URL</label>
-                    <input
-                      type="url"
-                      id="presenter_materials_url"
-                      value={newModule.presenter_materials_url}
-                      onChange={(e) => setNewModule({ ...newModule, presenter_materials_url: e.target.value })}
-                      placeholder="https://example.com/materials.pdf"
-                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      style={{ userSelect: 'text' }}
-                    />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-gray-700">PDF Materials</label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewModule({
+                            ...newModule,
+                            presenter_materials_urls: [...newModule.presenter_materials_urls, { url: '', title: '' }]
+                          })
+                        }}
+                        className="h-7 text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add PDF
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {newModule.presenter_materials_urls.map((pdf, index) => (
+                        <div key={index} className="flex gap-2 items-start p-3 border border-gray-200 rounded-lg bg-gray-50">
+                          <div className="flex-1 space-y-2">
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">Title</label>
+                              <input
+                                type="text"
+                                value={pdf.title}
+                                onChange={(e) => {
+                                  const updatedPdfs = [...newModule.presenter_materials_urls]
+                                  updatedPdfs[index] = { ...updatedPdfs[index], title: e.target.value }
+                                  setNewModule({ ...newModule, presenter_materials_urls: updatedPdfs })
+                                }}
+                                placeholder="e.g., Module 1 Materials"
+                                className="flex h-8 w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[2px] focus:ring-[#486681]/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600 mb-1 block">PDF URL</label>
+                              <input
+                                type="url"
+                                value={pdf.url}
+                                onChange={(e) => {
+                                  const updatedPdfs = [...newModule.presenter_materials_urls]
+                                  updatedPdfs[index] = { ...updatedPdfs[index], url: e.target.value }
+                                  setNewModule({ ...newModule, presenter_materials_urls: updatedPdfs })
+                                }}
+                                placeholder="https://example.com/materials.pdf"
+                                className="flex h-8 w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[2px] focus:ring-[#486681]/20"
+                              />
+                            </div>
+                          </div>
+                          {newModule.presenter_materials_urls.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const updatedPdfs = newModule.presenter_materials_urls.filter((_, i) => i !== index)
+                                setNewModule({ ...newModule, presenter_materials_urls: updatedPdfs })
+                              }}
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
