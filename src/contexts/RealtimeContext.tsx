@@ -73,7 +73,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
           subscriptions.current[key].config.callback()
         })
       })
-      .subscribe((status) => {
+      .subscribe((status: string) => {
         setIsConnected(status === 'SUBSCRIBED')
       })
 
@@ -118,7 +118,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
       // Simple ping to check connection
       supabase.current
         .channel('health-check')
-        .subscribe((status) => {
+        .subscribe((status: string) => {
           setIsConnected(status === 'SUBSCRIBED')
         })
     }

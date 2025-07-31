@@ -4,6 +4,27 @@ import { useEffect, useRef, useCallback } from 'react'
 import { usePathname } from 'next/navigation'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
+// Utility function to clear auth cookies
+const clearAuthCookies = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return
+  }
+
+  const cookiesToClear = [
+    'sb-access-token',
+    'sb-refresh-token',
+    'supabase-auth-token',
+    'supabase.auth.token'
+  ]
+
+  cookiesToClear.forEach(cookieName => {
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`
+  })
+
+  console.log('[SessionBootstrap] Cleared auth cookies:', cookiesToClear)
+}
+
 /**
  * Supabase JS reads auth tokens from localStorage in the browser while the
  * server-side helpers read them from cookies. After login, we need to sync
@@ -44,32 +65,26 @@ export default function SessionBootstrap() {
 
         if (sessionError) {
           console.error('[SessionBootstrap] Get session error:', sessionError)
+          // Clear invalid cookies on error
+          if (sessionError.message.includes('Auth session missing') ||
+              sessionError.message.includes('Invalid refresh token') ||
+              sessionError.message.includes('refresh_token_not_found')) {
+            console.log('[SessionBootstrap] Clearing invalid auth cookies due to session error')
+            clearAuthCookies()
+          }
         } else if (sessionData.session) {
           console.log('[SessionBootstrap] Session found:', sessionData.session.user?.email || 'no user')
         } else {
-          // Only try to refresh if we don't have a valid session
-          console.log('[SessionBootstrap] No valid session found, attempting refresh...')
-          const { data, error: refreshError } = await supabase.current.auth.refreshSession()
-
-          if (refreshError) {
-            console.error('[SessionBootstrap] Refresh error:', refreshError)
-            // If refresh fails, clear invalid cookies
-            if (refreshError.message.includes('Auth session missing') ||
-                refreshError.message.includes('Invalid refresh token')) {
-              console.log('[SessionBootstrap] Clearing invalid auth cookies')
-              // Clear auth cookies by setting them to expire
-              document.cookie = 'sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-              document.cookie = 'sb-refresh-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-            }
-          } else {
-            console.log('[SessionBootstrap] Session refreshed successfully:', data.session?.user?.email || 'no session')
-          }
+          console.log('[SessionBootstrap] No session found, clearing any stale cookies')
+          clearAuthCookies()
         }
       } else {
         console.log('[SessionBootstrap] No auth cookies found')
       }
     } catch (error) {
       console.error('[SessionBootstrap] Error syncing auth state:', error)
+      // Clear cookies on any error to prevent stuck state
+      clearAuthCookies()
     } finally {
       syncInProgress.current = false
     }

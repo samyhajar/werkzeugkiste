@@ -5,6 +5,27 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
 import type { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
+// Utility function to clear auth cookies
+const clearAuthCookies = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return
+  }
+
+  const cookiesToClear = [
+    'sb-access-token',
+    'sb-refresh-token',
+    'supabase-auth-token',
+    'supabase.auth.token'
+  ]
+
+  cookiesToClear.forEach(cookieName => {
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+    document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`
+  })
+
+  console.log('[AuthContext] Cleared auth cookies:', cookiesToClear)
+}
+
 interface UserProfile {
   id: string
   email: string
@@ -55,10 +76,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('[AuthContext] Error getting session:', error.message)
-        // If there's an error, clear the session state
-        setSession(null)
-        setUser(null)
-        setProfile(null)
+
+        // Handle specific auth errors by clearing state and cookies
+        if (error.message.includes('Auth session missing') ||
+            error.message.includes('Invalid refresh token') ||
+            error.message.includes('refresh_token_not_found')) {
+          console.log('[AuthContext] Auth error detected, clearing session state and cookies')
+
+          // Clear state
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+
+          // Clear cookies if in browser
+          clearAuthCookies()
+        } else {
+          // For other errors, just clear the session state
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+        }
         return
       }
 
@@ -194,7 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .insert(newProfileData)
               .select()
               .single()
-              .then(({ data: createdProfile, error: createError }) => {
+              .then(({ data: createdProfile, error: createError }: { data: any; error: any }) => {
                 if (createError) {
                   console.error('[AuthContext] Background profile creation error:', createError)
                 } else {
@@ -307,10 +344,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           console.error('[AuthContext] Error getting session:', error.message)
-          // Clear session state on error
-          setSession(null)
-          setUser(null)
-          setProfile(null)
+
+          // Handle specific auth errors by clearing state and cookies
+          if (error.message.includes('Auth session missing') ||
+              error.message.includes('Invalid refresh token') ||
+              error.message.includes('refresh_token_not_found')) {
+            console.log('[AuthContext] Initial session auth error detected, clearing session state and cookies')
+
+            // Clear state
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+
+            // Clear cookies if in browser
+            clearAuthCookies()
+          } else {
+            // For other errors, just clear the session state
+            setSession(null)
+            setUser(null)
+            setProfile(null)
+          }
         } else {
           console.log('[AuthContext] Initial session result:', session?.user?.email || 'no session')
           if (session) {
@@ -326,10 +379,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('[AuthContext] Exception getting session:', error)
-        // Clear session state on exception
+
+        // Clear session state on exception and clear cookies if it's an auth error
         setSession(null)
         setUser(null)
         setProfile(null)
+
+        // If it's an auth-related error, clear cookies
+        if (error instanceof Error &&
+            (error.message.includes('Auth session missing') ||
+             error.message.includes('Invalid refresh token') ||
+             error.message.includes('refresh_token_not_found'))) {
+          console.log('[AuthContext] Exception contains auth error, clearing cookies')
+
+          clearAuthCookies()
+        }
       } finally {
         setLoading(false)
       }
@@ -340,88 +404,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state change listener
     console.log('[AuthContext] Setting up auth state change listener...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: Session | null) => {
         console.log('[AuthContext] Auth state change:', event, session?.user?.email)
         console.log('[AuthContext] Auth state change - User role:', session?.user?.user_metadata?.role)
-        if (event === 'SIGNED_OUT') {
-          console.log('[AuthContext] SIGNED_OUT event received')
-          setUser(null)
-          setSession(null)
-          setProfile(null)
-          // Force page refresh and redirect to home page after logout
-          console.log('[AuthContext] SIGNED_OUT - forcing immediate redirect')
-          window.location.href = '/'
-                        } else if (event === 'SIGNED_IN' && session) {
-          // Prevent redirecting away from the set-password page
-          if (window.location.pathname === '/auth/set-password') {
-            console.log('[AuthContext] On set-password page, skipping redirect.');
-            setSession(session);
-            setUser(session.user);
-            return;
-          }
-          setUser(session.user)
-          setSession(session)
 
-          // Handle role-based redirection after login
-          console.log('[AuthContext] SIGNED_IN event - checking role for redirection')
-
-          // Try to get role from user metadata first
-          let userRole = session.user.user_metadata?.role
-
-                    if (userRole) {
-            console.log('[AuthContext] Found role in metadata:', userRole)
-            // Fetch profile in parallel
-            fetchUserProfile(session.user.id)
-
-            // Immediate redirection
-            if (userRole === 'admin') {
-              console.log('[AuthContext] Redirecting admin to /admin')
-              router.push('/admin')
-            } else {
-              console.log('[AuthContext] Redirecting student to /')
-              router.push('/')
+        try {
+          if (event === 'SIGNED_OUT') {
+            console.log('[AuthContext] SIGNED_OUT event received')
+            setUser(null)
+            setSession(null)
+            setProfile(null)
+            // Force page refresh and redirect to home page after logout
+            console.log('[AuthContext] SIGNED_OUT - forcing immediate redirect')
+            window.location.href = '/'
+          } else if (event === 'SIGNED_IN' && session) {
+            // Prevent redirecting away from the set-password page
+            if (window.location.pathname === '/auth/set-password') {
+              console.log('[AuthContext] On set-password page, skipping redirect.');
+              setSession(session);
+              setUser(session.user);
+              return;
             }
-          } else {
-            console.log('[AuthContext] No role in metadata, fetching profile first...')
-            // If no role in metadata, fetch profile first to get role
-            try {
-              const { data } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .single()
+            setUser(session.user)
+            setSession(session)
 
-              const profileRole = data?.role || 'student'
-              console.log('[AuthContext] Found role in profile:', profileRole)
+            // Handle role-based redirection after login
+            console.log('[AuthContext] SIGNED_IN event - checking role for redirection')
 
-                                          // Now fetch full profile in background
+            // Try to get role from user metadata first
+            let userRole = session.user.user_metadata?.role
+
+            if (userRole) {
+              console.log('[AuthContext] Found role in metadata:', userRole)
+              // Fetch profile in parallel
               fetchUserProfile(session.user.id)
 
               // Immediate redirection
-              if (profileRole === 'admin') {
+              if (userRole === 'admin') {
                 console.log('[AuthContext] Redirecting admin to /admin')
                 router.push('/admin')
               } else {
                 console.log('[AuthContext] Redirecting student to /')
                 router.push('/')
               }
-            } catch (error) {
-              console.error('[AuthContext] Error fetching role from profile:', error)
-              // Default to student and redirect to home
-              fetchUserProfile(session.user.id)
-              router.push('/')
+            } else {
+              console.log('[AuthContext] No role in metadata, fetching profile first...')
+              // If no role in metadata, fetch profile first to get role
+              try {
+                const { data } = await supabase
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', session.user.id)
+                  .single()
+
+                const profileRole = data?.role || 'student'
+                console.log('[AuthContext] Found role in profile:', profileRole)
+
+                // Now fetch full profile in background
+                fetchUserProfile(session.user.id)
+
+                // Immediate redirection
+                if (profileRole === 'admin') {
+                  console.log('[AuthContext] Redirecting admin to /admin')
+                  router.push('/admin')
+                } else {
+                  console.log('[AuthContext] Redirecting student to /')
+                  router.push('/')
+                }
+              } catch (error) {
+                console.error('[AuthContext] Error fetching role from profile:', error)
+                // Default to student and redirect to home
+                fetchUserProfile(session.user.id)
+                router.push('/')
+              }
+            }
+          } else if (event === 'TOKEN_REFRESHED' && session) {
+            console.log('[AuthContext] TOKEN_REFRESHED event received')
+            setUser(session.user)
+            setSession(session)
+            // Don't redirect on token refresh, just update the session
+          } else {
+            setUser(session?.user ?? null)
+            setSession(session)
+            if (session?.user) {
+              await fetchUserProfile(session.user.id)
+            } else {
+              setProfile(null)
             }
           }
-        } else {
-          setUser(session?.user ?? null)
-          setSession(session)
-          if (session?.user) {
-            await fetchUserProfile(session.user.id)
-          } else {
+        } catch (error) {
+          console.error('[AuthContext] Error in auth state change handler:', error)
+          // On error, clear the session to prevent stuck states
+          if (error instanceof Error &&
+              (error.message.includes('Auth session missing') ||
+               error.message.includes('Invalid refresh token') ||
+               error.message.includes('refresh_token_not_found'))) {
+            console.log('[AuthContext] Auth error in state change, clearing session')
+            setSession(null)
+            setUser(null)
             setProfile(null)
           }
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
 

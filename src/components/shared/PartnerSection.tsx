@@ -25,7 +25,7 @@ export default function PartnerSection() {
             alt={logo.alt}
             width={logo.width}
             height={logo.height}
-            className="object-contain h-20 md:h-24 w-auto max-w-[160px] md:max-w-[220px]"
+            className="object-contain h-20 md:h-24 max-w-[160px] md:max-w-[220px]"
           />
         ))}
       </div>
@@ -49,7 +49,7 @@ export default function PartnerSection() {
             alt={logo.alt}
             width={logo.width}
             height={logo.height}
-            className="object-contain h-24 w-auto max-w-[200px] md:max-w-[260px]"
+            className="object-contain h-24 max-w-[200px] md:max-w-[260px]"
           />
         ))}
       </div>
