@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { ChevronDown, User, LogOut, Award } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useAuth } from '@/contexts/AuthContext'
-import LoginModal from './LoginModal'
+import LoginModal, { LoginModalRef } from './LoginModal'
 import { useRouter } from 'next/navigation'
 
 const links = [
@@ -28,11 +28,11 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isModulesOpen, setIsModulesOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [modules, setModules] = useState<ModuleData[]>([])
   const [modulesLoading, setModulesLoading] = useState(false)
   const [forceShowButton, setForceShowButton] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const loginModalRef = useRef<LoginModalRef>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
@@ -155,7 +155,7 @@ export default function Navbar() {
   const handleModuleClick = (e: React.MouseEvent, moduleId: string) => {
     if (!user) {
       e.preventDefault()
-      setIsLoginModalOpen(true)
+      loginModalRef.current?.show('login', `/modules/${moduleId}`)
       setIsModulesOpen(false)
       setIsOpen(false)
     }
@@ -344,7 +344,7 @@ export default function Navbar() {
                 <div className="flex items-center space-x-8">
                   <button
                     onClick={() => {
-                      setIsLoginModalOpen(true)
+                      loginModalRef.current?.show('login', window.location.href)
                     }}
                     className="text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 cursor-pointer text-lg"
                     style={{
@@ -482,7 +482,7 @@ export default function Navbar() {
                   <button
                     onClick={() => {
                       setIsOpen(false)
-                      setIsLoginModalOpen(true)
+                      loginModalRef.current?.show('login', window.location.href)
                     }}
                     className="block w-full text-left px-3 py-2 text-white font-semibold rounded-lg transition-colors duration-200 mt-2 text-lg"
                     style={{
@@ -506,11 +506,7 @@ export default function Navbar() {
       </div>
 
       {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        initialTab="login"
-      />
+      <LoginModal ref={loginModalRef} initialTab="login" />
     </>
   )
 }

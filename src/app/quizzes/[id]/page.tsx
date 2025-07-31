@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { HelpCircle } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
-import LoginModal from '@/components/shared/LoginModal'
+import LoginModal, { LoginModalRef } from '@/components/shared/LoginModal'
 import { useRouter } from 'next/navigation'
 
 interface QuizQuestion {
@@ -56,8 +56,8 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+  const loginModalRef = useRef<LoginModalRef>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -71,14 +71,14 @@ export default function QuizDetailPage() {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
-          setShowLoginModal(true)
+          loginModalRef.current?.show('login', window.location.href)
         } else {
           setUser(user)
         }
         setAuthChecked(true)
       } catch (error) {
         console.error('Error checking authentication:', error)
-        setShowLoginModal(true)
+        loginModalRef.current?.show('login', window.location.href)
         setAuthChecked(true)
       }
     }
@@ -188,7 +188,7 @@ export default function QuizDetailPage() {
           <div className="text-blue-600 text-6xl mb-4">🔐</div>
           <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
           <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Quiz zuzugreifen.</p>
-          <Button onClick={() => setShowLoginModal(true)}>
+          <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
             Jetzt anmelden
           </Button>
         </div>
@@ -373,16 +373,7 @@ export default function QuizDetailPage() {
         )}
       </div>
 
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => {
-          setShowLoginModal(false)
-          // If user is still not logged in after modal closes, redirect to home
-          if (!user) {
-            router.push('/')
-          }
-        }}
-      />
+      <LoginModal ref={loginModalRef} />
     </>
   )
 }
