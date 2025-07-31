@@ -21,6 +21,10 @@ import { GripVertical } from 'lucide-react'
 type Module = Tables<'modules'>
 type Course = Tables<'courses'>
 
+interface CourseWithLessons extends Course {
+  lessons: { id: string; title: string }[]
+}
+
 interface CourseWithStats extends Course {
   lesson_count: number
   lessons: any[]
@@ -75,7 +79,7 @@ export default function ModuleDetailsPage() {
         if (coursesError) throw coursesError
 
         // Format courses data
-        const coursesWithStats = coursesData.map(course => ({
+        const coursesWithStats = coursesData.map((course: CourseWithLessons) => ({
           ...course,
           lesson_count: course.lessons ? course.lessons.length : 0,
           lessons: course.lessons || []

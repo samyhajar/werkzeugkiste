@@ -193,7 +193,7 @@ export default function CourseDetailsPage() {
           .order('order', { ascending: true })
 
         if (!lessonsError && lessonsData && course) {
-          const lessonsWithQuizCount = lessonsData.map(lesson => ({
+          const lessonsWithQuizCount = lessonsData.map((lesson: LessonWithQuizzes) => ({
             ...lesson,
             quiz_count: lesson.quizzes ? lesson.quizzes.length : 0
           }))
