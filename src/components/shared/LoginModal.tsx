@@ -35,6 +35,9 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [redirectUrl, setRedirectUrl] = useState<string | undefined>()
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('')
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState('')
 
   const { refreshSession } = useAuth()
   const router = useRouter()
@@ -64,6 +67,9 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     setShowPassword(false)
     setShowConfirmPassword(false)
     setRedirectUrl(undefined)
+    setShowForgotPassword(false)
+    setForgotPasswordEmail('')
+    setForgotPasswordSuccess('')
   }
 
   const handleClose = () => {
@@ -177,8 +183,52 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   }
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
-    alert('Passwort-Zurücksetzen-Funktion wird bald verfügbar sein.')
+    setShowForgotPassword(true)
+    setError('')
+    setForgotPasswordSuccess('')
+  }
+
+  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!forgotPasswordEmail) {
+      setError('E-Mail-Adresse ist erforderlich')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+    setForgotPasswordSuccess('')
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: forgotPasswordEmail
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setForgotPasswordSuccess(data.message)
+        setForgotPasswordEmail('')
+        // Close forgot password form after 3 seconds
+        setTimeout(() => {
+          setShowForgotPassword(false)
+          setForgotPasswordSuccess('')
+        }, 3000)
+      } else {
+        setError(data.error || 'Ein Fehler ist aufgetreten')
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error)
+      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!isOpen) {
@@ -483,6 +533,77 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
               </form>
             </TabsContent>
           </Tabs>
+
+          {/* Forgot Password Form */}
+          {showForgotPassword && (
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Passwort vergessen?</h3>
+                <p className="text-sm text-gray-600">
+                  Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.
+                </p>
+              </div>
+
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    </svg>
+                    E-Mail-Adresse
+                  </Label>
+                  <CustomInput
+                    id="forgot-email"
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    placeholder="ihre@email.com"
+                    required
+                    disabled={isLoading}
+                    autoComplete="email"
+                  />
+                </div>
+
+                {error && (
+                  <div className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium">
+                    {error}
+                  </div>
+                )}
+
+                {forgotPasswordSuccess && (
+                  <div className="text-green-700 text-sm text-center bg-green-50 border border-green-200 p-4 rounded-2xl font-medium">
+                    {forgotPasswordSuccess}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-12 border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl"
+                    onClick={() => setShowForgotPassword(false)}
+                    disabled={isLoading}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-12 bg-gradient-to-r from-[#486681] to-[#5a7a95] hover:from-[#3e5570] hover:to-[#4a6b7f] text-white font-semibold rounded-xl transition-all duration-200 shadow-lg shadow-[#486681]/25 hover:shadow-xl hover:shadow-[#486681]/30"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Wird gesendet...
+                      </div>
+                    ) : (
+                      'E-Mail senden'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
