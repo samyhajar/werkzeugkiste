@@ -100,6 +100,15 @@ export default function PasswordResetPage() {
 
     setLoading(true)
 
+    // Failsafe: if loading > 10s show timeout error
+    setTimeout(() => {
+      if (loading) {
+        console.log('*** TIMEOUT AFTER 10s – something is stuck');
+        setLoading(false);
+        setError('Zeitüberschreitung – bitte Seite neu laden und erneut versuchen.');
+      }
+    }, 10000);
+
     try {
       const supabase = getBrowserClient()
 
@@ -124,10 +133,12 @@ export default function PasswordResetPage() {
       }
 
       // Establish session using the tokens from the password recovery email
+      console.log('*** STEP 1: CALL setSession');
       const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       })
+      console.log('*** STEP 1 DONE', { sessionError, gotSession: !!sessionData?.session });
 
       if (sessionError || !sessionData.session) {
         console.error('[PasswordReset] Session establishment error:', sessionError)
@@ -139,7 +150,9 @@ export default function PasswordResetPage() {
       console.log('[PasswordReset] Session established for password update')
 
       // Now update the password
+      console.log('*** STEP 2: CALL updateUser');
       const { error: updateError } = await supabase.auth.updateUser({ password })
+      console.log('*** STEP 2 DONE', { updateError });
 
       if (updateError) {
         console.error('[PasswordReset] Password update error:', updateError)
