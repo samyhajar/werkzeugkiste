@@ -50,7 +50,7 @@ export default async function AdminDashboard() {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    redirect('/login')
+    redirect('/')
   }
 
   // Check if user is admin using profiles table

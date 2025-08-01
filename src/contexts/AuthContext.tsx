@@ -564,8 +564,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
       }
 
-      // Immediate redirect - now the API call won't be interrupted
-      window.location.href = '/'
+      // Use a temporary logout redirect to avoid middleware race condition
+      // Add a logout parameter so middleware knows this is a logout redirect
+      window.location.href = '/?logout=true'
 
       console.log('[AuthContext] Sign out completed')
     } catch (error) {
@@ -574,7 +575,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setSession(null)
       setProfile(null)
-      window.location.href = '/'
+      window.location.href = '/?logout=true'
     }
   }
 

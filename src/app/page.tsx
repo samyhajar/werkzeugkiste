@@ -1,5 +1,6 @@
 import LiveModulesSection from '@/components/shared/LiveModulesSection'
 import RegistrationButton from '@/components/shared/RegistrationButton'
+import LogoutCleanup from '@/components/shared/LogoutCleanup'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server-client'
 import { Tables } from '@/types/supabase'
@@ -160,6 +161,9 @@ export default async function Home({
 
   return (
     <>
+      {/* Clean up logout parameter from URL */}
+      <LogoutCleanup />
+
       {/* Hero Banner */}
       <section className="w-full relative">
         <Image

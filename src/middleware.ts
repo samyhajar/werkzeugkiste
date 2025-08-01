@@ -121,7 +121,11 @@ export async function middleware(request: NextRequest) {
     }
 
     // Admin visiting home page should go to admin dashboard
-    if (isHomePage && userRole === 'admin') {
+    // BUT: Don't redirect if this is part of a logout process
+    const isLogoutRedirect =
+      request.nextUrl.searchParams.get('logout') === 'true'
+
+    if (isHomePage && userRole === 'admin' && !isLogoutRedirect) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin'
       return NextResponse.redirect(url)
