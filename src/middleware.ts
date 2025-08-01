@@ -89,6 +89,10 @@ export async function middleware(request: NextRequest) {
     '/ueber-uns',
     '/fragen',
     '/suche',
+    '/modules',
+    '/quizzes',
+    '/certificates',
+    '/dashboard',
   ].some(p => request.nextUrl.pathname.startsWith(p))
 
   // If user is not authenticated
@@ -121,14 +125,25 @@ export async function middleware(request: NextRequest) {
     }
 
     // Admin visiting home page should go to admin dashboard
-    // BUT: Don't redirect if this is part of a logout process
-    const isLogoutRedirect =
-      request.nextUrl.searchParams.get('logout') === 'true'
-
-    if (isHomePage && userRole === 'admin' && !isLogoutRedirect) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin'
-      return NextResponse.redirect(url)
+    // BUT: Don't redirect if this is part of a logout process OR if they're trying to access other pages
+    const isLogoutRedirect = request.nextUrl.searchParams.get('logout') === 'true'
+    const referer = request.headers.get('referer')
+    const isFromAdminNavigation = referer && referer.includes('/admin')
+    
+    // Only redirect admin to /admin from homepage if:
+    // 1. It's not a logout redirect
+    // 2. They're not navigating FROM admin pages (to allow navigation away)
+    // 3. It's a direct homepage visit (not from navigation)
+    // 4. They're not trying to access public pages
+    if (isHomePage && userRole === 'admin' && !isLogoutRedirect && !isFromAdminNavigation) {
+      // Check if they're trying to access a specific page via URL parameters or hash
+      const hasSpecificIntent = request.nextUrl.searchParams.toString() || request.nextUrl.hash
+      
+      if (!hasSpecificIntent) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin'
+        return NextResponse.redirect(url)
+      }
     }
   }
 
