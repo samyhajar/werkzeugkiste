@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { useAuth } from '@/contexts/AuthContext'
+
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 export default function SetPasswordPage() {
@@ -12,35 +12,63 @@ export default function SetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [showFallback, setShowFallback] = useState(false)
+  const [isValidSession, setIsValidSession] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
+  const [sessionTokens, setSessionTokens] = useState<{accessToken: string, refreshToken: string} | null>(null)
   const router = useRouter()
-  const { user, session, loading: authLoading } = useAuth()
-
-  // Session is ready when we have a user and session, and auth is not loading
-  const isSessionReady = !authLoading && !!user && !!session
 
   useEffect(() => {
-    console.log('[SetPassword] Auth state:', {
-      authLoading,
-      hasUser: !!user,
-      hasSession: !!session,
-      isSessionReady,
-      userEmail: user?.email,
-      userAgent: navigator.userAgent
-    })
-  }, [authLoading, user, session, isSessionReady])
+    const checkInvitationTokens = async () => {
+      try {
+        console.log('*** SET_PASSWORD PAGE LOADED *** FULL_URL:', window.location.href)
+        console.log('[SetPassword] URL hash:', window.location.hash)
+        console.log('[SetPassword] URL search:', window.location.search)
 
-  // Add a timeout to show fallback options if session doesn't load
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!isSessionReady && !authLoading) {
-        console.log('[SetPassword] Session timeout reached, showing fallback options')
-        setShowFallback(true)
+        // Check both hash and query parameters for tokens
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const queryParams = new URLSearchParams(window.location.search)
+
+        // Try to get tokens from hash first (usual Supabase format)
+        let accessToken = hashParams.get('access_token')
+        let refreshToken = hashParams.get('refresh_token')
+        let type = hashParams.get('type')
+
+        // If not found in hash, try query parameters
+        if (!accessToken || !refreshToken) {
+          accessToken = accessToken || queryParams.get('access_token')
+          refreshToken = refreshToken || queryParams.get('refresh_token')
+          type = type || queryParams.get('type')
+        }
+
+        console.log('[SetPassword] Parsed tokens:', {
+          type,
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          accessTokenLength: accessToken?.length || 0,
+          refreshTokenLength: refreshToken?.length || 0
+        })
+
+        if (accessToken && refreshToken) {
+          console.log('[SetPassword] Valid invitation tokens found')
+          setIsValidSession(true)
+          setSessionTokens({ accessToken, refreshToken })
+        } else {
+          console.log('[SetPassword] Missing tokens:', {
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken
+          })
+          setError('Ungültiger Einladungslink. Bitte fordern Sie eine neue Einladung an.')
+        }
+      } catch (error) {
+        console.error('[SetPassword] Error checking tokens:', error)
+        setError('Ein Fehler ist aufgetreten beim Verarbeiten des Einladungslinks.')
+      } finally {
+        setIsCheckingSession(false)
       }
-    }, 10000) // 10 second timeout
+    }
 
-    return () => clearTimeout(timeout)
-  }, [isSessionReady, authLoading])
+    checkInvitationTokens()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,37 +87,118 @@ export default function SetPasswordPage() {
 
     setLoading(true)
 
+    if (!sessionTokens) {
+      setError('Sitzungstoken fehlen. Bitte verwenden Sie einen neuen Einladungslink.')
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = getBrowserClient()
-      const { error } = await supabase.auth.updateUser({ password })
+      
+      // Establish session using the tokens from the invitation email
+      console.log('*** STEP 1: CALL setSession');
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: sessionTokens.accessToken,
+        refresh_token: sessionTokens.refreshToken,
+      })
+      console.log('*** STEP 1 DONE', { sessionError, gotSession: !!sessionData?.session });
 
-      if (error) {
-        setError(error.message)
+      if (sessionError || !sessionData.session) {
+        console.error('[SetPassword] Session establishment error:', sessionError)
+        setError('Ungültiger oder abgelaufener Einladungslink. Bitte fordern Sie eine neue Einladung an.')
+        setLoading(false)
+        return
+      }
+
+      console.log('[SetPassword] Session established for password update')
+
+      // Now update the password
+      console.log('*** STEP 2: CALL updateUser');
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      console.log('*** STEP 2 DONE', { updateError });
+
+      if (updateError) {
+        console.error('[SetPassword] Password update error:', updateError)
+        setError('Fehler beim Setzen des Passworts: ' + updateError.message)
       } else {
-        setSuccess('Passwort erfolgreich aktualisiert!')
+        setSuccess('Passwort erfolgreich gesetzt!')
+        console.log('[SetPassword] Password set successfully')
 
-        // Determine redirect based on user role from AuthContext
+        // Determine redirect based on user role from session
         let redirectPath = '/'
-        if (user?.user_metadata?.role === 'admin') {
+        if (sessionData.session.user?.user_metadata?.role === 'admin') {
           redirectPath = '/admin'
         } else {
-          // For students or if no role is specified, go to home page
           redirectPath = '/'
         }
 
-        console.log('[SetPassword] Password updated successfully, redirecting to:', redirectPath)
+        console.log('[SetPassword] Redirecting to:', redirectPath)
 
-        // Redirect immediately after successful password update
+        // Redirect after success
         setTimeout(() => {
           router.push(redirectPath)
-        }, 1000) // Brief delay to show success message
+        }, 2000)
       }
     } catch (error) {
-      console.error('[SetPassword] Error updating password:', error)
+      console.error('[SetPassword] Error setting password:', error)
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     }
 
     setLoading(false)
+  }
+
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#486682' }}>
+        <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl">
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/Logo-digi-CMYK.png"
+                alt="Werkzeugkiste Logo"
+                width={80}
+                height={80}
+                className="rounded-full"
+              />
+            </div>
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-6 h-6 border-2 border-[#486682] border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-lg text-gray-600">Einladungslink wird überprüft...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isValidSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#486682' }}>
+        <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl">
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/Logo-digi-CMYK.png"
+                alt="Werkzeugkiste Logo"
+                width={80}
+                height={80}
+                className="rounded-full"
+              />
+            </div>
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Ungültiger Einladungslink</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full px-4 py-3 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#486682] transition-colors hover:bg-[#3e5570]"
+              style={{ backgroundColor: '#486682' }}
+            >
+              Zur Startseite
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -162,38 +271,15 @@ export default function SetPasswordPage() {
 
           <button
             type="submit"
-            disabled={loading || (!isSessionReady && !showFallback)}
-            className="w-full px-4 py-3 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b5169] disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-[#2d3e52]"
+            disabled={loading || !isValidSession}
+            className="w-full px-4 py-3 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#486682] disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-[#3e5570]"
             style={{
-              backgroundColor: loading || (!isSessionReady && !showFallback) ? '#9ca3af' : '#3b5169'
+              backgroundColor: loading || !isValidSession ? '#9ca3af' : '#486682'
             }}
           >
             {loading ? 'Passwort wird gesetzt...' : 'Passwort festlegen'}
           </button>
-
-          {showFallback && !isSessionReady && (
-            <div className="text-center">
-              <div className="text-xs text-orange-600 bg-orange-50 rounded-lg p-3 border border-orange-200">
-                <p className="font-medium mb-1">Browser-Kompatibilitätsmodus aktiviert</p>
-                <p>Sie können trotzdem versuchen, Ihr Passwort zu setzen. Falls es nicht funktioniert, versuchen Sie es mit einem anderen Browser.</p>
-              </div>
-            </div>
-          )}
         </form>
-
-        {!isSessionReady && !showFallback && (
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg">
-              <div className="w-4 h-4 border-2 border-gray-300 border-t-[#3b5169] rounded-full animate-spin mr-2"></div>
-              {authLoading ? 'Session wird vorbereitet...' : 'Warten auf Anmeldung...'}
-            </div>
-            {!authLoading && !user && (
-              <div className="text-xs text-gray-500">
-                Falls das Problem weiterhin besteht, laden Sie die Seite neu oder verwenden Sie einen anderen Browser (Chrome/Safari empfohlen).
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   )
