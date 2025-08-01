@@ -414,9 +414,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null)
             setSession(null)
             setProfile(null)
-            // Force page refresh and redirect to home page after logout
-            console.log('[AuthContext] SIGNED_OUT - forcing immediate redirect')
-            window.location.href = '/'
+            // Let the application handle navigation naturally - no forced redirect needed
+            console.log('[AuthContext] SIGNED_OUT - state cleared, letting app handle navigation')
           } else if (event === 'SIGNED_IN' && session) {
             // Prevent redirecting away from the set-password page
             if (window.location.pathname === '/auth/set-password') {

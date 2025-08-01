@@ -2,6 +2,7 @@
 
 import { useState, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CustomInput } from '@/components/ui/CustomInput'
@@ -36,6 +37,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   const [redirectUrl, setRedirectUrl] = useState<string | undefined>()
 
   const { refreshSession } = useAuth()
+  const router = useRouter()
 
   useImperativeHandle(ref, () => ({
     show: (tab = 'login', url) => {
@@ -100,7 +102,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
         console.log('[LoginModal] Session refreshed, closing modal...')
 
         if (redirectUrl) {
-          window.location.href = redirectUrl
+          router.push(redirectUrl)
         } else {
           handleClose()
         }
@@ -159,7 +161,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
         await refreshSession()
 
         if (redirectUrl) {
-          window.location.href = redirectUrl
+          router.push(redirectUrl)
         } else {
           handleClose()
         }

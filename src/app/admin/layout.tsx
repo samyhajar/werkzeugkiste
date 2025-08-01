@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
 
 // Force dynamic rendering to prevent static generation issues
@@ -12,6 +13,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const { loading, profileLoading, isAdmin, profile, signOut } = useAuth()
+  const router = useRouter()
 
   const handleLogout = async () => {
     try {
@@ -42,7 +44,7 @@ export default function AdminLayout({
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-white mb-4">You don&apos;t have permission to access the admin panel.</p>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
             className="bg-white text-[#6e859a] px-4 py-2 rounded hover:bg-gray-100"
           >
             Go to Home
