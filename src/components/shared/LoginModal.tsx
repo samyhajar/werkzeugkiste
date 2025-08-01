@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, forwardRef, useImperativeHandle, useRef } from 'react'
+import { useState, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/contexts/AuthContext'
 import { X } from 'lucide-react'
-import ForgotPasswordModal, { ForgotPasswordModalRef } from './ForgotPasswordModal'
 
 export interface LoginModalRef {
   show: (tab?: 'login' | 'signup', redirectUrl?: string) => void
@@ -39,7 +38,6 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
 
   const { refreshSession } = useAuth()
   const router = useRouter()
-  const forgotPasswordModalRef = useRef<ForgotPasswordModalRef>(null)
 
   useImperativeHandle(ref, () => ({
     show: (tab = 'login', url) => {
@@ -182,11 +180,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     e.preventDefault()
     e.stopPropagation()
     setIsOpen(false) // Close login modal
-    forgotPasswordModalRef.current?.show()
-  }
-
-  const handleBackToLogin = () => {
-    setIsOpen(true) // Reopen login modal
+    router.push('/auth/forgot-password')
   }
 
   if (!isOpen) {
@@ -492,10 +486,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
             </TabsContent>
           </Tabs>
         </div>
-      </DialogContent>
-
-      {/* Separate Forgot Password Modal */}
-      <ForgotPasswordModal ref={forgotPasswordModalRef} onBackToLogin={handleBackToLogin} />
+            </DialogContent>
     </Dialog>
   )
 })

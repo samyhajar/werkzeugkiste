@@ -27,9 +27,9 @@ export const revalidate = 60 // ISR every minute
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string; error?: string; error_description?: string }>
+  searchParams: Promise<{ code?: string; error?: string; error_description?: string; 'forgot-password'?: string; login?: string }>
 }) {
-  const { code, error, error_description } = await searchParams
+  const { code, error, error_description, 'forgot-password': forgotPasswordStatus, login } = await searchParams
   if (code) {
     redirect(`/auth/callback?code=${code}`)
   }
@@ -201,6 +201,29 @@ export default async function Home({
                       : error_description || 'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'
                     }
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Success Messages */}
+      {forgotPasswordStatus === 'sent' && (
+        <section className="w-full bg-green-50 border-l-4 border-green-400 p-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-green-800">
+                  E-Mail erfolgreich gesendet!
+                </h3>
+                <div className="mt-2 text-sm text-green-700">
+                  <p>Falls ein Konto mit Ihrer E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet. Bitte überprüfen Sie auch Ihren Spam-Ordner.</p>
                 </div>
               </div>
             </div>
