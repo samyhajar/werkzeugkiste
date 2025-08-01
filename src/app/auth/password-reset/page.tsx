@@ -20,6 +20,7 @@ export default function PasswordResetPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
+  const [userUpdatedReceived, setUserUpdatedReceived] = useState(false)
 
   useEffect(() => {
     const checkResetTokens = async () => {
@@ -83,6 +84,28 @@ export default function PasswordResetPage() {
     checkResetTokens()
   }, [])
 
+  // Listen for USER_UPDATED event as backup success indicator
+  useEffect(() => {
+    if (!isValidSession) return
+
+    const supabase = getBrowserClient()
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'USER_UPDATED' && loading) {
+        console.log('*** USER_UPDATED EVENT RECEIVED - treating as success')
+        setUserUpdatedReceived(true)
+        setLoading(false)
+        setSuccess('Passwort erfolgreich zurückgesetzt! Sie werden weitergeleitet.')
+        
+        setTimeout(() => {
+          router.push('/?password-reset=success')
+        }, 2000)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [isValidSession, loading, router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -100,9 +123,9 @@ export default function PasswordResetPage() {
 
     setLoading(true)
 
-    // Failsafe: if loading > 10s show timeout error
+    // Failsafe: if loading > 10s show timeout error (unless USER_UPDATED already handled it)
     setTimeout(() => {
-      if (loading) {
+      if (loading && !userUpdatedReceived) {
         console.log('*** TIMEOUT AFTER 10s – something is stuck');
         setLoading(false);
         setError('Zeitüberschreitung – bitte Seite neu laden und erneut versuchen.');
@@ -156,8 +179,15 @@ export default function PasswordResetPage() {
 
       if (updateError) {
         console.error('[PasswordReset] Password update error:', updateError)
-        setError('Fehler beim Aktualisieren des Passworts: ' + updateError.message)
-      } else {
+        
+        // Handle specific "same password" error with better message
+        if (updateError.message?.includes('New password should be different from the old password')) {
+          setError('Das neue Passwort muss sich vom bisherigen Passwort unterscheiden.')
+        } else {
+          setError('Fehler beim Aktualisieren des Passworts: ' + updateError.message)
+        }
+      } else if (!userUpdatedReceived) {
+        // Only show success if we haven't already handled it via USER_UPDATED event
         setSuccess('Passwort erfolgreich zurückgesetzt! Sie werden weitergeleitet.')
         console.log('[PasswordReset] Password updated successfully')
 
@@ -171,7 +201,10 @@ export default function PasswordResetPage() {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     }
 
-    setLoading(false)
+    // Only set loading to false if USER_UPDATED event hasn't already handled it
+    if (!userUpdatedReceived) {
+      setLoading(false)
+    }
   }
 
   if (isCheckingSession) {
