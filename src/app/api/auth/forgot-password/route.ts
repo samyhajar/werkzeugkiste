@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Dynamically determine the base URL so we always send a correct redirect no matter where we are (local, preview, prod)
     const reqUrl = new URL(request.url)
     const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
-    const redirectUrl = `${baseUrl}/auth/password-reset`
+    const redirectUrl = `${baseUrl}/auth/callback?type=recovery`
 
     console.log(
       '[Forgot Password API] Sending password reset email to:',
