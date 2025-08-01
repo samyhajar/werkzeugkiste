@@ -90,7 +90,7 @@ export default function PasswordResetPage() {
 
     const supabase = getBrowserClient()
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session) => {
       if (event === 'USER_UPDATED' && loading) {
         console.log('*** USER_UPDATED EVENT RECEIVED - treating as success')
         setUserUpdatedReceived(true)
