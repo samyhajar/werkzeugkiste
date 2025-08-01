@@ -25,19 +25,19 @@ export default function PasswordResetPage() {
     const checkResetTokens = async () => {
       try {
         // Debug: Log the full URL
-        console.log('[PasswordReset] Full URL:', window.location.href)
+        console.log('*** PASSWORD_RESET PAGE LOADED *** FULL_URL:', window.location.href)
         console.log('[PasswordReset] URL hash:', window.location.hash)
         console.log('[PasswordReset] URL search:', window.location.search)
 
         // Check both hash and query parameters for tokens
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const queryParams = new URLSearchParams(window.location.search)
-        
+
         // Try to get tokens from hash first (usual Supabase format)
         let accessToken = hashParams.get('access_token')
         let refreshToken = hashParams.get('refresh_token')
         let type = hashParams.get('type')
-        
+
         // If not found in hash, try query parameters
         if (!accessToken || !refreshToken || !type) {
           accessToken = accessToken || queryParams.get('access_token')
@@ -45,9 +45,9 @@ export default function PasswordResetPage() {
           type = type || queryParams.get('type')
         }
 
-        console.log('[PasswordReset] Parsed tokens:', { 
-          type, 
-          hasAccessToken: !!accessToken, 
+        console.log('[PasswordReset] Parsed tokens:', {
+          type,
+          hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
           accessTokenLength: accessToken?.length || 0,
           refreshTokenLength: refreshToken?.length || 0
@@ -62,7 +62,7 @@ export default function PasswordResetPage() {
             hasAccessToken: !!accessToken,
             hasRefreshToken: !!refreshToken
           })
-          
+
           // More helpful error message
           if (!type) {
             setError('Kein Reset-Link Typ gefunden. Bitte verwenden Sie den Link aus der E-Mail.')
@@ -106,17 +106,17 @@ export default function PasswordResetPage() {
             // Get tokens from URL (same logic as initial check)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const queryParams = new URLSearchParams(window.location.search)
-      
+
       let accessToken = hashParams.get('access_token') || queryParams.get('access_token')
       let refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token')
       let type = hashParams.get('type') || queryParams.get('type')
-      
-      console.log('[PasswordReset] Submit - tokens check:', { 
-        type, 
-        hasAccessToken: !!accessToken, 
-        hasRefreshToken: !!refreshToken 
+
+      console.log('[PasswordReset] Submit - tokens check:', {
+        type,
+        hasAccessToken: !!accessToken,
+        hasRefreshToken: !!refreshToken
       })
-      
+
       if (!accessToken || !refreshToken || type !== 'recovery') {
         setError('Sitzungstoken fehlen oder sind ungültig. Bitte verwenden Sie einen neuen Reset-Link.')
         setLoading(false)

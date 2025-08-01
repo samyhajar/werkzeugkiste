@@ -46,15 +46,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    // Dynamically determine the base URL so we always send a correct redirect no matter where we are (local, preview, prod)
+    const reqUrl = new URL(request.url)
+    const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
     const redirectUrl = `${baseUrl}/auth/password-reset`
-    
+
     console.log(
       '[Forgot Password API] Sending password reset email to:',
       body.email
     )
     console.log('[Forgot Password API] Using redirect URL:', redirectUrl)
-    console.log('[Forgot Password API] Base URL from env:', process.env.NEXT_PUBLIC_BASE_URL)
+    console.log(
+      '[Forgot Password API] Base URL from env:',
+      process.env.NEXT_PUBLIC_BASE_URL
+    )
 
     // Send password reset email with redirect to our reset page
     const { error } = await supabase.auth.resetPasswordForEmail(body.email, {

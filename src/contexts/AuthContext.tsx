@@ -368,6 +368,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         console.log('[AuthContext] Getting initial session...')
+
+        // Skip session establishment if on password reset pages to avoid auth confusion
+        if (typeof window !== 'undefined' &&
+            (window.location.pathname === '/auth/password-reset' ||
+             window.location.pathname === '/auth/set-password')) {
+          console.log('[AuthContext] On password reset page, skipping initial session establishment')
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+          return
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession()
 
         if (error) {
@@ -433,7 +445,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('[AuthContext] Setting up auth state change listener...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: Session | null) => {
-        console.log('[AuthContext] Auth state change:', event, session?.user?.email)
+        console.log('*** AUTH_CONTEXT EVENT ***', event, 'PATH:', typeof window !== 'undefined' ? window.location.pathname : 'server', 'USER:', session?.user?.email)
         console.log('[AuthContext] Auth state change - User role:', session?.user?.user_metadata?.role)
 
         try {
@@ -445,12 +457,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             hasRedirectedOnce.current = false // Reset redirect flag on logout
             // Let the application handle navigation naturally - no forced redirect needed
             console.log('[AuthContext] SIGNED_OUT - state cleared, letting app handle navigation')
+          } else if (event === 'PASSWORD_RECOVERY' || event === 'INITIAL_SESSION') {
+            console.log('*** SKIP_AUTH_EVENT ***', event, 'ON PATH', typeof window !== 'undefined' ? window.location.pathname : 'server', '- skipping state updates during password reset flow')
+            // Do nothing - password reset page will handle session using tokens explicitly
+            return;
           } else if (event === 'SIGNED_IN' && session) {
-            // Prevent redirecting away from the set-password page
-            if (window.location.pathname === '/auth/set-password') {
-              console.log('[AuthContext] On set-password page, skipping redirect.');
-              setSession(session);
-              setUser(session.user);
+            // Prevent redirecting away from password reset related pages
+            if (window.location.pathname === '/auth/set-password' ||
+                window.location.pathname === '/auth/password-reset') {
+              console.log('[AuthContext] On password reset page, skipping redirect and state updates.');
+              // Don't set session/user state during password reset to avoid UI confusion
               return;
             }
 

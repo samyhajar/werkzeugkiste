@@ -25,6 +25,9 @@ interface ModuleData {
 
 export default function Navbar() {
   const { user, loading, signOut, isAdmin, getDisplayName, getUserRole } = useAuth()
+  if (typeof window !== 'undefined') {
+    console.log('*** NAVBAR RENDER *** PATH:', window.location.pathname, 'USER_LOGGED_IN:', !!user)
+  }
   const [isOpen, setIsOpen] = useState(false)
   const [isModulesOpen, setIsModulesOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)

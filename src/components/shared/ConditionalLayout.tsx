@@ -21,13 +21,26 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     setIsClient(true)
   }, [])
 
-  // Check if we're on a module page or admin page
+  // Check if we're on a module page, admin page, or auth page
   const isModulePage = pathname?.startsWith('/modules/')
   const isAdminPage = pathname?.startsWith('/admin')
+  const isAuthPage = pathname?.startsWith('/auth')
 
   // For admin pages, always provide AuthProvider even during SSR
   // Admin pages don't need real-time updates, so we skip RealtimeProvider
   if (isAdminPage) {
+    return (
+      <AuthProvider>
+        <SessionBootstrap />
+        <div className="min-h-screen">
+          <main className="flex-1">{children}</main>
+        </div>
+      </AuthProvider>
+    )
+  }
+
+  // For auth pages, provide minimal layout without navbar/footer to avoid confusion during auth flows
+  if (isAuthPage) {
     return (
       <AuthProvider>
         <SessionBootstrap />
