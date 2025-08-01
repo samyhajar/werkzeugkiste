@@ -46,14 +46,19 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const redirectUrl = `${baseUrl}/auth/password-reset`
+    
     console.log(
       '[Forgot Password API] Sending password reset email to:',
       body.email
     )
+    console.log('[Forgot Password API] Using redirect URL:', redirectUrl)
+    console.log('[Forgot Password API] Base URL from env:', process.env.NEXT_PUBLIC_BASE_URL)
 
     // Send password reset email with redirect to our reset page
     const { error } = await supabase.auth.resetPasswordForEmail(body.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/auth/password-reset`,
+      redirectTo: redirectUrl,
     })
 
     if (error) {
