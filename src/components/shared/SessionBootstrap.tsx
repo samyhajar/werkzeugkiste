@@ -38,9 +38,43 @@ export default function SessionBootstrap() {
   const supabase = useRef<ReturnType<typeof getBrowserClient> | null>(null)
   const pathname = usePathname()
 
+  // Check if we should skip bootstrap (use sessionStorage to persist across tab focus)
+  const shouldSkipBootstrap = useCallback(() => {
+    try {
+      const lastBootstrap = sessionStorage.getItem('supabase-bootstrap-run')
+      const now = Date.now()
+
+      // If we ran the bootstrap less than 5 minutes ago, skip it
+      if (lastBootstrap && (now - parseInt(lastBootstrap)) < 5 * 60 * 1000) {
+        console.log('[SessionBootstrap] Skipping - already ran recently:', new Date(parseInt(lastBootstrap)).toISOString())
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.log('[SessionBootstrap] Error checking sessionStorage, proceeding with bootstrap')
+      return false
+    }
+  }, [])
+
+  // Mark that bootstrap has run
+  const markBootstrapRun = useCallback(() => {
+    try {
+      sessionStorage.setItem('supabase-bootstrap-run', Date.now().toString())
+    } catch (error) {
+      console.log('[SessionBootstrap] Error setting sessionStorage')
+    }
+  }, [])
+
   const syncAuthState = useCallback(async () => {
     // Prevent duplicate sync operations
     if (syncInProgress.current || hasRun.current || !supabase.current) {
+      return
+    }
+
+    // Check if we should skip bootstrap due to recent run
+    if (shouldSkipBootstrap()) {
+      hasRun.current = true
       return
     }
 
@@ -49,6 +83,8 @@ export default function SessionBootstrap() {
 
     try {
       console.log('[SessionBootstrap] Starting auth state sync...')
+      console.log('[SessionBootstrap] Current tab visibility:', document.visibilityState)
+      console.log('[SessionBootstrap] Current URL:', window.location.href)
 
       // Check for auth cookies
       const cookies = document.cookie.split(';')
@@ -81,6 +117,10 @@ export default function SessionBootstrap() {
       } else {
         console.log('[SessionBootstrap] No auth cookies found')
       }
+
+      // Mark that bootstrap has run successfully
+      markBootstrapRun()
+      console.log('[SessionBootstrap] Auth state sync completed successfully')
     } catch (error) {
       console.error('[SessionBootstrap] Error syncing auth state:', error)
       // Clear cookies on any error to prevent stuck state
@@ -88,9 +128,11 @@ export default function SessionBootstrap() {
     } finally {
       syncInProgress.current = false
     }
-  }, [])
+  }, [shouldSkipBootstrap, markBootstrapRun])
 
   useEffect(() => {
+    console.log('[SessionBootstrap] useEffect triggered - pathname:', pathname, 'visibilityState:', document?.visibilityState)
+
     // Only run in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       return
@@ -107,14 +149,16 @@ export default function SessionBootstrap() {
 
     // Run sync on mount with a small delay to avoid conflicts
     const initialTimeout = setTimeout(() => {
+      console.log('[SessionBootstrap] Running delayed auth sync...')
       void syncAuthState()
     }, 100)
 
     return () => {
+      console.log('[SessionBootstrap] Cleaning up effect')
       clearTimeout(initialTimeout)
       syncInProgress.current = false
     }
-  }, [syncAuthState])
+  }, [syncAuthState, pathname])
 
   return null
 }

@@ -60,8 +60,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileLoading, setProfileLoading] = useState(false)
   const initialized = useRef(false)
+  const hasRedirectedOnce = useRef(false) // Track if we've already redirected
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
   const router = useRouter()
+
+  // Add visibility change listener to debug tab focus issues
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[AuthContext] Tab became visible - Current state:', {
+          hasUser: !!user,
+          hasSession: !!session,
+          hasProfile: !!profile,
+          hasRedirectedOnce: hasRedirectedOnce.current,
+          userRole: user?.user_metadata?.role || profile?.role,
+          currentPath: window.location.pathname
+        })
+      } else {
+        console.log('[AuthContext] Tab became hidden')
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user, session, profile])
 
   const refreshSession = async () => {
     try {
@@ -116,14 +138,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] Profile fetch completed')
 
         // Handle redirection for fresh logins (when refreshSession is called after login)
-        if (wasLoggedOut) {
+        // Only redirect if we haven't redirected before and this is truly a fresh login
+        if (wasLoggedOut && !hasRedirectedOnce.current) {
           console.log('[AuthContext] Fresh login detected in refreshSession, handling redirection...')
 
           // Try to get role from user metadata first
           let userRole = session.user.user_metadata?.role
 
-                    if (userRole) {
+          if (userRole) {
             console.log('[AuthContext] Found role in metadata (refreshSession):', userRole)
+            hasRedirectedOnce.current = true // Mark that we've redirected
 
             // Immediate redirection - no delay needed
             if (userRole === 'admin') {
@@ -135,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           } else {
             console.log('[AuthContext] No role in metadata, checking profile...')
-                        // Fetch role from profile immediately
+            // Fetch role from profile immediately
             try {
               const { data } = await supabase
                 .from('profiles')
@@ -145,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               const profileRole = data?.role || 'student'
               console.log('[AuthContext] Found role in profile (refreshSession):', profileRole)
+              hasRedirectedOnce.current = true // Mark that we've redirected
 
               if (profileRole === 'admin') {
                 console.log('[AuthContext] Redirecting admin to /admin (refreshSession)')
@@ -155,9 +180,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             } catch (error) {
               console.error('[AuthContext] Error fetching role from profile (refreshSession):', error)
+              hasRedirectedOnce.current = true // Mark that we've redirected
               router.push('/')
             }
           }
+        } else {
+          console.log('[AuthContext] Skipping redirect - wasLoggedOut:', wasLoggedOut, 'hasRedirectedOnce:', hasRedirectedOnce.current)
         }
       } else {
         setSession(null)
@@ -414,6 +442,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(null)
             setSession(null)
             setProfile(null)
+            hasRedirectedOnce.current = false // Reset redirect flag on logout
             // Let the application handle navigation naturally - no forced redirect needed
             console.log('[AuthContext] SIGNED_OUT - state cleared, letting app handle navigation')
           } else if (event === 'SIGNED_IN' && session) {
@@ -424,15 +453,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setUser(session.user);
               return;
             }
-            
+
             // Check if this is a fresh login (user wasn't previously logged in)
             const wasLoggedOut = !user && !profile
-            
+
             setUser(session.user)
             setSession(session)
 
-            // Only redirect on fresh logins, not during navigation or session refreshes
-            if (wasLoggedOut) {
+            // Only redirect on fresh logins and if we haven't redirected before
+            if (wasLoggedOut && !hasRedirectedOnce.current) {
               console.log('[AuthContext] SIGNED_IN event - fresh login detected, checking role for redirection')
 
               // Try to get role from user metadata first
@@ -440,6 +469,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (userRole) {
                 console.log('[AuthContext] Found role in metadata:', userRole)
+                hasRedirectedOnce.current = true // Mark that we've redirected
+
                 // Fetch profile in parallel
                 fetchUserProfile(session.user.id)
 
@@ -463,6 +494,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                   const profileRole = data?.role || 'student'
                   console.log('[AuthContext] Found role in profile:', profileRole)
+                  hasRedirectedOnce.current = true // Mark that we've redirected
 
                   // Now fetch full profile in background
                   fetchUserProfile(session.user.id)
@@ -477,22 +509,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   }
                 } catch (error) {
                   console.error('[AuthContext] Error fetching role from profile:', error)
+                  hasRedirectedOnce.current = true // Mark that we've redirected
                   // Default to student and redirect to home
                   fetchUserProfile(session.user.id)
                   router.push('/')
                 }
               }
             } else {
-              console.log('[AuthContext] SIGNED_IN event - existing session, no redirect needed')
+              console.log('[AuthContext] SIGNED_IN event - skipping redirect. wasLoggedOut:', wasLoggedOut, 'hasRedirectedOnce:', hasRedirectedOnce.current)
               // Just fetch profile for existing sessions, no redirect
               fetchUserProfile(session.user.id)
             }
           } else if (event === 'TOKEN_REFRESHED' && session) {
-            console.log('[AuthContext] TOKEN_REFRESHED event received')
+            console.log('[AuthContext] TOKEN_REFRESHED event received - no redirect needed')
+            console.log('[AuthContext] TOKEN_REFRESHED - User:', session.user.email, 'Role:', session.user.user_metadata?.role)
             setUser(session.user)
             setSession(session)
             // Don't redirect on token refresh, just update the session
           } else {
+            console.log('[AuthContext] Other auth event:', event, 'Session user:', session?.user?.email)
             setUser(session?.user ?? null)
             setSession(session)
             if (session?.user) {
@@ -552,6 +587,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setSession(null)
       setProfile(null)
+      hasRedirectedOnce.current = false // Reset redirect flag
 
       // Just force page refresh immediately - let the server handle the rest
       console.log('[AuthContext] Forcing immediate page refresh and redirect...')
