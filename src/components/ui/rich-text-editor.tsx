@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import TextAlign from '@tiptap/extension-text-align'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -37,6 +38,11 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         openOnClick: false,
       }),
       Image,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
+        defaultAlignment: 'left',
+      }),
       Table.configure({
         resizable: true,
       }),
@@ -52,6 +58,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none prose-headings:font-bold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h1:mb-4 prose-h2:mb-3 prose-h3:mb-2 prose-p:mb-2',
+        style: 'text-align: inherit;',
       },
     },
   })
@@ -154,7 +161,54 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           </svg>
         </Button>
 
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
+        {/* Text Alignment */}
+        <Button
+          variant={editor.isActive({ textAlign: 'left' }) ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign('left').run()}
+          title="Align Left"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM3 8a1 1 0 000 2h7a1 1 0 100-2H3zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM3 16a1 1 0 100 2h7a1 1 0 100-2H3z"/>
+          </svg>
+        </Button>
+
+        <Button
+          variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign('center').run()}
+          title="Align Center"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM5 8a1 1 0 000 2h10a1 1 0 100-2H5zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM5 16a1 1 0 100 2h10a1 1 0 100-2H5z"/>
+          </svg>
+        </Button>
+
+        <Button
+          variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign('right').run()}
+          title="Align Right"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM7 8a1 1 0 100 2h7a1 1 0 100-2H7zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM7 16a1 1 0 100 2h7a1 1 0 100-2H7z"/>
+          </svg>
+        </Button>
+
+        <Button
+          variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+          title="Justify"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM2 8a1 1 0 000 2h16a1 1 0 100-2H2zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM2 16a1 1 0 100 2h16a1 1 0 100-2H2z"/>
+          </svg>
+        </Button>
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
 
         {/* Lists */}
         <Button
@@ -309,7 +363,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
+          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_*[style*='text-align:_left']]:text-left [&_*[style*='text-align:_center']]:text-center [&_*[style*='text-align:_right']]:text-right [&_*[style*='text-align:_justify']]:text-justify"
         />
       </div>
     </div>
