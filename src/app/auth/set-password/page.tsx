@@ -1,14 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+import { useAuth } from '@/contexts/AuthContext'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -16,32 +12,35 @@ export default function SetPasswordPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [isSessionReady, setIsSessionReady] = useState(false)
+  const [showFallback, setShowFallback] = useState(false)
   const router = useRouter()
+  const { user, session, loading: authLoading } = useAuth()
+
+  // Session is ready when we have a user and session, and auth is not loading
+  const isSessionReady = !authLoading && !!user && !!session
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in, session is ready for password update.');
-          setIsSessionReady(true);
-        }
-      }
-    );
+    console.log('[SetPassword] Auth state:', {
+      authLoading,
+      hasUser: !!user,
+      hasSession: !!session,
+      isSessionReady,
+      userEmail: user?.email,
+      userAgent: navigator.userAgent
+    })
+  }, [authLoading, user, session, isSessionReady])
 
-    // Initial check in case the user is already signed in when the page loads
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setIsSessionReady(true);
+  // Add a timeout to show fallback options if session doesn't load
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!isSessionReady && !authLoading) {
+        console.log('[SetPassword] Session timeout reached, showing fallback options')
+        setShowFallback(true)
       }
-    };
-    checkSession();
+    }, 10000) // 10 second timeout
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    return () => clearTimeout(timeout)
+  }, [isSessionReady, authLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,30 +59,34 @@ export default function SetPasswordPage() {
 
     setLoading(true)
 
-    const { error } = await supabase.auth.updateUser({ password })
+    try {
+      const supabase = getBrowserClient()
+      const { error } = await supabase.auth.updateUser({ password })
 
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      setSuccess('Passwort erfolgreich aktualisiert!')
-
-      // Get the current user to determine their role
-      const { data: { user } } = await supabase.auth.getUser()
-
-      // Determine redirect based on user role
-      let redirectPath = '/'
-      if (user?.user_metadata?.role === 'admin') {
-        redirectPath = '/admin'
+      if (error) {
+        setError(error.message)
       } else {
-        // For students or if no role is specified, go to home page
-        redirectPath = '/'
-      }
+        setSuccess('Passwort erfolgreich aktualisiert!')
 
-      // Redirect immediately after successful password update
-      setTimeout(() => {
-        router.push(redirectPath)
-      }, 1000) // Brief delay to show success message
+        // Determine redirect based on user role from AuthContext
+        let redirectPath = '/'
+        if (user?.user_metadata?.role === 'admin') {
+          redirectPath = '/admin'
+        } else {
+          // For students or if no role is specified, go to home page
+          redirectPath = '/'
+        }
+
+        console.log('[SetPassword] Password updated successfully, redirecting to:', redirectPath)
+
+        // Redirect immediately after successful password update
+        setTimeout(() => {
+          router.push(redirectPath)
+        }, 1000) // Brief delay to show success message
+      }
+    } catch (error) {
+      console.error('[SetPassword] Error updating password:', error)
+      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     }
 
     setLoading(false)
@@ -159,22 +162,36 @@ export default function SetPasswordPage() {
 
           <button
             type="submit"
-            disabled={loading || !isSessionReady}
+            disabled={loading || (!isSessionReady && !showFallback)}
             className="w-full px-4 py-3 text-sm font-medium text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b5169] disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-[#2d3e52]"
             style={{
-              backgroundColor: loading || !isSessionReady ? '#9ca3af' : '#3b5169'
+              backgroundColor: loading || (!isSessionReady && !showFallback) ? '#9ca3af' : '#3b5169'
             }}
           >
             {loading ? 'Passwort wird gesetzt...' : 'Passwort festlegen'}
           </button>
+
+          {showFallback && !isSessionReady && (
+            <div className="text-center">
+              <div className="text-xs text-orange-600 bg-orange-50 rounded-lg p-3 border border-orange-200">
+                <p className="font-medium mb-1">Browser-Kompatibilitätsmodus aktiviert</p>
+                <p>Sie können trotzdem versuchen, Ihr Passwort zu setzen. Falls es nicht funktioniert, versuchen Sie es mit einem anderen Browser.</p>
+              </div>
+            </div>
+          )}
         </form>
 
-        {!isSessionReady && (
-          <div className="text-center">
+        {!isSessionReady && !showFallback && (
+          <div className="text-center space-y-2">
             <div className="inline-flex items-center px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg">
               <div className="w-4 h-4 border-2 border-gray-300 border-t-[#3b5169] rounded-full animate-spin mr-2"></div>
-              Session wird vorbereitet...
+              {authLoading ? 'Session wird vorbereitet...' : 'Warten auf Anmeldung...'}
             </div>
+            {!authLoading && !user && (
+              <div className="text-xs text-gray-500">
+                Falls das Problem weiterhin besteht, laden Sie die Seite neu oder verwenden Sie einen anderen Browser (Chrome/Safari empfohlen).
+              </div>
+            )}
           </div>
         )}
       </div>
