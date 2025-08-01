@@ -19,7 +19,7 @@ export default function PasswordResetPage() {
     const checkResetSession = async () => {
       try {
         const supabase = getBrowserClient()
-        
+
         // Get access token and refresh token from URL hash (for password recovery)
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const accessToken = hashParams.get('access_token')
@@ -82,7 +82,7 @@ export default function PasswordResetPage() {
         setError('Fehler beim Aktualisieren des Passworts: ' + error.message)
       } else {
         setSuccess('Passwort erfolgreich zurückgesetzt!')
-        
+
         // Redirect to login after success
         setTimeout(() => {
           router.push('/?password-reset=success')

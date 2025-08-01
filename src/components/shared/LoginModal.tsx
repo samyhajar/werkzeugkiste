@@ -182,7 +182,9 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     }
   }
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setShowForgotPassword(true)
     setError('')
     setForgotPasswordSuccess('')

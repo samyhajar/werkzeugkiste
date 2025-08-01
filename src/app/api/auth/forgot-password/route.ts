@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
     try {
       body = (await request.json()) as ForgotPasswordRequest
     } catch (parseError) {
-      console.error('[Forgot Password API] Failed to parse request body:', parseError)
+      console.error(
+        '[Forgot Password API] Failed to parse request body:',
+        parseError
+      )
       return NextResponse.json(
         { success: false, error: 'Invalid request body' },
         { status: 400 }
@@ -43,7 +46,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    console.log('[Forgot Password API] Sending password reset email to:', body.email)
+    console.log(
+      '[Forgot Password API] Sending password reset email to:',
+      body.email
+    )
 
     // Send password reset email with redirect to our reset page
     const { error } = await supabase.auth.resetPasswordForEmail(body.email, {
@@ -52,12 +58,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('[Forgot Password API] Supabase error:', error)
-      
+
       // Don't reveal if the email exists or not for security reasons
       // Always return success to prevent email enumeration attacks
       return NextResponse.json({
         success: true,
-        message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.'
+        message:
+          'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.',
       })
     }
 
@@ -65,9 +72,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.'
+      message:
+        'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.',
     })
-
   } catch (error) {
     console.error('[Forgot Password API] Unexpected error:', error)
     return NextResponse.json(
