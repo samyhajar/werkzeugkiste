@@ -71,12 +71,12 @@ export default function PasswordResetPage() {
 
     try {
       const supabase = getBrowserClient()
-      
+
       // Get tokens from URL hash to establish session
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
-      
+
       if (!accessToken || !refreshToken) {
         setError('Sitzungstoken fehlen. Bitte verwenden Sie einen neuen Reset-Link.')
         setLoading(false)
