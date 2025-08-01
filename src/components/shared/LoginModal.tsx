@@ -181,7 +181,12 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    setIsOpen(false) // Close login modal
     forgotPasswordModalRef.current?.show()
+  }
+
+  const handleBackToLogin = () => {
+    setIsOpen(true) // Reopen login modal
   }
 
   if (!isOpen) {
@@ -488,9 +493,9 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
           </Tabs>
         </div>
       </DialogContent>
-      
+
       {/* Separate Forgot Password Modal */}
-      <ForgotPasswordModal ref={forgotPasswordModalRef} />
+      <ForgotPasswordModal ref={forgotPasswordModalRef} onBackToLogin={handleBackToLogin} />
     </Dialog>
   )
 })

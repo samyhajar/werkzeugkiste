@@ -13,7 +13,11 @@ export interface ForgotPasswordModalRef {
   hide: () => void
 }
 
-const ForgotPasswordModal = forwardRef<ForgotPasswordModalRef>((_, ref) => {
+interface ForgotPasswordModalProps {
+  onBackToLogin?: () => void
+}
+
+const ForgotPasswordModal = forwardRef<ForgotPasswordModalRef, ForgotPasswordModalProps>(({ onBackToLogin }, ref) => {
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -41,6 +45,11 @@ const ForgotPasswordModal = forwardRef<ForgotPasswordModalRef>((_, ref) => {
   const handleClose = () => {
     setIsOpen(false)
     resetForm()
+  }
+
+  const handleBackToLogin = () => {
+    handleClose()
+    onBackToLogin?.()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,7 +197,7 @@ const ForgotPasswordModal = forwardRef<ForgotPasswordModalRef>((_, ref) => {
             <p className="text-sm text-gray-600">
               Erinnern Sie sich an Ihr Passwort?{' '}
               <button
-                onClick={handleClose}
+                onClick={handleBackToLogin}
                 className="text-[#486681] hover:text-[#3e5570] font-semibold transition-colors"
                 disabled={isLoading}
               >
