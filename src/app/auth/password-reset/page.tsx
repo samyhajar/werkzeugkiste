@@ -89,14 +89,14 @@ export default function PasswordResetPage() {
     if (!isValidSession) return
 
     const supabase = getBrowserClient()
-    
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: any) => {
       if (event === 'USER_UPDATED' && loading) {
         console.log('*** USER_UPDATED EVENT RECEIVED - treating as success')
         setUserUpdatedReceived(true)
         setLoading(false)
         setSuccess('Passwort erfolgreich zurückgesetzt! Sie werden weitergeleitet.')
-        
+
         setTimeout(() => {
           router.push('/?password-reset=success')
         }, 2000)
@@ -179,7 +179,7 @@ export default function PasswordResetPage() {
 
       if (updateError) {
         console.error('[PasswordReset] Password update error:', updateError)
-        
+
         // Handle specific "same password" error with better message
         if (updateError.message?.includes('New password should be different from the old password')) {
           setError('Das neue Passwort muss sich vom bisherigen Passwort unterscheiden.')
