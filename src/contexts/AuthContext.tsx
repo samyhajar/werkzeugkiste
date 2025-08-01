@@ -424,58 +424,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               setUser(session.user);
               return;
             }
+            
+            // Check if this is a fresh login (user wasn't previously logged in)
+            const wasLoggedOut = !user && !profile
+            
             setUser(session.user)
             setSession(session)
 
-            // Handle role-based redirection after login
-            console.log('[AuthContext] SIGNED_IN event - checking role for redirection')
+            // Only redirect on fresh logins, not during navigation or session refreshes
+            if (wasLoggedOut) {
+              console.log('[AuthContext] SIGNED_IN event - fresh login detected, checking role for redirection')
 
-            // Try to get role from user metadata first
-            let userRole = session.user.user_metadata?.role
+              // Try to get role from user metadata first
+              let userRole = session.user.user_metadata?.role
 
-            if (userRole) {
-              console.log('[AuthContext] Found role in metadata:', userRole)
-              // Fetch profile in parallel
-              fetchUserProfile(session.user.id)
-
-              // Immediate redirection
-              if (userRole === 'admin') {
-                console.log('[AuthContext] Redirecting admin to /admin')
-                router.push('/admin')
-              } else {
-                console.log('[AuthContext] Redirecting student to /')
-                router.push('/')
-              }
-            } else {
-              console.log('[AuthContext] No role in metadata, fetching profile first...')
-              // If no role in metadata, fetch profile first to get role
-              try {
-                const { data } = await supabase
-                  .from('profiles')
-                  .select('role')
-                  .eq('id', session.user.id)
-                  .single()
-
-                const profileRole = data?.role || 'student'
-                console.log('[AuthContext] Found role in profile:', profileRole)
-
-                // Now fetch full profile in background
+              if (userRole) {
+                console.log('[AuthContext] Found role in metadata:', userRole)
+                // Fetch profile in parallel
                 fetchUserProfile(session.user.id)
 
-                // Immediate redirection
-                if (profileRole === 'admin') {
-                  console.log('[AuthContext] Redirecting admin to /admin')
+                // Immediate redirection only for fresh logins
+                if (userRole === 'admin') {
+                  console.log('[AuthContext] Redirecting admin to /admin (fresh login)')
                   router.push('/admin')
                 } else {
-                  console.log('[AuthContext] Redirecting student to /')
+                  console.log('[AuthContext] Redirecting student to / (fresh login)')
                   router.push('/')
                 }
-              } catch (error) {
-                console.error('[AuthContext] Error fetching role from profile:', error)
-                // Default to student and redirect to home
-                fetchUserProfile(session.user.id)
-                router.push('/')
+              } else {
+                console.log('[AuthContext] No role in metadata, fetching profile first...')
+                // If no role in metadata, fetch profile first to get role
+                try {
+                  const { data } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .single()
+
+                  const profileRole = data?.role || 'student'
+                  console.log('[AuthContext] Found role in profile:', profileRole)
+
+                  // Now fetch full profile in background
+                  fetchUserProfile(session.user.id)
+
+                  // Immediate redirection only for fresh logins
+                  if (profileRole === 'admin') {
+                    console.log('[AuthContext] Redirecting admin to /admin (fresh login)')
+                    router.push('/admin')
+                  } else {
+                    console.log('[AuthContext] Redirecting student to / (fresh login)')
+                    router.push('/')
+                  }
+                } catch (error) {
+                  console.error('[AuthContext] Error fetching role from profile:', error)
+                  // Default to student and redirect to home
+                  fetchUserProfile(session.user.id)
+                  router.push('/')
+                }
               }
+            } else {
+              console.log('[AuthContext] SIGNED_IN event - existing session, no redirect needed')
+              // Just fetch profile for existing sessions, no redirect
+              fetchUserProfile(session.user.id)
             }
           } else if (event === 'TOKEN_REFRESHED' && session) {
             console.log('[AuthContext] TOKEN_REFRESHED event received')
