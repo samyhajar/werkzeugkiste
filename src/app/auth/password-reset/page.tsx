@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { Button } from '@/components/ui/button'
+import { CustomInput } from '@/components/ui/CustomInput'
+import { Label } from '@/components/ui/label'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function PasswordResetPage() {
   const [password, setPassword] = useState('')
@@ -13,13 +17,13 @@ export default function PasswordResetPage() {
   const [loading, setLoading] = useState(false)
   const [isValidSession, setIsValidSession] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const checkResetSession = async () => {
+    const checkResetTokens = async () => {
       try {
-        const supabase = getBrowserClient()
-
         // Get access token and refresh token from URL hash (for password recovery)
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const accessToken = hashParams.get('access_token')
@@ -29,32 +33,23 @@ export default function PasswordResetPage() {
         console.log('[PasswordReset] URL params:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken })
 
         if (type === 'recovery' && accessToken && refreshToken) {
-          // Set session using the tokens from the password recovery email
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
-
-          if (error) {
-            console.error('[PasswordReset] Session error:', error)
-            setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
-          } else if (data.session) {
-            console.log('[PasswordReset] Session established successfully')
-            setIsValidSession(true)
-          }
+          // Just validate that tokens exist, don't establish session yet
+          // We'll only establish the session when user successfully updates their password
+          console.log('[PasswordReset] Valid recovery tokens found')
+          setIsValidSession(true)
         } else {
           console.log('[PasswordReset] No valid recovery parameters found')
           setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
         }
       } catch (error) {
-        console.error('[PasswordReset] Error checking session:', error)
+        console.error('[PasswordReset] Error checking tokens:', error)
         setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
       } finally {
         setIsCheckingSession(false)
       }
     }
 
-    checkResetSession()
+    checkResetTokens()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,14 +71,44 @@ export default function PasswordResetPage() {
 
     try {
       const supabase = getBrowserClient()
-      const { error } = await supabase.auth.updateUser({ password })
+      
+      // Get tokens from URL hash to establish session
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+      
+      if (!accessToken || !refreshToken) {
+        setError('Sitzungstoken fehlen. Bitte verwenden Sie einen neuen Reset-Link.')
+        setLoading(false)
+        return
+      }
 
-      if (error) {
-        setError('Fehler beim Aktualisieren des Passworts: ' + error.message)
+      // Establish session using the tokens from the password recovery email
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
+      if (sessionError || !sessionData.session) {
+        console.error('[PasswordReset] Session establishment error:', sessionError)
+        setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
+        setLoading(false)
+        return
+      }
+
+      console.log('[PasswordReset] Session established for password update')
+
+      // Now update the password
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+
+      if (updateError) {
+        console.error('[PasswordReset] Password update error:', updateError)
+        setError('Fehler beim Aktualisieren des Passworts: ' + updateError.message)
       } else {
-        setSuccess('Passwort erfolgreich zurückgesetzt!')
+        setSuccess('Passwort erfolgreich zurückgesetzt! Sie werden weitergeleitet.')
+        console.log('[PasswordReset] Password updated successfully')
 
-        // Redirect to login after success
+        // Redirect to home page after success (user will be logged in)
         setTimeout(() => {
           router.push('/?password-reset=success')
         }, 2000)

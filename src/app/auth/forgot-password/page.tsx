@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
       if (data.success) {
         setSuccess(data.message)
         setEmail('')
-        
+
         // Redirect back to home page after 3 seconds
         setTimeout(() => {
           router.push('/?forgot-password=sent')
@@ -147,7 +147,7 @@ export default function ForgotPasswordPage() {
           >
             Zurück zur Startseite
           </button>
-          
+
           <div className="text-xs text-gray-500">
             Erinnern Sie sich an Ihr Passwort?{' '}
             <button
