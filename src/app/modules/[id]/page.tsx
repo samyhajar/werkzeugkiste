@@ -582,7 +582,7 @@ export default function ModuleDetailPage() {
           .in('lesson_id', moduleLessonIds)
 
         if (progressData) {
-          const completedIds = new Set(progressData.map((p: { lesson_id: string }) => p.lesson_id))
+          const completedIds = new Set<string>(progressData.map((p: { lesson_id: string }) => p.lesson_id))
           setCompletedLessons(completedIds)
         }
 
@@ -600,7 +600,7 @@ export default function ModuleDetailPage() {
           .in('quiz_id', moduleQuizIds)
 
         if (quizAttempts) {
-          const passedQuizIds = new Set(quizAttempts.map(a => a.quiz_id))
+          const passedQuizIds = new Set<string>(quizAttempts.map((a: { quiz_id: string }) => a.quiz_id))
           setPassedQuizzes(passedQuizIds)
         }
       }
