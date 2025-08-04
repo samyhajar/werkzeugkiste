@@ -585,19 +585,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               fetchUserProfile(session.user.id)
             }
           } else if (event === 'TOKEN_REFRESHED' && session) {
-            console.log('[AuthContext] TOKEN_REFRESHED event received - no redirect needed')
+            console.log('[AuthContext] TOKEN_REFRESHED event received - minimal state update')
             console.log('[AuthContext] TOKEN_REFRESHED - User:', session.user.email, 'Role:', session.user.user_metadata?.role)
-            setUser(session.user)
-            setSession(session)
-            // Don't redirect on token refresh, just update the session
+            
+            // For token refresh, only update if user ID actually changed (rare but possible)
+            if (!user || user.id !== session.user.id) {
+              console.log('[AuthContext] User ID changed during token refresh, updating state')
+              setUser(session.user)
+              setSession(session)
+            } else {
+              console.log('[AuthContext] Same user during token refresh, skipping state update to prevent page reload')
+            }
+            // Don't redirect on token refresh, just update the session if needed
           } else {
             console.log('[AuthContext] Other auth event:', event, 'Session user:', session?.user?.email)
-            setUser(session?.user ?? null)
-            setSession(session)
-            if (session?.user) {
-              fetchUserProfile(session.user.id)
+            
+            // For other events, also check if state actually needs updating
+            const sessionUser = session?.user ?? null
+            const needsUpdate = (!user && sessionUser) || (user && !sessionUser) || (user && sessionUser && user.id !== sessionUser.id)
+            
+            if (needsUpdate) {
+              console.log('[AuthContext] State change needed for event:', event)
+              setUser(sessionUser)
+              setSession(session)
+              if (sessionUser) {
+                fetchUserProfile(sessionUser.id)
+              } else {
+                setProfile(null)
+              }
             } else {
-              setProfile(null)
+              console.log('[AuthContext] No state change needed for event:', event, '- preventing unnecessary re-render')
             }
           }
         } catch (error) {
