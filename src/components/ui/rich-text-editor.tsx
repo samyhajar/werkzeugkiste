@@ -71,7 +71,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     onCreate: ({ editor }) => {
       // Set content when editor is created
       if (content && content !== '<p></p>' && content.trim() !== '') {
-        editor.commands.setContent(content, false)
+        editor.commands.setContent(content)
       }
     },
     immediatelyRender: false,
@@ -86,7 +86,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   // Update editor content when prop changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content, false)
+      editor.commands.setContent(content)
     }
   }, [editor, content])
 
