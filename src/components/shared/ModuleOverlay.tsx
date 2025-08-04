@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Tables } from '@/types/supabase'
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, ChevronDown, ChevronRight, Book, FileText } from 'lucide-react'
 
 type Module = Tables<'modules'> & {
   courses: (Tables<'courses'> & {
@@ -25,6 +25,17 @@ interface ModuleOverlayProps {
 
 export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onStartLogin }: ModuleOverlayProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'presenter'>('content')
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
+
+  const toggleCourse = (courseId: string) => {
+    const newExpanded = new Set(expandedCourses)
+    if (newExpanded.has(courseId)) {
+      newExpanded.delete(courseId)
+    } else {
+      newExpanded.add(courseId)
+    }
+    setExpandedCourses(newExpanded)
+  }
 
   const handleStartClick = (e: React.MouseEvent) => {
     if (!isLoggedIn) {
@@ -80,9 +91,9 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
                   onClick={() => setActiveTab('content')}
                   className={`${
                     activeTab === 'content'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg`}
+                      ? 'border-[#de0647] text-[#de0647] bg-red-50/50'
+                      : 'border-transparent text-gray-600 hover:text-[#486681] hover:border-gray-300 hover:bg-gray-50/50'
+                  } whitespace-nowrap py-4 px-6 border-b-2 font-semibold text-lg rounded-t-lg transition-all duration-200`}
                 >
                   Inhalt
                 </button>
@@ -90,9 +101,9 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
                   onClick={() => setActiveTab('presenter')}
                   className={`${
                     activeTab === 'presenter'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg`}
+                      ? 'border-[#de0647] text-[#de0647] bg-red-50/50'
+                      : 'border-transparent text-gray-600 hover:text-[#486681] hover:border-gray-300 hover:bg-gray-50/50'
+                  } whitespace-nowrap py-4 px-6 border-b-2 font-semibold text-lg rounded-t-lg transition-all duration-200`}
                 >
                   Unterlagen für Vortragende
                 </button>
@@ -113,19 +124,65 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
 
                 <div>
                   <h2 className="text-2xl font-semibold text-gray-800 mb-4">Inhalt</h2>
-                  <ul className="space-y-3">
-                    {module.courses.map((course, index) => (
-                      <li key={course.id} className="bg-gray-50 rounded-lg p-4 flex items-start">
-                        <div className="flex-shrink-0 bg-[#486681] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4">
-                          {index + 1}
+                  <div className="space-y-3">
+                    {module.courses.map((course, index) => {
+                      const isExpanded = expandedCourses.has(course.id)
+                      return (
+                        <div key={course.id} className="bg-gray-50 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => toggleCourse(course.id)}
+                            className="w-full p-4 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 bg-[#486681] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4">
+                                {index + 1}
+                              </div>
+                              <h3 className="font-semibold text-gray-800 text-left">{course.title}</h3>
+                            </div>
+                            {isExpanded ? (
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5 text-gray-600" />
+                            )}
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-4 pb-4 border-t border-gray-200">
+                              <div className="pt-4 space-y-2">
+                                {course.lessons.length > 0 ? (
+                                  course.lessons.map((lesson, lessonIndex) => (
+                                    <div key={lesson.id} className="flex items-center py-2 px-3 bg-white rounded-md">
+                                      <Book className="h-4 w-4 text-[#486681] mr-3 flex-shrink-0" />
+                                      <span className="text-sm text-gray-700 flex-1">{lesson.title}</span>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="flex items-center py-2 px-3 bg-white rounded-md">
+                                    <FileText className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
+                                    <span className="text-sm text-gray-500 italic">Keine Lektionen verfügbar</span>
+                                  </div>
+                                )}
+
+                                {course.quizzes.length > 0 && (
+                                  <div className="mt-3 pt-2 border-t border-gray-100">
+                                    <div className="text-xs font-semibold text-gray-600 mb-2">Quiz:</div>
+                                    {course.quizzes.map((quiz) => (
+                                      <div key={quiz.id} className="flex items-center py-2 px-3 bg-blue-50 rounded-md">
+                                        <div className="h-4 w-4 bg-blue-500 rounded-full mr-3 flex-shrink-0 flex items-center justify-center">
+                                          <span className="text-xs text-white font-bold">?</span>
+                                        </div>
+                                        <span className="text-sm text-blue-700 flex-1">{quiz.title}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">{course.title}</h3>
-                          <p className="text-sm text-gray-600">{course.description}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -152,16 +209,16 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
                 <div className="mt-8 space-y-3">
                   <h3 className="text-lg font-semibold text-gray-800">PDF Materialien</h3>
                   {module.presenter_materials_urls
-                    .filter((item): item is { url: string; title: string } => 
-                      typeof item === 'object' && item !== null && 
-                      typeof (item as any).url === 'string' && 
+                    .filter((item): item is { url: string; title: string } =>
+                      typeof item === 'object' && item !== null &&
+                      typeof (item as any).url === 'string' &&
                       typeof (item as any).title === 'string' &&
                       (item as any).url.trim() !== ''
                     )
                     .map((pdf, index) => (
-                      <Button 
-                        key={index} 
-                        asChild 
+                      <Button
+                        key={index}
+                        asChild
                         className="w-full bg-[#c53030] hover:bg-[#c53030]/90 text-white font-bold py-3 justify-start"
                       >
                         <a href={pdf.url} download>
