@@ -61,21 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false)
   const initialized = useRef(false)
   const hasRedirectedOnce = useRef(false) // Track if we've already redirected
-  const userRef = useRef<User | null>(null)
-  const profileRef = useRef<UserProfile | null>(null)
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
   const router = useRouter()
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    userRef.current = user
-  }, [user])
-
-  useEffect(() => {
-    profileRef.current = profile
-  }, [profile])
-
-  // (Removed visibilitychange debug listener)
+  // Add visibility change listener to debug tab focus issues
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
@@ -141,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] Session and user state updated')
 
         // Check if this is a fresh login (user wasn't previously logged in)
-        const wasLoggedOut = !userRef.current && !profileRef.current
+        const wasLoggedOut = !user && !profile
 
         // Fetch profile when session is established (non-blocking for faster login)
         fetchUserProfile(session.user.id)
@@ -159,11 +148,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (userRole) {
             console.log('[AuthContext] Found role in metadata (refreshSession):', userRole)
-
+            
             // Check if user is already on the correct page for their role
             const isAdminOnAdminPage = userRole === 'admin' && currentPath.startsWith('/admin')
             const isStudentOnHomePage = userRole === 'student' && currentPath === '/'
-
+            
             if (isAdminOnAdminPage || isStudentOnHomePage) {
               console.log('[AuthContext] User already on correct page in refreshSession, skipping redirect')
               hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
@@ -192,11 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               const profileRole = data?.role || 'student'
               console.log('[AuthContext] Found role in profile (refreshSession):', profileRole)
-
+              
               // Check if user is already on the correct page for their role
               const isAdminOnAdminPage = profileRole === 'admin' && currentPath.startsWith('/admin')
               const isStudentOnHomePage = profileRole === 'student' && currentPath === '/'
-
+              
               if (isAdminOnAdminPage || isStudentOnHomePage) {
                 console.log('[AuthContext] User already on correct page in refreshSession, skipping redirect')
                 hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
@@ -505,7 +494,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             // Check if this is a fresh login (user wasn't previously logged in)
-            const wasLoggedOut = !userRef.current && !profileRef.current
+            const wasLoggedOut = !user && !profile
             const currentPath = window.location.pathname
 
             setUser(session.user)
@@ -520,11 +509,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (userRole) {
                 console.log('[AuthContext] Found role in metadata:', userRole)
-
+                
                 // Check if user is already on the correct page for their role
                 const isAdminOnAdminPage = userRole === 'admin' && currentPath.startsWith('/admin')
                 const isStudentOnHomePage = userRole === 'student' && currentPath === '/'
-
+                
                 if (isAdminOnAdminPage || isStudentOnHomePage) {
                   console.log('[AuthContext] User already on correct page, skipping redirect')
                   hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
@@ -557,11 +546,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                   const profileRole = data?.role || 'student'
                   console.log('[AuthContext] Found role in profile:', profileRole)
-
+                  
                   // Check if user is already on the correct page for their role
                   const isAdminOnAdminPage = profileRole === 'admin' && currentPath.startsWith('/admin')
                   const isStudentOnHomePage = profileRole === 'student' && currentPath === '/'
-
+                  
                   if (isAdminOnAdminPage || isStudentOnHomePage) {
                     console.log('[AuthContext] User already on correct page, skipping redirect')
                     hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
@@ -591,12 +580,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 }
               }
             } else {
-              console.log('[AuthContext] SIGNED_IN event - already logged in, no redirect and no state update needed')
+              console.log('[AuthContext] SIGNED_IN event - skipping redirect. wasLoggedOut:', wasLoggedOut, 'hasRedirectedOnce:', hasRedirectedOnce.current)
+              // Just fetch profile for existing sessions, no redirect
+              fetchUserProfile(session.user.id)
             }
           } else if (event === 'TOKEN_REFRESHED' && session) {
             console.log('[AuthContext] TOKEN_REFRESHED event received - minimal state update')
             console.log('[AuthContext] TOKEN_REFRESHED - User:', session.user.email, 'Role:', session.user.user_metadata?.role)
-
+            
             // For token refresh, only update if user ID actually changed (rare but possible)
             if (!user || user.id !== session.user.id) {
               console.log('[AuthContext] User ID changed during token refresh, updating state')
@@ -608,11 +599,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Don't redirect on token refresh, just update the session if needed
           } else {
             console.log('[AuthContext] Other auth event:', event, 'Session user:', session?.user?.email)
-
+            
             // For other events, also check if state actually needs updating
             const sessionUser = session?.user ?? null
             const needsUpdate = (!user && sessionUser) || (user && !sessionUser) || (user && sessionUser && user.id !== sessionUser.id)
-
+            
             if (needsUpdate) {
               console.log('[AuthContext] State change needed for event:', event)
               setUser(sessionUser)
