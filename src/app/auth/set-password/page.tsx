@@ -95,7 +95,7 @@ export default function SetPasswordPage() {
 
     try {
       const supabase = getBrowserClient()
-      
+
       // Establish session using the tokens from the invitation email
       console.log('*** STEP 1: CALL setSession');
       const { data: sessionData, error: sessionError } = await supabase.auth.setSession({

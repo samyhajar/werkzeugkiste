@@ -370,8 +370,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[AuthContext] Getting initial session...')
 
                 // Skip session establishment if on auth setup pages to avoid auth confusion
-        if (typeof window !== 'undefined' && 
-            (window.location.pathname === '/auth/password-reset' || 
+        if (typeof window !== 'undefined' &&
+            (window.location.pathname === '/auth/password-reset' ||
              window.location.pathname === '/auth/set-password')) {
           console.log('[AuthContext] On auth setup page, skipping initial session establishment')
           setSession(null)
@@ -463,7 +463,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
           } else if (event === 'SIGNED_IN' && session) {
                         // Prevent redirecting away from password reset related pages
-            if (window.location.pathname === '/auth/set-password' || 
+            if (window.location.pathname === '/auth/set-password' ||
                 window.location.pathname === '/auth/password-reset') {
               console.log('[AuthContext] On auth setup page, skipping redirect and state updates.');
               // Don't set session/user state during auth setup to avoid UI confusion

@@ -3,6 +3,14 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { Database } from '@/types/supabase'
 
 export async function middleware(request: NextRequest) {
+  // Domain redirect: werkzeugkiste.vercel.app → werkzeugkiste.arbeitplus.at
+  const hostname = request.headers.get('host')
+  if (hostname === 'werkzeugkiste.vercel.app') {
+    const url = new URL(request.url)
+    url.hostname = 'werkzeugkiste.arbeitplus.at'
+    return NextResponse.redirect(url, 301) // Permanent redirect
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
