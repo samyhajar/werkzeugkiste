@@ -6,6 +6,8 @@ import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { FontSize } from '@tiptap/extension-font-size'
 
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
@@ -31,6 +33,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const [imageWidth, setImageWidth] = useState('')
   const [imageHeight, setImageHeight] = useState('')
   const [imageSize, setImageSize] = useState('medium')
+  const [fontSize, setFontSize] = useState('16px')
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
 
@@ -42,6 +45,8 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         },
       }),
       Underline,
+      TextStyle,
+      FontSize,
       Link.configure({
         openOnClick: false,
       }),
@@ -133,6 +138,13 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     }
   }
 
+  const applyFontSize = (size: string) => {
+    if (editor) {
+      editor.chain().focus().setFontSize(size).run()
+      setFontSize(size)
+    }
+  }
+
   if (!editor) {
     return null
   }
@@ -169,6 +181,28 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
             <SelectItem value="h1">Heading 1</SelectItem>
             <SelectItem value="h2">Heading 2</SelectItem>
             <SelectItem value="h3">Heading 3</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Font Size Dropdown */}
+        <Select
+          value={fontSize}
+          onValueChange={applyFontSize}
+        >
+          <SelectTrigger className="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="12px">12px</SelectItem>
+            <SelectItem value="14px">14px</SelectItem>
+            <SelectItem value="16px">16px</SelectItem>
+            <SelectItem value="18px">18px</SelectItem>
+            <SelectItem value="20px">20px</SelectItem>
+            <SelectItem value="24px">24px</SelectItem>
+            <SelectItem value="28px">28px</SelectItem>
+            <SelectItem value="32px">32px</SelectItem>
+            <SelectItem value="36px">36px</SelectItem>
+            <SelectItem value="48px">48px</SelectItem>
           </SelectContent>
         </Select>
 
