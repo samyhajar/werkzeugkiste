@@ -63,7 +63,7 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
 
           <CardContent className="flex-1 flex flex-col p-6">
             <div className="flex-1 flex flex-col" style={{ minHeight: '200px' }}>
-              <CardTitle className="text-xl font-bold text-[#c53030] mb-4 leading-tight" style={{ minHeight: '3rem', maxHeight: '3rem', overflow: 'hidden' }}>
+              <CardTitle className="text-xl font-bold text-[#de0647] mb-4 leading-tight" style={{ minHeight: '3rem', maxHeight: '3rem', overflow: 'hidden' }}>
                 {module.title}
               </CardTitle>
 
