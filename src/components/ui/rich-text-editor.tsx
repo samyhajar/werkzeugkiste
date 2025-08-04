@@ -84,9 +84,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   }
 
   return (
-    <div className={`border border-gray-300 rounded-md bg-white ${className}`}>
+    <div className={`border border-gray-300 rounded-md bg-white relative ${className}`}>
       {/* Toolbar */}
-      <div className="border-b border-gray-200 p-3 flex flex-wrap gap-1">
+      <div className="sticky top-0 z-10 border-b border-gray-200 p-3 flex flex-wrap gap-1 bg-white rounded-t-md">
         {/* Text Format Dropdown */}
         <Select
           value={

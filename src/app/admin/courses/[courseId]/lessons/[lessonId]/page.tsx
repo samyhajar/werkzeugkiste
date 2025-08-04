@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import RichTextEditor from '@/components/ui/rich-text-editor'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -39,7 +40,7 @@ export default function LessonDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    markdown: '',
+    content: '',
     video_url: '',
     sort_order: 0
   })
@@ -86,7 +87,7 @@ export default function LessonDetailsPage() {
           setLesson(typedLesson)
           setFormData({
             title: typedLesson.title || '',
-            markdown: typedLesson.markdown || typedLesson.content || '',
+            content: typedLesson.content || typedLesson.markdown || '',
             video_url: typedLesson.video_url || '',
             sort_order: typedLesson.sort_order || 0
           })
@@ -112,7 +113,7 @@ export default function LessonDetailsPage() {
         .from('lessons')
         .update({
           title: formData.title,
-          markdown: formData.markdown,
+          content: formData.content,
           video_url: formData.video_url || null,
           sort_order: formData.sort_order
         })
@@ -357,13 +358,12 @@ export default function LessonDetailsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="markdown">Content (Markdown)</Label>
-                  <Textarea
-                    id="markdown"
-                    value={formData.markdown}
-                    onChange={(e) => setFormData({ ...formData, markdown: e.target.value })}
-                    placeholder="Lesson content in markdown format"
-                    rows={10}
+                  <Label htmlFor="content">Content</Label>
+                  <RichTextEditor
+                    content={formData.content}
+                    onChange={(content) => setFormData({ ...formData, content })}
+                    placeholder="Write your lesson content here. You can include text, links, and instructions..."
+                    className="min-h-[200px]"
                   />
                 </div>
               </div>
@@ -393,10 +393,10 @@ export default function LessonDetailsPage() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-foreground/60">Content</Label>
-                  <div className="mt-2 p-4 bg-muted rounded-lg">
-                    <pre className="whitespace-pre-wrap text-sm">
-                      {lesson.markdown || 'No content'}
-                    </pre>
+                  <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
+                    <div dangerouslySetInnerHTML={{
+                      __html: lesson.content || lesson.markdown || 'No content'
+                    }} />
                   </div>
                 </div>
               </div>
