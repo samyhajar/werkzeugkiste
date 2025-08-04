@@ -27,6 +27,9 @@ interface RichTextEditorProps {
 const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextEditorProps) => {
   const [linkUrl, setLinkUrl] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [imageWidth, setImageWidth] = useState('')
+  const [imageHeight, setImageHeight] = useState('')
+  const [imageSize, setImageSize] = useState('medium')
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
 
@@ -37,7 +40,13 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       Link.configure({
         openOnClick: false,
       }),
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto cursor-pointer',
+        },
+      }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right', 'justify'],
@@ -73,8 +82,34 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
 
   const addImage = () => {
     if (imageUrl) {
-      editor?.chain().focus().setImage({ src: imageUrl }).run()
+      let width, height
+      
+      // Handle preset sizes
+      if (imageSize === 'small') {
+        width = '200px'
+        height = 'auto'
+      } else if (imageSize === 'medium') {
+        width = '400px'
+        height = 'auto'
+      } else if (imageSize === 'large') {
+        width = '600px'
+        height = 'auto'
+      } else if (imageSize === 'custom') {
+        width = imageWidth ? `${imageWidth}px` : undefined
+        height = imageHeight ? `${imageHeight}px` : undefined
+      }
+
+      const imageAttributes: any = { src: imageUrl }
+      if (width) imageAttributes.width = width
+      if (height && height !== 'auto') imageAttributes.height = height
+
+      editor?.chain().focus().setImage(imageAttributes).run()
+      
+      // Reset form
       setImageUrl('')
+      setImageWidth('')
+      setImageHeight('')
+      setImageSize('medium')
       setIsImageDialogOpen(false)
     }
   }
@@ -294,11 +329,11 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
               </svg>
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Add Image</DialogTitle>
               <DialogDescription>
-                Add an image to your content
+                Add an image to your content with size options
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -311,6 +346,46 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="image-size">Size</Label>
+                <Select value={imageSize} onValueChange={setImageSize}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">Small (200px)</SelectItem>
+                    <SelectItem value="medium">Medium (400px)</SelectItem>
+                    <SelectItem value="large">Large (600px)</SelectItem>
+                    <SelectItem value="custom">Custom Size</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {imageSize === 'custom' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="image-width">Width (px)</Label>
+                    <Input
+                      id="image-width"
+                      type="number"
+                      value={imageWidth}
+                      onChange={(e) => setImageWidth(e.target.value)}
+                      placeholder="400"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="image-height">Height (px)</Label>
+                    <Input
+                      id="image-height"
+                      type="number"
+                      value={imageHeight}
+                      onChange={(e) => setImageHeight(e.target.value)}
+                      placeholder="auto"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>
@@ -363,7 +438,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_*[style*='text-align:_left']]:text-left [&_*[style*='text-align:_center']]:text-center [&_*[style*='text-align:_right']]:text-right [&_*[style*='text-align:_justify']]:text-justify"
+          className="focus:outline-none [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_p]:mb-2 [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_*[style*='text-align:_left']]:text-left [&_*[style*='text-align:_center']]:text-center [&_*[style*='text-align:_right']]:text-right [&_*[style*='text-align:_justify']]:text-justify [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img:hover]:border-gray-400 [&_img]:transition-colors [&_img]:cursor-pointer"
         />
       </div>
     </div>

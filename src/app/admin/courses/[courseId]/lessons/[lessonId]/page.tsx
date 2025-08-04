@@ -393,10 +393,13 @@ export default function LessonDetailsPage() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-foreground/60">Content</Label>
-                  <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
-                    <div dangerouslySetInnerHTML={{
-                      __html: lesson.content || lesson.markdown || 'No content'
-                    }} />
+                                    <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
+                    <div 
+                      className="[&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block"
+                      dangerouslySetInnerHTML={{ 
+                        __html: lesson.content || lesson.markdown || 'No content' 
+                      }} 
+                    />
                   </div>
                 </div>
               </div>

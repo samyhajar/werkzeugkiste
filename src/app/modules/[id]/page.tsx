@@ -1093,7 +1093,7 @@ export default function ModuleDetailPage() {
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                       <div className="p-8 prose prose-lg max-w-none">
                         <div
-                          className="text-gray-800 leading-relaxed"
+                          className="text-gray-800 leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_img]:shadow-sm"
                           dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
                         />
                       </div>
