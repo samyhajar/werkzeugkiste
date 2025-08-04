@@ -141,12 +141,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Only redirect if we haven't redirected before and this is truly a fresh login
         if (wasLoggedOut && !hasRedirectedOnce.current) {
           console.log('[AuthContext] Fresh login detected in refreshSession, handling redirection...')
+          const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
 
           // Try to get role from user metadata first
           let userRole = session.user.user_metadata?.role
 
           if (userRole) {
             console.log('[AuthContext] Found role in metadata (refreshSession):', userRole)
+            
+            // Check if user is already on the correct page for their role
+            const isAdminOnAdminPage = userRole === 'admin' && currentPath.startsWith('/admin')
+            const isStudentOnHomePage = userRole === 'student' && currentPath === '/'
+            
+            if (isAdminOnAdminPage || isStudentOnHomePage) {
+              console.log('[AuthContext] User already on correct page in refreshSession, skipping redirect')
+              hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
+              return
+            }
+
             hasRedirectedOnce.current = true // Mark that we've redirected
 
             // Immediate redirection - no delay needed
@@ -169,6 +181,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               const profileRole = data?.role || 'student'
               console.log('[AuthContext] Found role in profile (refreshSession):', profileRole)
+              
+              // Check if user is already on the correct page for their role
+              const isAdminOnAdminPage = profileRole === 'admin' && currentPath.startsWith('/admin')
+              const isStudentOnHomePage = profileRole === 'student' && currentPath === '/'
+              
+              if (isAdminOnAdminPage || isStudentOnHomePage) {
+                console.log('[AuthContext] User already on correct page in refreshSession, skipping redirect')
+                hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
+                return
+              }
+
               hasRedirectedOnce.current = true // Mark that we've redirected
 
               if (profileRole === 'admin') {
@@ -472,11 +495,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             // Check if this is a fresh login (user wasn't previously logged in)
             const wasLoggedOut = !user && !profile
+            const currentPath = window.location.pathname
 
             setUser(session.user)
             setSession(session)
 
-            // Only redirect on fresh logins and if we haven't redirected before
+            // Only redirect on fresh logins, if we haven't redirected before, and if we're not already on the correct page
             if (wasLoggedOut && !hasRedirectedOnce.current) {
               console.log('[AuthContext] SIGNED_IN event - fresh login detected, checking role for redirection')
 
@@ -485,6 +509,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
               if (userRole) {
                 console.log('[AuthContext] Found role in metadata:', userRole)
+                
+                // Check if user is already on the correct page for their role
+                const isAdminOnAdminPage = userRole === 'admin' && currentPath.startsWith('/admin')
+                const isStudentOnHomePage = userRole === 'student' && currentPath === '/'
+                
+                if (isAdminOnAdminPage || isStudentOnHomePage) {
+                  console.log('[AuthContext] User already on correct page, skipping redirect')
+                  hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
+                  fetchUserProfile(session.user.id)
+                  return
+                }
+
                 hasRedirectedOnce.current = true // Mark that we've redirected
 
                 // Fetch profile in parallel
@@ -510,6 +546,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                   const profileRole = data?.role || 'student'
                   console.log('[AuthContext] Found role in profile:', profileRole)
+                  
+                  // Check if user is already on the correct page for their role
+                  const isAdminOnAdminPage = profileRole === 'admin' && currentPath.startsWith('/admin')
+                  const isStudentOnHomePage = profileRole === 'student' && currentPath === '/'
+                  
+                  if (isAdminOnAdminPage || isStudentOnHomePage) {
+                    console.log('[AuthContext] User already on correct page, skipping redirect')
+                    hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
+                    fetchUserProfile(session.user.id)
+                    return
+                  }
+
                   hasRedirectedOnce.current = true // Mark that we've redirected
 
                   // Now fetch full profile in background
