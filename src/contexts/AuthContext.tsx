@@ -132,10 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check if this is a fresh login (user wasn't previously logged in)
         const wasLoggedOut = !user && !profile
 
-        // Fetch profile when session is established
-        await fetchUserProfile(session.user.id)
+        // Fetch profile when session is established (non-blocking for faster login)
+        fetchUserProfile(session.user.id)
 
-        console.log('[AuthContext] Profile fetch completed')
+        console.log('[AuthContext] Profile fetch started in background')
 
         // Handle redirection for fresh logins (when refreshSession is called after login)
         // Only redirect if we haven't redirected before and this is truly a fresh login
@@ -220,10 +220,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // If profile doesn't exist and we haven't retried too many times, wait and retry
         if (error.code === 'PGRST116' && retryCount < 2) { // Reduced from 3 to 2 retries
-          console.log('[AuthContext] Profile not found, retrying in 500ms... (attempt', retryCount + 1, 'of 2)')
+          console.log('[AuthContext] Profile not found, retrying in 100ms... (attempt', retryCount + 1, 'of 2)')
           setTimeout(() => {
             fetchUserProfile(userId, retryCount + 1)
-          }, 500) // Reduced from 1000ms to 500ms
+          }, 100) // Reduced from 500ms to 100ms for faster login
           return
         }
 
@@ -409,8 +409,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session) {
             setSession(session)
             setUser(session.user)
-            // Fetch profile for initial session
-            await fetchUserProfile(session.user.id)
+            // Fetch profile for initial session (non-blocking for faster page load)
+            fetchUserProfile(session.user.id)
           } else {
             setSession(null)
             setUser(null)
@@ -547,7 +547,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session?.user ?? null)
             setSession(session)
             if (session?.user) {
-              await fetchUserProfile(session.user.id)
+              fetchUserProfile(session.user.id)
             } else {
               setProfile(null)
             }
