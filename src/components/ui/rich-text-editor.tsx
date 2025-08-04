@@ -6,6 +6,7 @@ import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
+import { TextStyle } from '@tiptap/extension-text-style'
 import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableHeader } from '@tiptap/extension-table-header'
@@ -30,6 +31,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const [imageWidth, setImageWidth] = useState('')
   const [imageHeight, setImageHeight] = useState('')
   const [imageSize, setImageSize] = useState('medium')
+  const [fontSize, setFontSize] = useState('16')
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
 
@@ -41,6 +43,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         },
       }),
       Underline,
+      TextStyle,
       Link.configure({
         openOnClick: false,
       }),
@@ -132,6 +135,17 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     }
   }
 
+  const applyFontSize = (size: string) => {
+    if (editor) {
+      const selection = editor.view.state.selection
+      if (!selection.empty) {
+        // Apply font size to selected text
+        editor.chain().focus().setMark('textStyle', { fontSize: `${size}px` }).run()
+      }
+      setFontSize(size)
+    }
+  }
+
   if (!editor) {
     return null
   }
@@ -168,6 +182,26 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
             <SelectItem value="h1">Heading 1</SelectItem>
             <SelectItem value="h2">Heading 2</SelectItem>
             <SelectItem value="h3">Heading 3</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Font Size Dropdown */}
+        <Select
+          value={fontSize}
+          onValueChange={applyFontSize}
+        >
+          <SelectTrigger className="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="12">12px</SelectItem>
+            <SelectItem value="14">14px</SelectItem>
+            <SelectItem value="16">16px</SelectItem>
+            <SelectItem value="18">18px</SelectItem>
+            <SelectItem value="20">20px</SelectItem>
+            <SelectItem value="24">24px</SelectItem>
+            <SelectItem value="32">32px</SelectItem>
+            <SelectItem value="48">48px</SelectItem>
           </SelectContent>
         </Select>
 
@@ -456,7 +490,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <EditorContent
           editor={editor}
           placeholder={placeholder}
-          className="focus:outline-none min-h-[150px] [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h1]:text-gray-900 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h2]:text-gray-900 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-gray-900 [&_p]:mb-2 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_*[style*='text-align:_left']]:text-left [&_*[style*='text-align:_center']]:text-center [&_*[style*='text-align:_right']]:text-right [&_*[style*='text-align:_justify']]:text-justify [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img:hover]:border-gray-400 [&_img]:transition-colors [&_img]:cursor-pointer"
+          className="focus:outline-none min-h-[150px] [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h1]:text-gray-900 [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h2]:text-gray-900 [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-gray-900 [&_p]:mb-2 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-bold [&_em]:italic [&_u]:underline [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6 [&_*[style*='text-align:_left']]:text-left [&_*[style*='text-align:_center']]:text-center [&_*[style*='text-align:_right']]:text-right [&_*[style*='text-align:_justify']]:text-justify [&_span[style*='font-size']]:leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img:hover]:border-gray-400 [&_img]:transition-colors [&_img]:cursor-pointer"
         />
       </div>
     </div>
