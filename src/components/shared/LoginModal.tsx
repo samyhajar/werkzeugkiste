@@ -94,20 +94,27 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
       const data = await response.json()
 
       if (data.success) {
-        console.log('[LoginModal] Login successful, refreshing session...')
+        console.log('[LoginModal] Login successful, closing modal first...')
 
-        // Refresh the auth context session to get updated user data
-        await refreshSession()
+        // Close modal immediately to prevent UI issues
+        handleClose()
 
-        console.log('[LoginModal] Session refreshed, closing modal...')
+        console.log('[LoginModal] Modal closed, refreshing session...')
 
-        if (redirectUrl) {
-          router.push(redirectUrl)
-        } else {
-          handleClose()
-        }
+        // Small delay to ensure modal is closed before refreshing session
+        setTimeout(async () => {
+          // Refresh the auth context session to get updated user data
+          await refreshSession()
 
-        console.log('[LoginModal] Login process completed')
+          console.log('[LoginModal] Session refreshed')
+
+          // Handle redirect if needed (mostly handled by AuthContext now)
+          if (redirectUrl) {
+            router.push(redirectUrl)
+          }
+
+          console.log('[LoginModal] Login process completed')
+        }, 100)
       } else {
         setError(data.error || 'Anmeldung fehlgeschlagen')
       }
@@ -157,14 +164,27 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
       const data = await response.json()
 
       if (data.success) {
-        // Refresh the auth context session to get updated user data
-        await refreshSession()
+        console.log('[LoginModal] Signup successful, closing modal first...')
 
-        if (redirectUrl) {
-          router.push(redirectUrl)
-        } else {
-          handleClose()
-        }
+        // Close modal immediately to prevent UI issues
+        handleClose()
+
+        console.log('[LoginModal] Modal closed, refreshing session...')
+
+        // Small delay to ensure modal is closed before refreshing session
+        setTimeout(async () => {
+          // Refresh the auth context session to get updated user data
+          await refreshSession()
+
+          console.log('[LoginModal] Session refreshed after signup')
+
+          // Handle redirect if needed (mostly handled by AuthContext now)
+          if (redirectUrl) {
+            router.push(redirectUrl)
+          }
+
+          console.log('[LoginModal] Signup process completed')
+        }, 100)
       } else {
         setError(data.error || 'Registrierung fehlgeschlagen')
       }
