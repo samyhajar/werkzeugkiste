@@ -57,7 +57,7 @@ export async function upsertStaticPage(input: {
 }): Promise<StaticPage> {
   const supabase = await createClient()
 
-  const payload: StaticPagesInsert | StaticPagesUpdate = {
+  const payload: StaticPagesInsert = {
     slug: input.slug,
     title: input.title,
     content_html: input.content_html ?? null,

@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server-client'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params
   const supabase = await createClient()
   try {
     const {
@@ -29,7 +30,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('static_pages')
       .select('*')
-      .eq('slug', params.slug)
+      .eq('slug', slug)
       .single()
     if (error) throw error
     return NextResponse.json({ success: true, page: data })
@@ -43,8 +44,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params
   const supabase = await createClient()
   try {
     const {
@@ -77,8 +79,8 @@ export async function PUT(
       .from('static_pages')
       .upsert(
         {
-          slug: params.slug,
-          title: title ?? params.slug,
+          slug,
+          title: title ?? slug,
           content_html: content_html ?? null,
           content_json: (content_json as any) ?? null,
         },

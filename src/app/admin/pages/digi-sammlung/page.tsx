@@ -148,11 +148,11 @@ export default function DigiSammlungAdmin() {
       {/* Category Modal */}
       {catModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setCatModal({ open: false, title: '' })} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setCatModal({ open: false, title: '', icon: 'briefcase' })} />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Kategorie hinzufügen</h2>
-              <button onClick={() => setCatModal({ open: false, title: '' })} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5"/></button>
+              <button onClick={() => setCatModal({ open: false, title: '', icon: 'briefcase' })} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5"/></button>
             </div>
             <label className="text-sm font-medium mb-1 block">Titel</label>
             <input value={catModal.title} onChange={e => setCatModal({ ...catModal, title: e.target.value })} className="w-full h-10 px-3 border rounded" />
@@ -176,7 +176,7 @@ export default function DigiSammlungAdmin() {
               <p className="text-xs text-gray-500 mt-1">Wählen Sie ein Icon (Lucide). Mehr können später ergänzt werden.</p>
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setCatModal({ open: false, title: '' })} className="px-4 py-2 border rounded">Abbrechen</button>
+              <button onClick={() => setCatModal({ open: false, title: '', icon: 'briefcase' })} className="px-4 py-2 border rounded">Abbrechen</button>
               <button onClick={() => void submitCategory()} className="px-4 py-2 bg-[#486681] text-white rounded">Speichern</button>
             </div>
           </div>

@@ -2,7 +2,13 @@ export const dynamic = 'force-dynamic'
 
 import EditorClient from './EditorClient'
 
-export default function EditStaticPage({ params }: { params: { slug: string } }) {
+export default async function EditStaticPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = await params
+
   return (
     <div className="w-full px-8 py-8 space-y-8 bg-transparent">
       <div className="flex items-center justify-between">
@@ -13,8 +19,7 @@ export default function EditStaticPage({ params }: { params: { slug: string } })
       </div>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-6">
-          {/* Client editor */}
-          <EditorClient slug={params.slug} />
+          <EditorClient slug={slug} />
         </div>
       </div>
     </div>
