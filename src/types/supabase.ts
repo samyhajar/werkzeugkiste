@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       answers: {
@@ -177,6 +152,124 @@ export type Database = {
           },
         ]
       }
+      digi_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          slug: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          slug: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          slug?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      digi_resource_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          link_url: string | null
+          resource_id: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          resource_id: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          resource_id?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digi_resource_slides_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "digi_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digi_resources: {
+        Row: {
+          category_id: string
+          created_at: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digi_resources_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "digi_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enhanced_quiz_attempts: {
         Row: {
           finished_at: string | null
@@ -302,6 +395,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      income_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          emoji: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       legacy_course_mapping: {
         Row: {
@@ -823,6 +946,83 @@ export type Database = {
         }
         Relationships: []
       }
+      static_pages: {
+        Row: {
+          content_html: string | null
+          content_json: Json | null
+          created_at: string
+          id: string
+          meta: Json | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_html?: string | null
+          content_json?: Json | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content_html?: string | null
+          content_json?: Json | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_income_entries: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_recurring: boolean | null
+          month_year: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          month_year: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          month_year?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_income_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "income_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wp_answers_raw: {
         Row: {
           answer_html: string | null
@@ -1233,9 +1433,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       question_type: [

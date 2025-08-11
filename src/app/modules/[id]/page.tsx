@@ -820,16 +820,19 @@ export default function ModuleDetailPage() {
   // Show login prompt if not authenticated
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-blue-600 text-6xl mb-4">🔐</div>
-          <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
-          <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Modul zuzugreifen.</p>
-          <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
-            Jetzt anmelden
-          </Button>
+      <>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-blue-600 text-6xl mb-4">🔐</div>
+            <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
+            <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Modul zuzugreifen.</p>
+            <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
+              Jetzt anmelden
+            </Button>
+          </div>
         </div>
-      </div>
+        <LoginModal ref={loginModalRef} />
+      </>
     )
   }
 
@@ -1078,11 +1081,6 @@ export default function ModuleDetailPage() {
                   <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
                     {selectedLesson.title}
                   </h1>
-                  <div className="flex items-center justify-center gap-4 text-gray-600">
-                    <span className="flex items-center gap-2">
-                      Lektion {selectedLesson.order}
-                    </span>
-                  </div>
                 </div>
               </div>
 

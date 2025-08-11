@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // Prepare response that we will attach cookies to (we'll update the redirect path later)
-  const response = NextResponse.redirect(new URL('/', request.url))
+  // Create a temporary response for cookie handling
+  let response = NextResponse.next()
 
   // Create Supabase server client with cookie helpers tied to this response
   const supabase = createServerClient<Database>(
@@ -128,6 +128,15 @@ export async function GET(request: NextRequest) {
   }
 
   console.log('[Auth Callback] Redirecting to:', redirectPath)
-  response.headers.set('Location', redirectPath)
+
+  // Create the final redirect response and copy cookies from the previous response
+  const redirectResponse = NextResponse.redirect(
+    new URL(redirectPath, request.url)
+  )
+  response.cookies.getAll().forEach(cookie => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+  })
+
+  response = redirectResponse
   return response
 }

@@ -132,6 +132,11 @@ export default function SessionBootstrap() {
 
   useEffect(() => {
     console.log('[SessionBootstrap] useEffect triggered - pathname:', pathname, 'visibilityState:', document?.visibilityState)
+    console.log('[SessionBootstrap] DISABLED - skipping all auth sync to prevent reload issues')
+
+    // DISABLED: SessionBootstrap was causing multiple SIGNED_IN events and page reloads
+    // The AuthContext already handles initial session loading properly
+    return
 
     // Only run in browser environment
     if (typeof window === 'undefined' || typeof document === 'undefined') {

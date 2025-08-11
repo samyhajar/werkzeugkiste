@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 
 interface FAQItemProps {
   question: string
@@ -41,10 +42,31 @@ function FAQItem({ question, answer, isOpen = false }: FAQItemProps) {
 }
 
 export default function FragenPage() {
+  const [html, setHtml] = useState<string | null>(null)
+
   useEffect(() => {
     document.title = 'Fragen'
+    ;(async () => {
+      try {
+        const supabase = getBrowserClient()
+        const { data } = await supabase
+          .from('static_pages')
+          .select('content_html')
+          .eq('slug', 'fragen')
+          .single()
+        if (data?.content_html) setHtml(data.content_html as string)
+      } catch {}
+    })()
   }, [])
 
+  if (html) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 py-12">
+        { }
+        <div dangerouslySetInnerHTML={{ __html: html }} />
+      </main>
+    )
+  }
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
       {/* Header Section */}

@@ -1,11 +1,20 @@
 import Image from 'next/image'
+import { getStaticPageBySlug } from '@/services/staticPages'
 
 export const metadata = { title: 'Über Uns' }
 
-// Force dynamic rendering to prevent SSR issues
 export const dynamic = 'force-dynamic'
 
-export default function UeberUnsPage() {
+export default async function UeberUnsPage() {
+  const page = await getStaticPageBySlug('ueber-uns')
+  if (page?.content_html) {
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        { }
+        <div dangerouslySetInnerHTML={{ __html: page.content_html }} />
+      </main>
+    )
+  }
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">
       {/* Header Section */}

@@ -134,6 +134,27 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
       isActive: pathname.startsWith("/admin/certificates")
     },
 
+    {
+      href: "/admin/pages",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h8m-8 4h6" />
+        </svg>
+      ),
+      label: "Seiten",
+      isActive: pathname.startsWith("/admin/pages")
+    },
+    {
+      href: "/admin/pages/digi-sammlung",
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+        </svg>
+      ),
+      label: "Digi-Sammlung",
+      isActive: pathname.startsWith("/admin/pages/digi-sammlung")
+    },
+
 
   ]
 

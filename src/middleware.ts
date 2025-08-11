@@ -104,12 +104,13 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // If user is authenticated but on auth pages (excluding password reset related pages), redirect based on role
+  // If user is authenticated but on auth pages (excluding password reset related pages and callback), redirect based on role
   if (
     user &&
     isAuthPage &&
     request.nextUrl.pathname !== '/auth/set-password' &&
-    request.nextUrl.pathname !== '/auth/password-reset'
+    request.nextUrl.pathname !== '/auth/password-reset' &&
+    request.nextUrl.pathname !== '/auth/callback'
   ) {
     const url = request.nextUrl.clone()
     if (userRole === 'admin') {
@@ -178,8 +179,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api (API routes)
+     * - auth/callback (auth callback API route)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
