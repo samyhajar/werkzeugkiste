@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import type { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
@@ -64,6 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sessionInitialized = useRef(false) // Track if we've processed the initial session
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
   const router = useRouter()
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : undefined
+  // Note: usePathname provides client-side updates on route changes
+  let currentPathname: string | null = null
+  try {
+    // usePathname only works in client components; guard in case of SSR paths
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    currentPathname = usePathname() || null
+  } catch {
+    currentPathname = pathname || null
+  }
 
   // Removed visibility change listener - it was causing reload issues
 
@@ -291,24 +302,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Refresh session on page visibility/focus to pick up auth changes from other tabs
+  // Refresh session on focus for non-admin pages only to avoid disruptive reloads in admin dashboard
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const handleVisibility = () => {
-      if (!document.hidden) {
-        void refreshSession()
-      }
+    const path = currentPathname || window.location.pathname
+    if (path.startsWith('/admin')) {
+      return
     }
     const handleFocus = () => {
       void refreshSession()
     }
     window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibility)
     return () => {
       window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [supabase])
+  }, [supabase, currentPathname])
 
   useEffect(() => {
     // Don't proceed if Supabase client is not available
