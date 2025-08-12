@@ -302,21 +302,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Refresh session on focus for non-admin pages only to avoid disruptive reloads in admin dashboard
+  // Disabled: Avoid refreshing session on window focus to prevent unwanted reloads
+  // If needed in the future, implement with debounce and explicit opt-in per page.
+
+  // Fallback: derive role via server using cookies so admin gating works without client session
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const path = currentPathname || window.location.pathname
-    if (path.startsWith('/admin')) {
-      return
+    // If we already have a profile or are loading it via Supabase, skip
+    if (profile || profileLoading) return
+
+    let aborted = false
+    const loadFromServer = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json() as { authenticated: boolean; user?: { id: string; email: string | null; role?: string } }
+        if (!aborted && data.authenticated && data.user) {
+          const fallback: UserProfile = {
+            id: data.user.id,
+            email: data.user.email || '',
+            full_name: data.user.email ? data.user.email.split('@')[0] : 'User',
+            role: (data.user.role as 'admin' | 'student') || 'student',
+            first_name: null,
+            created_at: null,
+            updated_at: null,
+          }
+          setProfile(fallback)
+          setLoading(false)
+        }
+      } catch (_e) {
+        // ignore
+      }
     }
-    const handleFocus = () => {
-      void refreshSession()
-    }
-    window.addEventListener('focus', handleFocus)
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [supabase, currentPathname])
+    void loadFromServer()
+    return () => { aborted = true }
+  }, [profile, profileLoading])
 
   useEffect(() => {
     // Don't proceed if Supabase client is not available
@@ -444,115 +464,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return;
           } else if (event === 'SIGNED_IN' && session) {
-            // Prevent redirecting away from password reset related pages
-            if (window.location.pathname === '/auth/set-password' ||
-                window.location.pathname === '/auth/password-reset') {
-              console.log('[AuthContext] On auth setup page, skipping redirect and state updates.');
-              // Don't set session/user state during auth setup to avoid UI confusion
-              return;
-            }
-
-            // If session is already initialized and we have the same user, skip processing to prevent reloads
+            // Update state on real login, but avoid repeated updates on focus by checking existing session/user
             if (sessionInitialized.current && user && user.id === session.user.id) {
-              console.log('[AuthContext] SIGNED_IN event - session already initialized for same user, skipping to prevent reload')
-              return;
+              console.log('[AuthContext] SIGNED_IN event - same user and already initialized, skipping state update')
+              return
             }
-
-            // Check if this is a fresh login (user wasn't previously logged in)
-            // Only consider it a fresh login if:
-            // 1. We don't have a user currently
-            // 2. We haven't redirected before
-            // 3. The session was not already initialized (to avoid treating page reloads as fresh logins)
-            const wasLoggedOut = !user && !hasRedirectedOnce.current && !sessionInitialized.current
-            const currentPath = window.location.pathname
-
+            console.log('[AuthContext] SIGNED_IN event - updating state without redirect')
+            sessionInitialized.current = true
             setUser(session.user)
             setSession(session)
-
-            // Only redirect on truly fresh logins
-            if (wasLoggedOut) {
-              console.log('[AuthContext] SIGNED_IN event - fresh login detected, checking role for redirection')
-
-              // Try to get role from user metadata first
-              let userRole = session.user.user_metadata?.role
-
-              if (userRole) {
-                console.log('[AuthContext] Found role in metadata:', userRole)
-
-                // Check if user is already on the correct page for their role
-                const isAdminOnAdminPage = userRole === 'admin' && currentPath.startsWith('/admin')
-                const isStudentOnHomePage = userRole === 'student' && currentPath === '/'
-
-                if (isAdminOnAdminPage || isStudentOnHomePage) {
-                  console.log('[AuthContext] User already on correct page, skipping redirect')
-                  hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
-                  fetchUserProfile(session.user.id)
-                  return
-                }
-
-                hasRedirectedOnce.current = true // Mark that we've redirected
-
-                // Fetch profile in parallel
-                fetchUserProfile(session.user.id)
-
-                // Immediate redirection only for fresh logins
-                if (userRole === 'admin') {
-                  console.log('[AuthContext] Redirecting admin to /admin (fresh login)')
-                  router.push('/admin')
-                } else {
-                  console.log('[AuthContext] Redirecting student to / (fresh login)')
-                  router.push('/')
-                }
-              } else {
-                console.log('[AuthContext] No role in metadata, fetching profile first...')
-                // If no role in metadata, fetch profile first to get role
-                try {
-                  const { data } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .single()
-
-                  const profileRole = data?.role || 'student'
-                  console.log('[AuthContext] Found role in profile:', profileRole)
-
-                  // Check if user is already on the correct page for their role
-                  const isAdminOnAdminPage = profileRole === 'admin' && currentPath.startsWith('/admin')
-                  const isStudentOnHomePage = profileRole === 'student' && currentPath === '/'
-
-                  if (isAdminOnAdminPage || isStudentOnHomePage) {
-                    console.log('[AuthContext] User already on correct page, skipping redirect')
-                    hasRedirectedOnce.current = true // Mark that we've "redirected" (but actually stayed)
-                    fetchUserProfile(session.user.id)
-                    return
-                  }
-
-                  hasRedirectedOnce.current = true // Mark that we've redirected
-
-                  // Now fetch full profile in background
-                  fetchUserProfile(session.user.id)
-
-                  // Immediate redirection only for fresh logins
-                  if (profileRole === 'admin') {
-                    console.log('[AuthContext] Redirecting admin to /admin (fresh login)')
-                    router.push('/admin')
-                  } else {
-                    console.log('[AuthContext] Redirecting student to / (fresh login)')
-                    router.push('/')
-                  }
-                } catch (error) {
-                  console.error('[AuthContext] Error fetching role from profile:', error)
-                  hasRedirectedOnce.current = true // Mark that we've redirected
-                  // Default to student and redirect to home
-                  fetchUserProfile(session.user.id)
-                  router.push('/')
-                }
-              }
-            } else {
-              console.log('[AuthContext] SIGNED_IN event - skipping redirect. wasLoggedOut:', wasLoggedOut, 'hasRedirectedOnce:', hasRedirectedOnce.current)
-              // Just fetch profile for existing sessions, no redirect
-              fetchUserProfile(session.user.id)
-            }
+            fetchUserProfile(session.user.id)
           } else if (event === 'TOKEN_REFRESHED' && session) {
             console.log('[AuthContext] TOKEN_REFRESHED event received - skipping state updates to prevent reloads')
             // Don't update any state on token refresh to prevent unnecessary re-renders and reloads

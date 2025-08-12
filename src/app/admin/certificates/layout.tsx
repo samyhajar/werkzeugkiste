@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+// Default rendering
 
 export default function AdminCertificatesLayout({
   children,

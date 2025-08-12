@@ -4,9 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import AdminSidebar from '@/components/dashboard/AdminSidebar'
 
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
-
 export default function AdminLayout({
   children,
 }: {
@@ -24,8 +21,8 @@ export default function AdminLayout({
     }
   }
 
-  // Show loading state while auth or profile is loading
-  if (loading || profileLoading) {
+  // Block only during the very first load (no profile yet). Do not block on subsequent profileLoading toggles.
+  if (loading && !profile) {
     return (
       <div className="min-h-screen bg-[#6e859a] flex items-center justify-center">
         <div className="text-center">
@@ -36,8 +33,20 @@ export default function AdminLayout({
     )
   }
 
-  // Show unauthorized state if not admin
-  if (!isAdmin() || !profile) {
+  // If we don't yet have a profile (brief moment after login), render a light loading state
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#6e859a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-24 w-24 border-b-2 border-white mx-auto"></div>
+          <p className="mt-4 text-white">Preparing admin dashboard…</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show unauthorized state only when we are not loading and can confirm non-admin
+  if (!loading && !profileLoading && !isAdmin()) {
     return (
       <div className="min-h-screen bg-[#6e859a] flex items-center justify-center">
         <div className="text-center">
@@ -56,7 +65,7 @@ export default function AdminLayout({
 
   // Show admin layout
   return (
-    <div className="flex h-screen bg-[#6e859a]">
+    <div className="flex h-screen bg-[#6e859a] relative">
       <AdminSidebar
         profile={profile}
         role={profile.role}
@@ -66,6 +75,12 @@ export default function AdminLayout({
       <main className="flex-1 overflow-y-auto ml-64 bg-[#6e859a]">
         {children}
       </main>
+      {profileLoading && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 text-white/90">
+          <div className="w-5 h-5 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+          <span className="text-sm">Aktualisiere Profil…</span>
+        </div>
+      )}
     </div>
   )
 }

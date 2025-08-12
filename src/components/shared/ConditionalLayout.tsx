@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { RealtimeProvider } from '@/contexts/RealtimeContext'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import SessionBootstrap from './SessionBootstrap'
+// Removed SessionBootstrap to prevent any auth sync side-effects on focus/tab visibility
 import ScrollToTopButton from './ScrollToTopButton'
 
 interface ConditionalLayoutProps {
@@ -27,11 +26,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const isAuthPage = pathname?.startsWith('/auth')
 
   // For admin pages, always provide AuthProvider even during SSR
-  // Admin pages don't need real-time updates, so we skip RealtimeProvider
   if (isAdminPage) {
     return (
       <AuthProvider>
-        <SessionBootstrap />
         <div className="min-h-screen">
           <main className="flex-1">{children}</main>
         </div>
@@ -43,7 +40,6 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   if (isAuthPage) {
     return (
       <AuthProvider>
-        <SessionBootstrap />
         <div className="min-h-screen">
           <main className="flex-1">{children}</main>
         </div>
@@ -55,18 +51,15 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   // But conditionally render components based on hydration status
   return (
     <AuthProvider>
-      <RealtimeProvider>
-        <SessionBootstrap />
-        <div className="min-h-screen">
-          {/* Always render Navbar (it handles its own hydration) to ensure LoginModal has AuthProvider context */}
-          {!isModulePage && <Navbar />}
-          <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>
-            {children}
-          </main>
-          {!isModulePage && <Footer />}
-          {!isModulePage && <ScrollToTopButton />}
-        </div>
-      </RealtimeProvider>
+      <div className="min-h-screen">
+        {/* Always render Navbar (it handles its own hydration) to ensure LoginModal has AuthProvider context */}
+        {!isModulePage && <Navbar />}
+        <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>
+          {children}
+        </main>
+        {!isModulePage && <Footer />}
+        {!isModulePage && <ScrollToTopButton />}
+      </div>
     </AuthProvider>
   )
 }

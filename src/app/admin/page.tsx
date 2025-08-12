@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 
 // Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
+// Keep default rendering; no force-dynamic to avoid unnecessary reload behavior
 
 interface DashboardStats {
   totalUsers: number

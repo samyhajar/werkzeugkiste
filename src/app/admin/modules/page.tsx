@@ -1,6 +1,4 @@
 'use client'
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -230,12 +228,12 @@ export default function ModulesPage() {
     const openEditDialog = (module: Module) => {
     // Handle the new multiple URLs format
     let presenterUrls: { url: string; title: string }[] = [{ url: '', title: '' }]
-    
+
     if (module.presenter_materials_urls && Array.isArray(module.presenter_materials_urls)) {
       // New format: JSON array - validate the structure
-      const validUrls = module.presenter_materials_urls.filter((item): item is { url: string; title: string } => 
-        typeof item === 'object' && item !== null && 
-        typeof (item as any).url === 'string' && 
+      const validUrls = module.presenter_materials_urls.filter((item): item is { url: string; title: string } =>
+        typeof item === 'object' && item !== null &&
+        typeof (item as any).url === 'string' &&
         typeof (item as any).title === 'string'
       )
       presenterUrls = validUrls.length > 0 ? validUrls : [{ url: '', title: '' }]

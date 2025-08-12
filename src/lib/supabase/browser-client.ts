@@ -9,7 +9,8 @@ function createClient() {
       auth: {
         detectSessionInUrl: true,
         persistSession: true,
-        autoRefreshToken: true,
+        // Disable auto refresh to prevent focus-driven SIGNED_IN/TOKEN_REFRESHED events causing reload-like behavior
+        autoRefreshToken: false,
       },
     }
   )
