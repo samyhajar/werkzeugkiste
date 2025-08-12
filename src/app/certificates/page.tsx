@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Download, Award } from 'lucide-react'
@@ -21,6 +22,7 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
   const [showLoginModal, setShowLoginModal] = useState(false)
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function CertificatesPage() {
           <div className="text-blue-600 text-6xl mb-4">🔐</div>
           <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
           <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um Ihre Zertifikate zu sehen.</p>
-          <Button onClick={() => setShowLoginModal(true)}>
+          <Button onClick={() => router.push(`/auth/login?redirect=${encodeURIComponent(window.location.href)}`)}>
             Jetzt anmelden
           </Button>
         </div>

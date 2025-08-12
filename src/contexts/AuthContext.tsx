@@ -291,6 +291,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Refresh session on page visibility/focus to pick up auth changes from other tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        void refreshSession()
+      }
+    }
+    const handleFocus = () => {
+      void refreshSession()
+    }
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [supabase])
+
   useEffect(() => {
     // Don't proceed if Supabase client is not available
     if (!supabase) return

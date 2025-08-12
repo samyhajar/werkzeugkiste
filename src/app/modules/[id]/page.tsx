@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { sanitizeLessonHtml } from '@/lib/sanitize'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
@@ -8,7 +9,7 @@ import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import LoginModal, { LoginModalRef } from '@/components/shared/LoginModal'
+// Removed inline LoginModal usage; we redirect to dedicated login page instead
 
 interface Course {
   id: string
@@ -479,7 +480,7 @@ export default function ModuleDetailPage() {
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
   const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set())
-  const loginModalRef = useRef<LoginModalRef>(null)
+  // Removing LoginModal in favor of dedicated login route
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
 
@@ -492,24 +493,19 @@ export default function ModuleDetailPage() {
     // Handle authentication and data fetching
   useEffect(() => {
     if (authLoading) {
-      console.log('[ModulePage] Auth still loading...')
       return
     }
-
-    console.log('[ModulePage] Auth loaded, user:', !!user)
-
     if (!user) {
-      console.log('[ModulePage] No user found, showing login modal')
-      loginModalRef.current?.show('login', window.location.href)
+      // Redirect unauthenticated users to the dedicated login page with redirect back
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : '/'
+      router.replace(`/auth/login?redirect=${encodeURIComponent(currentUrl)}`)
       return
     }
-
     if (moduleId) {
-      console.log('[ModulePage] User authenticated, fetching module and progress...')
       void fetchModule()
       void fetchUserAndProgress()
     }
-  }, [user, authLoading, moduleId])
+  }, [user, authLoading, moduleId, router])
 
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
@@ -817,22 +813,15 @@ export default function ModuleDetailPage() {
     )
   }
 
-  // Show login prompt if not authenticated
+  // Redirecting state fallback while we push to /auth/login
   if (!user) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-blue-600 text-6xl mb-4">🔐</div>
-            <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
-            <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Modul zuzugreifen.</p>
-            <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
-              Jetzt anmelden
-            </Button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
+          <p className="text-gray-600">Weiterleitung zur Anmeldung…</p>
         </div>
-        <LoginModal ref={loginModalRef} />
-      </>
+      </div>
     )
   }
 
@@ -1091,8 +1080,8 @@ export default function ModuleDetailPage() {
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                       <div className="p-8 prose prose-lg max-w-none">
                         <div
-                          className="text-gray-800 leading-relaxed [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:mt-4 [&_h1]:text-[#de0647] [&_h1]:leading-tight [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-6 [&_h2]:text-[#de0647] [&_h2]:leading-tight [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-3 [&_h3]:mt-5 [&_h3]:text-[#de0647] [&_h3]:leading-tight [&_p]:mb-4 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-900 [&_em]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_span]:inline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_img]:shadow-sm"
-                          dangerouslySetInnerHTML={{ __html: selectedLesson.content }}
+                          className="text-gray-800 leading-relaxed [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:mt-4 [&_h1]:text-[#de0647] [&_h1]:leading-tight [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-6 [&_h2]:text-[#de0647] [&_h2]:leading-tight [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-3 [&_h3]:mt-5 [&_h3]:text-[#de0647] [&_h3]:leading-tight [&_p]:mb-4 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-900 [&_em]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_span]:inline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_img]:shadow-sm [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded [&_iframe]:border [&_iframe]:border-gray-200"
+                          dangerouslySetInnerHTML={{ __html: sanitizeLessonHtml(selectedLesson.content) }}
                         />
                       </div>
 
@@ -1210,7 +1199,7 @@ export default function ModuleDetailPage() {
         </div>
       </div>
 
-      <LoginModal ref={loginModalRef} />
+      {/* Login modal removed; modules page uses redirect to /auth/login */}
     </>
   )
 }

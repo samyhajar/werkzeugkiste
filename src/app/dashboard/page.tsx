@@ -138,7 +138,7 @@ export default function StudentDashboard() {
           <div className="text-blue-600 text-6xl mb-4">🔐</div>
           <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
           <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf Ihr Dashboard zuzugreifen.</p>
-          <Button onClick={() => setShowLoginModal(true)}>
+          <Button onClick={() => router.push(`/auth/login?redirect=${encodeURIComponent(window.location.href)}`)}>
             Jetzt anmelden
           </Button>
         </div>

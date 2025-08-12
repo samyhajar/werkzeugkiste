@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import RichTextEditor from '@/components/ui/rich-text-editor'
+import { sanitizeLessonHtml } from '@/lib/sanitize'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -395,9 +396,9 @@ export default function LessonDetailsPage() {
                   <Label className="text-sm font-medium text-foreground/60">Content</Label>
                                     <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
                     <div
-                      className="[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h1]:text-[#de0647] [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h2]:text-[#de0647] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-[#de0647] [&_p]:mb-2 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_span]:inline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block"
+                      className="[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h1]:text-[#de0647] [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h2]:text-[#de0647] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-[#de0647] [&_p]:mb-2 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_span]:inline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded [&_iframe]:border [&_iframe]:border-gray-200"
                       dangerouslySetInnerHTML={{
-                        __html: lesson.content || lesson.markdown || 'No content'
+                        __html: sanitizeLessonHtml(lesson.content || lesson.markdown || 'No content')
                       }}
                     />
                   </div>

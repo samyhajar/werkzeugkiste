@@ -1,6 +1,7 @@
 'use client'
 
 import { useEditor, EditorContent } from '@tiptap/react'
+type Editor = any
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
@@ -19,6 +20,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import Youtube from '@tiptap/extension-youtube'
+import { extractYouTubeId } from '@/lib/sanitize'
 
 interface RichTextEditorProps {
   content: string
@@ -36,6 +39,8 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const [fontSize, setFontSize] = useState('16px')
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [isYoutubeDialogOpen, setIsYoutubeDialogOpen] = useState(false)
+  const [youtubeUrl, setYoutubeUrl] = useState('')
 
   const editor = useEditor({
     extensions: [
@@ -68,13 +73,23 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       TableRow,
       TableHeader,
       TableCell,
+      Youtube.configure({
+        controls: true,
+        nocookie: true,
+        allowFullscreen: true,
+        HTMLAttributes: {
+          class: 'w-full aspect-video rounded border border-gray-200',
+          referrerpolicy: 'strict-origin-when-cross-origin',
+          allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+        },
+      }),
     ],
     content,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       const html = editor.getHTML()
       onChange(html)
     },
-    onCreate: ({ editor }) => {
+    onCreate: ({ editor }: { editor: Editor }) => {
       // Set content when editor is created
       if (content && content !== '<p></p>' && content.trim() !== '') {
         editor.commands.setContent(content)
@@ -102,6 +117,15 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       setLinkUrl('')
       setIsLinkDialogOpen(false)
     }
+  }
+
+  const addYouTube = () => {
+    if (!youtubeUrl) return
+    const id = extractYouTubeId(youtubeUrl)
+    const finalUrl = id ? `https://www.youtube-nocookie.com/embed/${id}` : youtubeUrl
+    editor?.chain().focus().setYoutubeVideo({ src: finalUrl }).run()
+    setYoutubeUrl('')
+    setIsYoutubeDialogOpen(false)
   }
 
   const addImage = () => {
@@ -445,6 +469,40 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                 Cancel
               </Button>
               <Button onClick={addImage}>Add Image</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* YouTube */}
+        <Dialog open={isYoutubeDialogOpen} onOpenChange={setIsYoutubeDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="sm" title="Insert YouTube">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.3 3.5 12 3.5 12 3.5s-7.3 0-9.4.6A3 3 0 00.5 6.2 31.2 31.2 0 000 12a31.2 31.2 0 00.5 5.8 3 3 0 002.1 2.1c2.1.6 9.4.6 9.4.6s7.3 0 9.4-.6a3 3 0 002.1-2.1A31.2 31.2 0 0024 12a31.2 31.2 0 00-.5-5.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+              </svg>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Insert YouTube video</DialogTitle>
+              <DialogDescription>Paste a YouTube URL. It will be embedded responsively.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="youtube-url">YouTube URL</Label>
+                <Input
+                  id="youtube-url"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsYoutubeDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={addYouTube}>Insert</Button>
             </div>
           </DialogContent>
         </Dialog>
