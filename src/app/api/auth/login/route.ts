@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create response with proper cookies
+    // Create response including session tokens so the client can set the browser session
     const response = NextResponse.json({
       success: true,
       user: {
@@ -101,6 +101,10 @@ export async function POST(request: NextRequest) {
         email: userEmail,
         role: profile?.role || 'student',
         full_name: profile?.full_name || '',
+      },
+      session: {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
       },
     })
 

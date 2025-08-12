@@ -3,6 +3,7 @@
 import { useState, forwardRef, useImperativeHandle } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { CustomInput } from '@/components/ui/CustomInput'
@@ -91,25 +92,31 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
         credentials: 'include'
       })
 
-      const data = await response.json()
+      const data: {
+        success: boolean
+        error?: string
+        session?: { access_token: string; refresh_token: string }
+      } = await response.json()
 
       if (data.success) {
-        console.log('[LoginModal] Login successful, closing modal first...')
+        console.log('[LoginModal] Login successful, setting client session...')
 
-        // Close modal immediately to prevent UI issues
+        // Ensure the browser Supabase client has the session immediately
+        if (data.session?.access_token && data.session?.refresh_token) {
+          const supabase = getBrowserClient()
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          })
+        }
+
+        // Close modal after session is set so UI updates can occur
         handleClose()
 
-        console.log('[LoginModal] Modal closed, login successful')
-
-        // Small delay to ensure modal is closed before any navigation
-        setTimeout(() => {
-          console.log('[LoginModal] Login process completed - AuthContext will handle redirects')
-
-          // Handle redirect if needed (mostly handled by AuthContext now)
-          if (redirectUrl) {
-            router.push(redirectUrl)
-          }
-        }, 100)
+        // Navigate back to the intended page (AuthContext will not override for students)
+        if (redirectUrl) {
+          router.push(redirectUrl)
+        }
       } else {
         setError(data.error || 'Anmeldung fehlgeschlagen')
       }

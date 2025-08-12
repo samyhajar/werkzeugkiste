@@ -1,22 +1,19 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import LoginModal, { type LoginModalRef } from '@/components/shared/LoginModal'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const loginModalRef = useRef<LoginModalRef>(null)
 
   const redirectUrl = useMemo(() => {
     const redirect = searchParams.get('redirect')
-    // Fallback to homepage if no redirect target provided
     return redirect && redirect.length > 0 ? redirect : '/'
   }, [searchParams])
 
   useEffect(() => {
-    // Open the login modal immediately with the redirect target
     loginModalRef.current?.show('login', redirectUrl)
   }, [redirectUrl])
 
@@ -34,5 +31,20 @@ export default function LoginPage() {
       </div>
       <LoginModal ref={loginModalRef} initialTab="login" />
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white p-6">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
+          <p className="text-gray-600">Lade Anmeldeseite…</p>
+        </div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   )
 }
