@@ -41,6 +41,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [isYoutubeDialogOpen, setIsYoutubeDialogOpen] = useState(false)
   const [youtubeUrl, setYoutubeUrl] = useState('')
+  const [youtubeSize, setYoutubeSize] = useState<'small' | 'medium' | 'large'>('medium')
 
   const editor = useEditor({
     extensions: [
@@ -123,8 +124,21 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     if (!youtubeUrl) return
     const id = extractYouTubeId(youtubeUrl)
     const finalUrl = id ? `https://www.youtube-nocookie.com/embed/${id}` : youtubeUrl
-    editor?.chain().focus().setYoutubeVideo({ src: finalUrl }).run()
+
+    const sizeClass = youtubeSize === 'small' ? 'yt-small' : youtubeSize === 'large' ? 'yt-large' : 'yt-medium'
+    const iframeHtml = `
+<iframe
+  src="${finalUrl}"
+  class="w-full aspect-video rounded border border-gray-200 ${sizeClass}"
+  referrerpolicy="strict-origin-when-cross-origin"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  allowfullscreen
+></iframe>`
+
+    editor?.chain().focus().insertContent(iframeHtml).run()
+
     setYoutubeUrl('')
+    setYoutubeSize('medium')
     setIsYoutubeDialogOpen(false)
   }
 
@@ -496,6 +510,19 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="youtube-size">Size</Label>
+                <Select value={youtubeSize} onValueChange={(v) => setYoutubeSize(v as 'small' | 'medium' | 'large')}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">Small</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="large">Large</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex justify-end space-x-2">
