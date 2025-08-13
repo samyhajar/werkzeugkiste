@@ -125,17 +125,25 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     const id = extractYouTubeId(youtubeUrl)
     const finalUrl = id ? `https://www.youtube-nocookie.com/embed/${id}` : youtubeUrl
 
-    const sizeClass = youtubeSize === 'small' ? 'yt-small' : youtubeSize === 'large' ? 'yt-large' : 'yt-medium'
-    const iframeHtml = `
-<iframe
-  src="${finalUrl}"
-  class="w-full aspect-video rounded border border-gray-200 ${sizeClass}"
-  referrerpolicy="strict-origin-when-cross-origin"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-  allowfullscreen
-></iframe>`
+    // Map size to width/height while keeping responsive aspect via CSS on render
+    let width = 720
+    let height = 405
+    if (youtubeSize === 'small') {
+      width = 480
+      height = 270
+    } else if (youtubeSize === 'large') {
+      width = 960
+      height = 540
+    }
 
-    editor?.chain().focus().insertContent(iframeHtml).run()
+    editor?.chain().focus().setYoutubeVideo({
+      src: finalUrl,
+      width,
+      height,
+      controls: true,
+      nocookie: true,
+      allowFullscreen: true,
+    }).run()
 
     setYoutubeUrl('')
     setYoutubeSize('medium')

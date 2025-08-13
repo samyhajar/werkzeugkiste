@@ -34,6 +34,7 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
       ADD_TAGS: ['iframe'],
       ADD_ATTR: [
         'class',
+        'src',
         'allow',
         'allowfullscreen',
         'frameborder',
