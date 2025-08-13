@@ -33,6 +33,7 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
       USE_PROFILES: { html: true },
       ADD_TAGS: ['iframe'],
       ADD_ATTR: [
+        'class',
         'allow',
         'allowfullscreen',
         'frameborder',
