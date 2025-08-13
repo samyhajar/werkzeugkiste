@@ -8,23 +8,45 @@ import DOMPurify from 'dompurify'
 export function sanitizeLessonHtml(html: string | null | undefined): string {
   if (!html) return ''
 
-  const YT_SRC_REGEX =
-    /^(https?:)?\/\/(www\.)?(youtube-nocookie\.com|youtube\.com|youtu\.be)\//i
+  // Allow standard HTML including <img>, and allow <iframe> but only from YouTube domains.
+  // Previously, ALLOWED_URI_REGEXP restricted ALL URLs (including <img src>) to YouTube,
+  // which stripped image sources and made lesson images disappear. We now:
+  // 1) Remove the global URL restriction so images and links work normally
+  // 2) Add a hook that removes non‑YouTube iframes for safety
 
-  return DOMPurify.sanitize(html, {
-    USE_PROFILES: { html: true },
-    ADD_TAGS: ['iframe'],
-    ADD_ATTR: [
-      'allow',
-      'allowfullscreen',
-      'frameborder',
-      'referrerpolicy',
-      'width',
-      'height',
-    ],
-    FORBID_TAGS: ['script', 'style'],
-    ALLOWED_URI_REGEXP: YT_SRC_REGEX,
-  })
+  const youtubeSrcRegex = /^(https?:)?\/\/(www\.)?(youtube-nocookie\.com|youtube\.com|youtu\.be)\//i
+
+  const iframeWhitelistHook = (node: Element) => {
+    if (node.nodeName.toLowerCase() === 'iframe') {
+      const src = (node as HTMLIFrameElement).getAttribute('src') || ''
+      if (!youtubeSrcRegex.test(src)) {
+        node.parentNode?.removeChild(node)
+      }
+    }
+  }
+
+  // Add hook, sanitize, then remove hook to avoid global side effects
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(DOMPurify as any).addHook?.('uponSanitizeElement', iframeWhitelistHook)
+  try {
+    return DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+      ADD_TAGS: ['iframe'],
+      ADD_ATTR: [
+        'allow',
+        'allowfullscreen',
+        'frameborder',
+        'referrerpolicy',
+        'width',
+        'height',
+      ],
+      FORBID_TAGS: ['script', 'style'],
+      // Do NOT set ALLOWED_URI_REGEXP globally to keep <img src>, <a href>, etc. working
+    })
+  } finally {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(DOMPurify as any).removeHook?.('uponSanitizeElement', iframeWhitelistHook)
+  }
 }
 
 /**
