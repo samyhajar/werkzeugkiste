@@ -14,29 +14,40 @@ function FAQItem({ question, answer, isOpen = false }: FAQItemProps) {
   const [open, setOpen] = useState(isOpen)
 
   return (
-    <div className="border-b border-gray-200 py-4">
+    <div className="border-b border-gray-200 last:border-b-0">
       <button
-        className="flex w-full items-center justify-between text-left focus:outline-none"
+        className="flex w-full items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-[#de0449] focus:ring-opacity-50 rounded-lg p-4 hover:bg-gray-50 transition-all duration-200 group"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        <span className="text-gray-800">{question}</span>
-        <svg
-          className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
-            open ? 'rotate-180' : ''
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="mt-4 pr-8">
-          <div className="text-gray-700 text-sm leading-relaxed">{answer}</div>
+        <span className="text-gray-800 font-medium text-base group-hover:text-[#de0449] transition-colors duration-200 pr-4">
+          {question}
+        </span>
+        <div className="flex-shrink-0">
+          <svg
+            className={`h-5 w-5 text-gray-600 group-hover:text-[#de0449] transition-all duration-300 ${
+              open ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
-      )}
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          open ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="px-4 pb-4">
+          <div className="text-gray-700 text-sm leading-relaxed bg-gray-50 rounded-lg p-4 border-l-4 border-[#de0449]">
+            {answer}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -62,8 +73,17 @@ export default function FragenPage() {
   if (html) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-12">
-        { }
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+        <div
+          className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700
+          [&_details]:bg-white [&_details]:border [&_details]:border-gray-200 [&_details]:rounded-xl [&_details]:mb-2 [&_details]:shadow-sm [&_details]:overflow-hidden
+          [&_summary]:p-4 [&_summary]:font-medium [&_summary]:text-base [&_summary]:text-gray-800 [&_summary]:cursor-pointer [&_summary]:flex [&_summary]:justify-between [&_summary]:items-center [&_summary]:transition-all [&_summary]:duration-200 [&_summary]:bg-transparent [&_summary]:border-none [&_summary]:outline-none [&_summary]:hover:bg-gray-50 [&_summary]:hover:text-[#de0449]
+          [&_summary::-webkit-details-marker]:hidden
+          [&_summary::after]:content-['▼'] [&_summary::after]:transition-transform [&_summary::after]:duration-300 [&_summary::after]:text-gray-600 [&_summary::after]:text-sm
+          [&_details[open]_summary::after]:rotate-180 [&_details[open]_summary::after]:text-[#de0449]
+          [&_details[open]_summary]:text-[#de0449]
+          [&_details>*:not(summary)]:px-4 [&_details>*:not(summary)]:pb-4 [&_details>*:not(summary)]:bg-gray-50 [&_details>*:not(summary)]:border-l-4 [&_details>*:not(summary)]:border-[#de0449] [&_details>*:not(summary)]:rounded-b-lg [&_details>*:not(summary)]:m-0 [&_details>*:not(summary)]:text-gray-700 [&_details>*:not(summary)]:leading-relaxed [&_details>*:not(summary)]:text-sm"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
       </main>
     )
   }
@@ -81,7 +101,7 @@ export default function FragenPage() {
       <section className="mb-12">
         <h2 className="text-3xl font-bold text-[#de0449] mb-8">Neu hier? Einführung!</h2>
 
-        <div className="space-y-0">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
             question="Muss ich mich registrieren?"
             answer={
@@ -158,7 +178,7 @@ export default function FragenPage() {
       <section className="mb-12">
         <h2 className="text-3xl font-bold text-[#de0449] mb-8">Während des Kurses</h2>
 
-        <div className="space-y-0">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
             question="Wie kann ich den Text größer machen oder die Helligkeit einstellen?"
             answer={
@@ -199,7 +219,7 @@ export default function FragenPage() {
       <section className="mb-12">
         <h2 className="text-3xl font-bold text-[#de0449] mb-8">Für Trainer:innen</h2>
 
-        <div className="space-y-0">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
             question="Wo bekomme ich didaktische Tips?"
             answer={
@@ -246,7 +266,7 @@ export default function FragenPage() {
       <section>
         <h2 className="text-3xl font-bold text-[#de0449] mb-8">Nach dem Kurs</h2>
 
-                 <div className="space-y-0">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
            <FAQItem
              question="Wie kann ich weiterlernen?"
              answer={

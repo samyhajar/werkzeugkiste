@@ -108,7 +108,7 @@ export default function DigiSammlungAdmin() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <button onClick={() => saveResource(res)} className="px-3 py-1 text-sm bg-[#486681] text-white rounded flex items-center gap-1"><Save className="w-3 h-3"/>Speichern</button>
-                  <button onClick={() => fetch('/api/admin/digi-sammlung/resources', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...res, deleted: true }) }).then(() => load())} className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded flex items-center gap-1"><Trash2 className="w-3 h-3"/>Entfernen</button>
+                  <button onClick={() => fetch(`/api/admin/digi-sammlung/resources?id=${res.id}`, { method: 'DELETE' }).then(() => load())} className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded flex items-center gap-1"><Trash2 className="w-3 h-3"/>Entfernen</button>
                 </div>
                 {/* Slides table */}
                 <div className="mt-2 border-t pt-2">

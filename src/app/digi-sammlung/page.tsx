@@ -94,7 +94,7 @@ export default async function DigiSammlungPage() {
       {categories.map(({ title, icon: Icon, items, color }) => (
         <section key={title} className="flex flex-col items-center gap-10">
           <Icon className="h-8 w-8 text-foreground" />
-          <h2 className={`text-3xl font-bold ${color} text-center`}>{title}</h2>
+          <h2 className="text-3xl font-bold text-center" style={{ color: '#de0647' }}>{title}</h2>
 
           {/* Buttons grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 w-full max-w-5xl">
@@ -119,7 +119,7 @@ export default async function DigiSammlungPage() {
           const resources = (res || []).filter(r => r.category_id === cat.id)
           return (
             <section key={cat.id} id={slugify(cat.title)} className="scroll-mt-24">
-              <h3 className="text-2xl font-semibold mb-6 text-center text-pink-600">
+              <h3 className="text-2xl font-semibold mb-6 text-center" style={{ color: '#de0647' }}>
                 {cat.title}
               </h3>
               {resources.length === 0 ? (

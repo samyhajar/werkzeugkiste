@@ -10,8 +10,10 @@ export default async function UeberUnsPage() {
   if (page?.content_html) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-12">
-        { }
-        <div dangerouslySetInnerHTML={{ __html: page.content_html }} />
+        <div
+          className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700"
+          dangerouslySetInnerHTML={{ __html: page.content_html }}
+        />
       </main>
     )
   }
