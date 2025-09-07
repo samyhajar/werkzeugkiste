@@ -26,7 +26,6 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
   }
 
   // Add hook, sanitize, then remove hook to avoid global side effects
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(DOMPurify as any).addHook?.('uponSanitizeElement', iframeWhitelistHook)
   try {
     return DOMPurify.sanitize(html, {
@@ -46,7 +45,6 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
       // Do NOT set ALLOWED_URI_REGEXP globally to keep <img src>, <a href>, etc. working
     })
   } finally {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(DOMPurify as any).removeHook?.('uponSanitizeElement', iframeWhitelistHook)
   }
 }

@@ -70,7 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   let currentPathname: string | null = null
   try {
     // usePathname only works in client components; guard in case of SSR paths
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     currentPathname = usePathname() || null
   } catch {
     currentPathname = pathname || null
