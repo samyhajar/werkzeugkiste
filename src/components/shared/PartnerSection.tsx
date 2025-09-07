@@ -1,17 +1,11 @@
 import Image from 'next/image'
 
 const topRowLogos = [
-  { src: '/small_arbeitplus_NOe.jpg', alt: 'arbeit plus NÖ', width: 220, height: 100 },
-  { src: '/small_fhstp.jpg', alt: 'FH St. Pölten', width: 220, height: 100 },
-  { src: '/ak-noe-logo-e1644578170238.jpg', alt: 'AK Niederösterreich', width: 220, height: 100 },
-  { src: '/small_AK_EXTRA_LOGO_JPG.jpg', alt: 'AK extra', width: 220, height: 100 },
+  { src: 'https://res.cloudinary.com/dqmofjqca/image/upload/v1757084221/BKA_Logo_srgb_exrmsd.png', alt: 'Bundeskanzleramt', width: 220, height: 100 },
+  { src: 'https://res.cloudinary.com/dqmofjqca/image/upload/v1757084194/Digital_Austria_Logo_RGB_lkk5by.png', alt: 'Digital Austria', width: 220, height: 100 },
+  { src: 'https://res.cloudinary.com/dqmofjqca/image/upload/v1757084209/OeAD_Logo_DK_RGB_Kompatkversion_yr0jxw.png', alt: 'OeAD', width: 220, height: 100 },
 ]
 
-const bottomRowLogos = [
-  { src: '/DSM-Mini-Web-Banner_quer_de_klein.png', alt: 'Digital Skills Map', width: 260, height: 100 },
-  { src: '/B-WISE-Banner-mini.png', alt: 'B-WISE', width: 260, height: 100 },
-  { src: '/erwachsenenbildung-Banner.png', alt: 'erwachsenenbildung.at', width: 260, height: 100 },
-]
 
 export default function PartnerSection() {
   return (
@@ -25,7 +19,7 @@ export default function PartnerSection() {
             alt={logo.alt}
             width={logo.width}
             height={logo.height}
-            className="object-contain h-20 md:h-24 max-w-[160px] md:max-w-[220px]"
+            className="object-contain h-28 md:h-32 max-w-[220px] md:max-w-[280px]"
           />
         ))}
       </div>
@@ -36,23 +30,10 @@ export default function PartnerSection() {
           Das Projekt Digi+ wurde 03/2020 bis 02/2022 von der Arbeiterkammer NÖ im Rahmen des Projektfonds&nbsp;4.0 gefördert.
         </p>
         <p>
-          Ab 03/2022 erfolgt die Finanzierung durch das Landesnetzwerk von arbeit plus&nbsp;NÖ.
+          Die Finanzierung der „digitalen Werkzeugkiste plus" erfolgt durch das Bundeskanzleramt, die Koordination übernimmt der OeAD (Geschäftsstelle Digitale Kompetenzen).
         </p>
       </div>
 
-      {/* Bottom logos */}
-      <div className="flex flex-wrap md:flex-nowrap justify-center items-center gap-10 md:gap-16 lg:gap-24 max-w-5xl w-full px-4">
-        {bottomRowLogos.map((logo) => (
-          <Image
-            key={logo.src}
-            src={logo.src}
-            alt={logo.alt}
-            width={logo.width}
-            height={logo.height}
-            className="object-contain h-24 max-w-[200px] md:max-w-[260px]"
-          />
-        ))}
-      </div>
     </section>
   )
 }
