@@ -156,12 +156,10 @@ export default function Navbar() {
   }, [isOpen, isModulesOpen, isUserMenuOpen])
 
   const handleModuleClick = (e: React.MouseEvent, moduleId: string) => {
-    if (!user) {
-      e.preventDefault()
-      loginModalRef.current?.show('login', `/modules/${moduleId}`)
-      setIsModulesOpen(false)
-      setIsOpen(false)
-    }
+    // Allow both authenticated and guest users to access modules
+    // No need to prevent default or show login modal
+    setIsModulesOpen(false)
+    setIsOpen(false)
   }
 
   // Don't render during SSR/build time - now using conditional rendering instead of early return
@@ -249,7 +247,7 @@ export default function Navbar() {
                         modules.map((module) => (
                           <Link
                             key={module.id}
-                            href={user ? `/modules/${module.id}` : '#'}
+                            href={`/modules/${module.id}`}
                             onClick={(e) => handleModuleClick(e, module.id)}
                             className="block px-6 py-4 text-white hover:text-blue-100 hover:bg-brand-primary-hover transition-colors text-lg font-semibold"
                           >
@@ -407,7 +405,7 @@ export default function Navbar() {
                     modules.map((module) => (
                       <Link
                         key={module.id}
-                        href={user ? `/modules/${module.id}` : '#'}
+                        href={`/modules/${module.id}`}
                         onClick={(e) => handleModuleClick(e, module.id)}
                         className="block px-6 py-2 text-white hover:text-blue-100 hover:bg-brand-primary-hover rounded-md transition-colors duration-200 text-lg font-semibold"
                       >
