@@ -40,7 +40,7 @@ export default function ModuleCard({ module, progress = 0, isLoggedIn = false }:
   }
 
   const handleStartModuleClick = (e: React.MouseEvent) => {
-    e.preventDefault() // Explicitly prevent navigation
+    e.preventDefault() // Prevent navigation, show overlay instead
     setShowOverlay(true)
   }
 

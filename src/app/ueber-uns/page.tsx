@@ -147,7 +147,7 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Projektstart Digi +</h3>
+                  <h3 className="text-lg font-bold mb-2 text-white">Projektstart Digi +</h3>
                   <p className="text-sm">
                     Das Projekt Digi + erhält eine Förderzusage im Rahmen des
                     Projektfonds 4.0 der AK Niederösterreich.
@@ -190,7 +190,7 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Digi + Schulungen Teil 1</h3>
+                  <h3 className="text-lg font-bold mb-2 text-white">Digi + Schulungen Teil 1</h3>
                                      <p className="text-sm">
                      Die ersten Digi + Schulungen finden in insgesamt acht
                      sozialintegrativen Unternehmen in Niederösterreich statt. Dabei
@@ -234,7 +234,7 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Digi + Schulungen Teil 2</h3>
+                  <h3 className="text-lg font-bold mb-2 text-white">Digi + Schulungen Teil 2</h3>
                                      <p className="text-sm">
                      Mit einem adaptierten Schulungskonzept finden die Digi +
                      Schulungen Teil 2 in 13 Sozialen Unternehmen statt. Dabei
@@ -290,7 +290,7 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Abschluss Digi +</h3>
+                  <h3 className="text-lg font-bold mb-2 text-white">Abschluss Digi +</h3>
                                      <p className="text-sm">
                      Im Rahmen der Abschlussveranstaltung wird auf die Bedeutung
                      der digitalen Assistenz hingewiesen, sowie die Digi +

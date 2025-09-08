@@ -69,9 +69,10 @@ interface QuizContentProps {
   quiz: Quiz
   onBack: () => void
   onQuizCompleted?: () => void
+  user?: any
 }
 
-function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
+function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -159,7 +160,12 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
     try {
       setSubmitting(true)
 
-      const response = await fetch(`/api/quizzes/${quiz.id}/submit`, {
+      // Use different endpoint for guest vs authenticated users
+      const endpoint = user
+        ? `/api/quizzes/${quiz.id}/submit`
+        : `/api/quizzes/${quiz.id}/guest-submit`
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,8 +182,8 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
         setResults(data.results)
         setSubmitted(true)
 
-        // If quiz was passed, call the completion callback
-        if (data.results?.passed && onQuizCompleted) {
+        // If quiz was passed, call the completion callback (only for authenticated users)
+        if (data.results?.passed && onQuizCompleted && user) {
           onQuizCompleted()
         }
       } else {
@@ -281,6 +287,15 @@ function QuizContent({ quiz, onBack, onQuizCompleted }: QuizContentProps) {
                 <div className="text-red-600 font-semibold">❌ Quiz nicht bestanden</div>
               )}
             </div>
+
+            {/* Guest mode notice */}
+            {results.is_guest && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 text-sm text-center">
+                  {results.message || 'Ergebnisse werden nicht gespeichert. Melden Sie sich an, um Ihren Fortschritt zu verfolgen.'}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 mb-6">
@@ -495,15 +510,12 @@ export default function ModuleDetailPage() {
     if (authLoading) {
       return
     }
-    if (!user) {
-      // Redirect unauthenticated users to the dedicated login page with redirect back
-      const currentUrl = typeof window !== 'undefined' ? window.location.href : '/'
-      router.replace(`/auth/login?redirect=${encodeURIComponent(currentUrl)}`)
-      return
-    }
+    // Allow both authenticated and guest users to access modules
     if (moduleId) {
       void fetchModule()
-      void fetchUserAndProgress()
+      if (user) {
+        void fetchUserAndProgress()
+      }
     }
   }, [user, authLoading, moduleId, router])
 
@@ -559,7 +571,7 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId, fetchModule])
 
-  // Fetch user and progress data
+  // Fetch user and progress data (only for authenticated users)
   const fetchUserAndProgress = useCallback(async () => {
     try {
       if (user && moduleId && module) {
@@ -599,6 +611,10 @@ export default function ModuleDetailPage() {
           const passedQuizIds = new Set<string>(quizAttempts.map((a: { quiz_id: string }) => a.quiz_id))
           setPassedQuizzes(passedQuizIds)
         }
+      } else {
+        // For guest users, clear any progress data
+        setCompletedLessons(new Set())
+        setPassedQuizzes(new Set())
       }
     } catch (error) {
       console.error('Error fetching user and progress:', error)
@@ -813,17 +829,7 @@ export default function ModuleDetailPage() {
     )
   }
 
-  // Redirecting state fallback while we push to /auth/login
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
-          <p className="text-gray-600">Weiterleitung zur Anmeldung…</p>
-        </div>
-      </div>
-    )
-  }
+  // No redirect needed - allow guest access
 
   return (
     <>
@@ -832,29 +838,31 @@ export default function ModuleDetailPage() {
         <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
           {/* Right: Progress Bar and User Info */}
           <div className="flex items-center gap-6 ml-auto">
-                        {/* Module-specific Progress Bar */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-[#486681]" />
-              </div>
-              <div className="w-32">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-[#486681] h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${getProgressPercentage()}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {(() => {
-                    const { completedLessons, totalLessons } = getModuleProgressData()
-                    return `${completedLessons} von ${totalLessons} Lektionen`
-                  })()}
-                </div>
-              </div>
-            </div>
-
-            {/* User Info */}
+            {/* Module-specific Progress Bar - only show for authenticated users */}
             {user && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-[#486681]" />
+                </div>
+                <div className="w-32">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-[#486681] h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${getProgressPercentage()}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {(() => {
+                      const { completedLessons, totalLessons } = getModuleProgressData()
+                      return `${completedLessons} von ${totalLessons} Lektionen`
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* User Info or Guest Mode */}
+            {user ? (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#486681] rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
@@ -864,6 +872,20 @@ export default function ModuleDetailPage() {
                     {user.user_metadata?.full_name || user.email || 'Student'}
                   </div>
                   <div className="text-gray-500 text-xs">Student</div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="text-sm">
+                  <div className="font-medium text-gray-900">Gast</div>
+                  <div className="text-gray-500 text-xs">
+                    <Link href="/auth/login" className="text-blue-600 hover:text-blue-800">
+                      Anmelden
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -1086,7 +1108,7 @@ export default function ModuleDetailPage() {
                       </div>
 
                       {/* Lesson Completion Button */}
-                      {user && (
+                      {user ? (
                         <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
                           <div className="flex items-center justify-center">
                             {completedLessons.has(selectedLesson.id) ? (
@@ -1112,6 +1134,19 @@ export default function ModuleDetailPage() {
                                 )}
                               </button>
                             )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="px-8 py-6 bg-blue-50 border-t border-blue-200">
+                          <div className="text-center">
+                            <p className="text-blue-800 text-sm mb-3">
+                              Melden Sie sich an, um Ihren Fortschritt zu verfolgen und Zertifikate zu erhalten.
+                            </p>
+                            <Link href="/auth/login">
+                              <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                                Jetzt anmelden
+                              </button>
+                            </Link>
                           </div>
                         </div>
                       )}
@@ -1182,6 +1217,7 @@ export default function ModuleDetailPage() {
                       // Refresh quiz progress when a quiz is completed
                       setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
                     }}
+                    user={user}
                   />
                 )}
                 </div>

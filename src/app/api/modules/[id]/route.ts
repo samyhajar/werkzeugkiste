@@ -11,7 +11,7 @@ export async function GET(
 
     // Get current user (optional for public modules, but good for progress tracking)
     const {
-      data: { user: _user },
+      data: { user },
     } = await supabase.auth.getUser()
 
     // Fetch module details

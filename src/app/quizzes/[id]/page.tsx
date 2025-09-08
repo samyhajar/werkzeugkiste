@@ -63,22 +63,17 @@ export default function QuizDetailPage() {
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState<any>(null)
 
-  // Check authentication on component mount
+  // Check authentication on component mount (optional for guest access)
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const supabase = getBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
-
-        if (!user) {
-          loginModalRef.current?.show('login', window.location.href)
-        } else {
-          setUser(user)
-        }
+        setUser(user) // Allow both authenticated and guest users
         setAuthChecked(true)
       } catch (error) {
         console.error('Error checking authentication:', error)
-        loginModalRef.current?.show('login', window.location.href)
+        setUser(null) // Set as guest user
         setAuthChecked(true)
       }
     }
@@ -131,7 +126,13 @@ export default function QuizDetailPage() {
 
     try {
       setSubmitting(true)
-      const response = await fetch(`/api/quizzes/${quizId}/submit`, {
+
+      // Use different endpoint for guest vs authenticated users
+      const endpoint = user
+        ? `/api/quizzes/${quizId}/submit`
+        : `/api/quizzes/${quizId}/guest-submit`
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +147,7 @@ export default function QuizDetailPage() {
       }
 
       const data = await response.json()
-      setResults(data)
+      setResults(data.results || data)
       setSubmitted(true)
     } catch (err) {
       console.error('Error submitting quiz:', err)
@@ -157,10 +158,10 @@ export default function QuizDetailPage() {
   }
 
   useEffect(() => {
-    if (user && quizId) {
+    if (quizId) {
       void fetchQuizDetails()
     }
-  }, [user, quizId])
+  }, [quizId])
 
   useEffect(() => {
     if (quiz) {
@@ -180,21 +181,7 @@ export default function QuizDetailPage() {
     )
   }
 
-  // Show login modal if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-blue-600 text-6xl mb-4">🔐</div>
-          <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
-          <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf dieses Quiz zuzugreifen.</p>
-          <Button onClick={() => loginModalRef.current?.show('login', window.location.href)}>
-            Jetzt anmelden
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  // No login requirement - allow guest access
 
   if (loading) {
     return (
@@ -236,10 +223,15 @@ export default function QuizDetailPage() {
         {/* Header */}
         <header className="bg-[#486681] text-white py-6">
           <div className="max-w-4xl mx-auto px-4">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center justify-between mb-2">
               <Link href="/" className="text-white hover:text-blue-200">
                 ← Zurück zur Übersicht
               </Link>
+              {!user && (
+                <div className="text-sm bg-blue-600 px-3 py-1 rounded-full">
+                  Gast-Modus
+                </div>
+              )}
             </div>
             <h1 className="text-2xl font-bold">{quiz.title}</h1>
             <p className="text-blue-100">{course.title}</p>
@@ -326,6 +318,15 @@ export default function QuizDetailPage() {
                     <p className="text-sm mt-2">
                       Bestehensgrenze: {quiz.pass_percent}%
                     </p>
+
+                    {/* Guest mode notice */}
+                    {results?.is_guest && (
+                      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-blue-800 text-sm">
+                          {results.message || 'Ergebnisse werden nicht gespeichert. Melden Sie sich an, um Ihren Fortschritt zu verfolgen.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-4 justify-center">

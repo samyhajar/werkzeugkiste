@@ -38,11 +38,8 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
   }
 
   const handleStartClick = (e: React.MouseEvent) => {
-    if (!isLoggedIn) {
-      e.preventDefault()
-      onStartLogin()
-    }
-    // If logged in, the link will navigate automatically.
+    // Allow both logged in and guest users to start modules
+    // The link will navigate automatically for both cases
   }
 
   if (!isOpen) {

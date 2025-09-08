@@ -9,18 +9,10 @@ export async function GET(
     const { id } = await params
     const supabase = await createClient()
 
-    // Get current user (for progress tracking and access control)
+    // Get current user (optional for guest access, but good for progress tracking)
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
-    }
 
     // Fetch quiz details with related data from enhanced_quizzes table
     const { data: quiz, error: quizError } = await supabase
@@ -79,18 +71,22 @@ export async function GET(
     //   .single()
     // const isAdmin = profile?.role === 'admin'
 
-    // Get user's quiz attempts if any
-    const { data: attempts } = await supabase
-      .from('quiz_attempts')
-      .select('*')
-      .eq('quiz_id', id)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    // Get user's quiz attempts if any (only for authenticated users)
+    let attempts: any[] = []
+    if (user) {
+      const { data: userAttempts } = await supabase
+        .from('quiz_attempts')
+        .select('*')
+        .eq('quiz_id', id)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+      attempts = userAttempts || []
+    }
 
     const quizWithAttempts = {
       ...quiz,
       questions: questions || [],
-      user_attempts: attempts || [],
+      user_attempts: attempts,
       best_score:
         attempts && attempts.length > 0
           ? Math.max(...attempts.map(a => a.score_percentage || 0))
@@ -99,6 +95,7 @@ export async function GET(
         attempts && attempts.length > 0
           ? attempts.some(a => a.passed === true)
           : false,
+      is_guest: !user, // Flag to indicate if this is a guest user
     }
 
     console.log('API: Quiz data being returned:', {
