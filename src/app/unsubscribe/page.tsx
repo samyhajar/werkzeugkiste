@@ -5,13 +5,14 @@ export const metadata: Metadata = {
   title: 'Abmeldung',
 }
 
-export default function UnsubscribePage({
+export default async function UnsubscribePage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  // Read query values on server and pass to client
-  const emailParam = searchParams?.email
+  // Next.js 15 passes searchParams as a Promise
+  const sp = await searchParams
+  const emailParam = sp?.email
   const emailFromUrl = Array.isArray(emailParam) ? emailParam[0] : emailParam
 
   return (
