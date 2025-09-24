@@ -32,7 +32,7 @@ export default function RootLayout({
         className={`${assistant.variable} antialiased`}
       >
         <Script
-          src="https://webcache-eu.datareporter.eu/loader/v2/cmp-load.js?url=32870081-646d-477e-98ac-205b44d9c2f1.jEOudZRWor42.de"
+          src="https://webcachex-eu.datareporter.eu/loader/v2/cmp-load.js?url=32870081-646d-477e-98ac-205b44d9c2f1.jEOudZRWor42.Jap"
           strategy="beforeInteractive"
         />
         <ConditionalLayout>{children}</ConditionalLayout>
