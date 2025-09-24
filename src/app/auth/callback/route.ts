@@ -81,13 +81,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Determine redirect path based on authentication type
-  let redirectPath = '/auth/password-reset'
+  let redirectPath = '/'
 
-  // Check if this is a password recovery or email confirmation
   if (type === 'recovery') {
-    console.log('[Auth Callback] Password recovery flow detected')
-    // For password recovery, we need to redirect to password-reset with the session tokens
-    // Extract the tokens from the session to pass them via hash fragment
+    // Forward to the reset page with tokens in the URL hash so the client page can use them if needed
     if (sessionData.session) {
       const accessToken = sessionData.session.access_token
       const refreshToken = sessionData.session.refresh_token
@@ -95,7 +92,7 @@ export async function GET(request: NextRequest) {
     } else {
       redirectPath = '/auth/password-reset'
     }
-  } else {
+  } else if (type === 'signup' || type === 'email') {
     // For regular login/signup, check user role and redirect appropriately
     const {
       data: { user },

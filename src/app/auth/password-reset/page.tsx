@@ -30,7 +30,7 @@ export default function PasswordResetPage() {
         console.log('[PasswordReset] URL hash:', window.location.hash)
         console.log('[PasswordReset] URL search:', window.location.search)
 
-        // Check both hash and query parameters for tokens
+        // Check both hash and query parameters for tokens or a PKCE/OTP code
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const queryParams = new URLSearchParams(window.location.search)
 
@@ -38,6 +38,7 @@ export default function PasswordResetPage() {
         let accessToken = hashParams.get('access_token')
         let refreshToken = hashParams.get('refresh_token')
         let type = hashParams.get('type')
+        const code = queryParams.get('code')
 
         // If not found in hash, try query parameters
         if (!accessToken || !refreshToken || !type) {
@@ -46,32 +47,42 @@ export default function PasswordResetPage() {
           type = type || queryParams.get('type')
         }
 
-        console.log('[PasswordReset] Parsed tokens:', {
+        console.log('[PasswordReset] Parsed tokens/code:', {
           type,
           hasAccessToken: !!accessToken,
           hasRefreshToken: !!refreshToken,
+          hasCode: !!code,
           accessTokenLength: accessToken?.length || 0,
           refreshTokenLength: refreshToken?.length || 0
         })
 
-        if (type === 'recovery' && accessToken && refreshToken) {
-          console.log('[PasswordReset] Valid recovery tokens found')
+        const supabase = getBrowserClient()
+
+        if (accessToken && refreshToken) {
+          console.log('[PasswordReset] Found access/refresh tokens in URL')
           setIsValidSession(true)
+        } else if (code) {
+          console.log('[PasswordReset] Found code param, attempting exchangeCodeForSession')
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+          if (exchangeError) {
+            console.error('[PasswordReset] exchangeCodeForSession error:', exchangeError)
+            setError('Der Wiederherstellungslink ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an.')
+          } else if (data?.session) {
+            console.log('[PasswordReset] Code exchanged for session successfully')
+            setIsValidSession(true)
+          } else {
+            setError('Sitzung konnte nicht hergestellt werden. Bitte fordern Sie einen neuen Link an.')
+          }
         } else {
           console.log('[PasswordReset] Missing or invalid tokens:', {
             type,
             hasAccessToken: !!accessToken,
-            hasRefreshToken: !!refreshToken
+            hasRefreshToken: !!refreshToken,
+            hasCode: !!code
           })
 
           // More helpful error message
-          if (!type) {
-            setError('Kein Reset-Link Typ gefunden. Bitte verwenden Sie den Link aus der E-Mail.')
-          } else if (type !== 'recovery') {
-            setError(`Falscher Link-Typ: ${type}. Erwartet wurde: recovery.`)
-          } else {
-            setError('Fehlende Authentifizierungs-Tokens. Bitte fordern Sie einen neuen Reset-Link an.')
-          }
+          setError('Fehlende Authentifizierungs-Tokens. Bitte öffnen Sie den Link erneut oder fordern Sie einen neuen Reset-Link an.')
         }
       } catch (error) {
         console.error('[PasswordReset] Error checking tokens:', error)
@@ -142,6 +153,7 @@ export default function PasswordResetPage() {
       let accessToken = hashParams.get('access_token') || queryParams.get('access_token')
       let refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token')
       let type = hashParams.get('type') || queryParams.get('type')
+      const code = queryParams.get('code')
 
       console.log('[PasswordReset] Submit - tokens check:', {
         type,
@@ -149,25 +161,47 @@ export default function PasswordResetPage() {
         hasRefreshToken: !!refreshToken
       })
 
-      if (!accessToken || !refreshToken || type !== 'recovery') {
-        setError('Sitzungstoken fehlen oder sind ungültig. Bitte verwenden Sie einen neuen Reset-Link.')
-        setLoading(false)
-        return
+      // Ensure we have a valid session before updating password.
+      // 1) If we already have a session (from code exchange in useEffect), use it.
+      // 2) Else if tokens are present, setSession with tokens.
+      // 3) Else if code is present, exchange code now as a fallback.
+      let hasSession = false
+      {
+        const { data: current } = await supabase.auth.getSession()
+        hasSession = !!current.session
       }
 
-      // Establish session using the tokens from the password recovery email
-      console.log('*** STEP 1: CALL setSession');
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
-      console.log('*** STEP 1 DONE', { sessionError, gotSession: !!sessionData?.session });
-
-      if (sessionError || !sessionData.session) {
-        console.error('[PasswordReset] Session establishment error:', sessionError)
-        setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
-        setLoading(false)
-        return
+      if (!hasSession) {
+        if (accessToken && refreshToken) {
+          console.log('*** STEP 1A: CALL setSession with tokens')
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+          console.log('*** STEP 1A DONE', { sessionError, gotSession: !!sessionData?.session })
+          if (sessionError || !sessionData.session) {
+            console.error('[PasswordReset] Session establishment error (tokens):', sessionError)
+            setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
+            setLoading(false)
+            return
+          }
+          hasSession = true
+        } else if (code) {
+          console.log('*** STEP 1B: CALL exchangeCodeForSession as fallback')
+          const { data: exData, error: exError } = await supabase.auth.exchangeCodeForSession(code)
+          console.log('*** STEP 1B DONE', { exError, gotSession: !!exData?.session })
+          if (exError || !exData?.session) {
+            console.error('[PasswordReset] Session establishment error (code):', exError)
+            setError('Ungültiger oder abgelaufener Reset-Link. Bitte fordern Sie einen neuen an.')
+            setLoading(false)
+            return
+          }
+          hasSession = true
+        } else {
+          setError('Sitzungstoken fehlen oder sind ungültig. Bitte verwenden Sie einen neuen Reset-Link.')
+          setLoading(false)
+          return
+        }
       }
 
       console.log('[PasswordReset] Session established for password update')

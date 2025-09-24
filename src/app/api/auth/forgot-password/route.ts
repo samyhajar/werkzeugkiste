@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     // Dynamically determine the base URL so we always send a correct redirect no matter where we are (local, preview, prod)
     const reqUrl = new URL(request.url)
     const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
+    // Use server callback to exchange ?code for a session, then forward tokens to the reset page
     const redirectUrl = `${baseUrl}/auth/callback?type=recovery`
 
     console.log(
