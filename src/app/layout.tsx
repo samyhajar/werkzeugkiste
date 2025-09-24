@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import ConditionalLayout from "@/components/shared/ConditionalLayout";
 
@@ -30,6 +31,10 @@ export default function RootLayout({
       <body
         className={`${assistant.variable} antialiased`}
       >
+        <Script
+          src="https://webcache-eu.datareporter.eu/loader/v2/cmp-load.js?url=32870081-646d-477e-98ac-205b44d9c2f1.jEOudZRWor42.de"
+          strategy="beforeInteractive"
+        />
         <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
