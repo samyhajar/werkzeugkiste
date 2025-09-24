@@ -164,9 +164,11 @@ export async function POST(request: NextRequest) {
         type:
           q.type === 'multiple_choice'
             ? 'multiple'
-            : q.type === 'true_false'
+            : q.type === 'single'
               ? 'single'
-              : 'free_text',
+              : q.type === 'true_false'
+                ? 'true_false'
+                : 'free_text',
         question_html: q.question_text,
         explanation_html: q.explanation,
         points: 1,
@@ -212,6 +214,16 @@ export async function POST(request: NextRequest) {
             )
           } else if (q.type === 'multiple_choice' && q.options) {
             // Add options for multiple choice questions
+            q.options.forEach((option: any, optIndex: number) => {
+              answerData.push({
+                question_id: questionId,
+                answer_html: option.text,
+                is_correct: option.is_correct || false,
+                sort_order: optIndex + 1,
+              })
+            })
+          } else if (q.type === 'single' && q.options) {
+            // Add options for single answer questions
             q.options.forEach((option: any, optIndex: number) => {
               answerData.push({
                 question_id: questionId,

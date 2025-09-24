@@ -28,7 +28,7 @@ interface Lesson {
 
 interface QuizQuestion {
   id?: number
-  type: 'multiple_choice' | 'true_false' | 'short_answer'
+  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'single'
   question_text: string
   explanation: string
   sort_order: number
@@ -163,7 +163,7 @@ export default function QuizzesPage() {
     }))
   }
 
-  const updateQuestionType = (type: 'multiple_choice' | 'true_false' | 'short_answer') => {
+  const updateQuestionType = (type: 'multiple_choice' | 'true_false' | 'short_answer' | 'single') => {
     setNewQuiz(prev => ({
       ...prev,
       questions: prev.questions.map((q, _i) => ({
@@ -175,6 +175,9 @@ export default function QuizzesPage() {
         ] : type === 'true_false' ? [
         { text: 'True', is_correct: false },
         { text: 'False', is_correct: false }
+        ] : type === 'single' ? [
+          { text: '', is_correct: false },
+          { text: '', is_correct: false }
         ] : []
       }))
     }))
@@ -273,7 +276,7 @@ export default function QuizzesPage() {
     setEditingQuestions(editingQuestions.filter((_, i) => i !== index))
   }
 
-  const updateEditingQuestionType = (index: number, type: 'multiple_choice' | 'true_false' | 'short_answer') => {
+  const updateEditingQuestionType = (index: number, type: 'multiple_choice' | 'true_false' | 'short_answer' | 'single') => {
     const updatedQuestions = [...editingQuestions]
     updatedQuestions[index] = {
       ...updatedQuestions[index],
@@ -284,6 +287,9 @@ export default function QuizzesPage() {
       ] : type === 'true_false' ? [
         { text: 'True', is_correct: false },
         { text: 'False', is_correct: false }
+      ] : type === 'single' ? [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
       ] : []
     }
     setEditingQuestions(updatedQuestions)
@@ -315,6 +321,11 @@ export default function QuizzesPage() {
       })
     } else if (question.type === 'true_false') {
       // For true/false, only one option can be correct
+      question.options.forEach((option, i) => {
+        option.is_correct = i === optionIndex
+      })
+    } else if (question.type === 'single') {
+      // For single answer, only one option can be correct
       question.options.forEach((option, i) => {
         option.is_correct = i === optionIndex
       })
@@ -660,13 +671,14 @@ export default function QuizzesPage() {
                         <Label>Question Type</Label>
                         <Select
                           value={question.type}
-                          onValueChange={(value: 'multiple_choice' | 'true_false' | 'short_answer') => updateQuestionType(value)}
+                          onValueChange={(value: 'multiple_choice' | 'true_false' | 'short_answer' | 'single') => updateQuestionType(value)}
                         >
                           <SelectTrigger className="mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                        <SelectItem value="single">Single Answer</SelectItem>
                         <SelectItem value="true_false">True/False</SelectItem>
                         <SelectItem value="short_answer">Short Answer</SelectItem>
                       </SelectContent>
@@ -681,7 +693,7 @@ export default function QuizzesPage() {
                           className="mt-1"
                         />
                       </div>
-                      {question.type === 'multiple_choice' && (
+                      {(question.type === 'multiple_choice' || question.type === 'single') && (
                         <div>
                           <Label>Options</Label>
                           <div className="space-y-2 mt-1">
@@ -923,13 +935,14 @@ export default function QuizzesPage() {
                           <Label>Question Type</Label>
                           <Select
                             value={question.type}
-                            onValueChange={(value: 'multiple_choice' | 'true_false' | 'short_answer') => updateEditingQuestionType(index, value)}
+                            onValueChange={(value: 'multiple_choice' | 'true_false' | 'short_answer' | 'single') => updateEditingQuestionType(index, value)}
                           >
                             <SelectTrigger className="mt-1">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                              <SelectItem value="single">Single Answer</SelectItem>
                               <SelectItem value="true_false">True/False</SelectItem>
                               <SelectItem value="short_answer">Short Answer</SelectItem>
                             </SelectContent>
@@ -944,7 +957,7 @@ export default function QuizzesPage() {
                             className="mt-1"
                           />
                         </div>
-                        {(question.type === 'multiple_choice' || question.type === 'true_false') && (
+                        {(question.type === 'multiple_choice' || question.type === 'true_false' || question.type === 'single') && (
                           <div>
                             <Label>Options</Label>
                             <div className="space-y-2 mt-1">

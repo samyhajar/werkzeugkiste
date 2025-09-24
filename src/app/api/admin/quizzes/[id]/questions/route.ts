@@ -156,7 +156,7 @@ export async function GET(
     const formattedQuestions =
       questions?.map(q => ({
         id: q.id,
-        type: q.type === 'single' ? 'multiple_choice' : q.type,
+        type: q.type === 'single' ? 'single' : q.type,
         question_text: q.question_html || '',
         explanation: q.explanation_html || '',
         sort_order: q.sort_order || 0,
@@ -250,7 +250,7 @@ export async function PUT(
         .from('quiz_questions')
         .insert({
           quiz_id: quizId,
-          type: question.type === 'multiple_choice' ? 'single' : question.type,
+          type: question.type,
           question_html: question.question_text,
           explanation_html: question.explanation || '',
           points: 1,
