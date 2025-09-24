@@ -94,7 +94,7 @@ export function UnsubscribeClient({ emailFromUrl }: { emailFromUrl?: string }) {
         <button
           type="submit"
           disabled={!canSubmit || loading}
-          className="w-full h-10 inline-flex items-center justify-center rounded-md bg-[--color-brand-primary] text-white text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[--color-brand-primary-hover]"
+          className="w-full h-10 inline-flex items-center justify-center rounded-md bg-brand-primary text-white text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand-primary-hover"
           aria-busy={loading}
         >
           {loading ? 'Wird abgemeldet…' : 'Jetzt abmelden'}
