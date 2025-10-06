@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { sanitizeLessonHtml } from '@/lib/sanitize'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
@@ -483,6 +483,8 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
 export default function ModuleDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const moduleId = params.id as string
 
   const [module, setModule] = useState<Module | null>(null)
@@ -504,6 +506,38 @@ export default function ModuleDetailPage() {
 
   // Add progress tracking hook
   const { markLessonComplete, isMarking } = useProgressTracking()
+
+  const updateQueryParams = useCallback((updates: { lessonId?: string | null; quizId?: string | null }) => {
+    const params = new URLSearchParams(searchParams.toString())
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'lessonId')) {
+      const lessonId = updates.lessonId
+      if (lessonId) {
+        params.set('lessonId', lessonId)
+      } else {
+        params.delete('lessonId')
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'quizId')) {
+      const quizId = updates.quizId
+      if (quizId) {
+        params.set('quizId', quizId)
+      } else {
+        params.delete('quizId')
+      }
+    }
+
+    const newQueryString = params.toString()
+    const currentQueryString = searchParams.toString()
+
+    if (newQueryString === currentQueryString) {
+      return
+    }
+
+    const url = newQueryString ? `${pathname}?${newQueryString}` : pathname
+    router.replace(url, { scroll: false })
+  }, [pathname, router, searchParams])
 
     // Handle authentication and data fetching
   useEffect(() => {
@@ -675,13 +709,22 @@ export default function ModuleDetailPage() {
     })
   }
 
-  const selectLesson = async (lesson: Lesson) => {
+  const selectLesson = useCallback((lesson: Lesson, options: { updateParams?: boolean } = {}) => {
+    const { updateParams = true } = options
     setSelectedLesson(lesson)
-    setSelectedQuiz(null) // Clear quiz selection
-    // Find the course using the lesson's course_id
-    const course = module?.courses.find(c => c.id === lesson.course_id)
-    setSelectedCourse(course || null)
-  }
+    setSelectedQuiz(null)
+
+    const course = module?.courses.find(c => c.id === lesson.course_id) || null
+    setSelectedCourse(course)
+
+    if (course) {
+      setExpandedCourses(new Set([course.id]))
+    }
+
+    if (updateParams) {
+      updateQueryParams({ lessonId: lesson.id, quizId: null })
+    }
+  }, [module, updateQueryParams])
 
   const handleLessonComplete = async (lesson: Lesson) => {
     if (!user || !lesson.id || completedLessons.has(lesson.id)) {
@@ -724,13 +767,70 @@ export default function ModuleDetailPage() {
     }
   }
 
-  const selectQuiz = (quiz: Quiz) => {
+  const selectQuiz = useCallback((quiz: Quiz, options: { updateParams?: boolean } = {}) => {
+    const { updateParams = true } = options
     setSelectedQuiz(quiz)
-    setSelectedLesson(null) // Clear lesson selection
-    // Find the course using the quiz's course_id
-    const course = module?.courses.find(c => c.id === quiz.course_id)
-    setSelectedCourse(course || null)
-  }
+    setSelectedLesson(null)
+
+    const course = module?.courses.find(c => c.id === quiz.course_id) || null
+    setSelectedCourse(course)
+
+    if (course) {
+      setExpandedCourses(new Set([course.id]))
+    }
+
+    if (updateParams) {
+      updateQueryParams({ quizId: quiz.id, lessonId: null })
+    }
+  }, [module, updateQueryParams])
+
+  const clearSelectedQuiz = useCallback((options: { updateParams?: boolean } = {}) => {
+    const { updateParams = true } = options
+    setSelectedQuiz(null)
+
+    if (updateParams) {
+      updateQueryParams({ quizId: null })
+    }
+  }, [updateQueryParams])
+
+  useEffect(() => {
+    if (!module) {
+      return
+    }
+
+    const lessonIdParam = searchParams.get('lessonId')
+    const quizIdParam = searchParams.get('quizId')
+
+    if (lessonIdParam) {
+      const course = module.courses.find(c => c.lessons.some(lesson => lesson.id === lessonIdParam)) || null
+      const lesson = course?.lessons.find(lesson => lesson.id === lessonIdParam) || null
+
+      if (lesson && lesson.id !== selectedLesson?.id) {
+        selectLesson(lesson, { updateParams: false })
+      } else if (!lesson && selectedLesson) {
+        setSelectedLesson(null)
+        setSelectedCourse(null)
+        setExpandedCourses(new Set<string>())
+        updateQueryParams({ lessonId: null })
+      }
+
+      return
+    }
+
+    if (quizIdParam) {
+      const course = module.courses.find(c => c.quizzes.some(quiz => quiz.id === quizIdParam)) || null
+      const quiz = course?.quizzes.find(quiz => quiz.id === quizIdParam) || null
+
+      if (quiz && quiz.id !== selectedQuiz?.id) {
+        selectQuiz(quiz, { updateParams: false })
+      } else if (!quiz && selectedQuiz) {
+        clearSelectedQuiz({ updateParams: false })
+        setSelectedCourse(null)
+        setExpandedCourses(new Set<string>())
+        updateQueryParams({ quizId: null })
+      }
+    }
+  }, [module, searchParams, selectLesson, selectQuiz, clearSelectedQuiz, selectedLesson, selectedQuiz, updateQueryParams])
 
   const checkModuleCompletion = async () => {
     if (!user || !moduleId) return
@@ -1210,16 +1310,16 @@ export default function ModuleDetailPage() {
               <div className="px-8 py-8 overflow-y-auto bg-gray-50">
                 <div className="max-w-4xl mx-auto">
                   {selectedQuiz && (
-                  <QuizContent
-                    quiz={selectedQuiz}
-                    onBack={() => setSelectedQuiz(null)}
-                    onQuizCompleted={() => {
-                      // Refresh quiz progress when a quiz is completed
-                      setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
-                    }}
-                    user={user}
-                  />
-                )}
+                    <QuizContent
+                      quiz={selectedQuiz}
+                      onBack={() => clearSelectedQuiz()}
+                      onQuizCompleted={() => {
+                        // Refresh quiz progress when a quiz is completed
+                        setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
+                      }}
+                      user={user}
+                    />
+                  )}
                 </div>
               </div>
             </div>
