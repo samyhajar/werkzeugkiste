@@ -1,27 +1,40 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
-type Editor = any
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
-import TextAlign from '@tiptap/extension-text-align'
-import { TextStyle } from '@tiptap/extension-text-style'
-import { FontSize } from '@tiptap/extension-font-size'
-
-import { Table } from '@tiptap/extension-table'
-import { TableRow } from '@tiptap/extension-table-row'
-import { TableHeader } from '@tiptap/extension-table-header'
-import { TableCell } from '@tiptap/extension-table-cell'
 import { Button } from '@/components/ui/button'
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import Youtube from '@tiptap/extension-youtube'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { extractYouTubeId } from '@/lib/sanitize'
+import { FontSize } from '@tiptap/extension-font-size'
+import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
+import { Table } from '@tiptap/extension-table'
+import { TableCell } from '@tiptap/extension-table-cell'
+import { TableHeader } from '@tiptap/extension-table-header'
+import { TableRow } from '@tiptap/extension-table-row'
+import TextAlign from '@tiptap/extension-text-align'
+import { TextStyle } from '@tiptap/extension-text-style'
+import Underline from '@tiptap/extension-underline'
+import Youtube from '@tiptap/extension-youtube'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { useEffect, useState } from 'react'
+
+type Editor = any
 
 interface RichTextEditorProps {
   content: string
@@ -30,7 +43,12 @@ interface RichTextEditorProps {
   className?: string
 }
 
-const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextEditorProps) => {
+const RichTextEditor = ({
+  content,
+  onChange,
+  placeholder,
+  className,
+}: RichTextEditorProps) => {
   const [linkUrl, setLinkUrl] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [imageWidth, setImageWidth] = useState('')
@@ -41,7 +59,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [isYoutubeDialogOpen, setIsYoutubeDialogOpen] = useState(false)
   const [youtubeUrl, setYoutubeUrl] = useState('')
-  const [youtubeSize, setYoutubeSize] = useState<'small' | 'medium' | 'large'>('medium')
+  const [youtubeSize, setYoutubeSize] = useState<'small' | 'medium' | 'large'>(
+    'medium'
+  )
 
   const editor = useEditor({
     extensions: [
@@ -55,7 +75,13 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       FontSize,
       Link.configure({
         openOnClick: false,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'text-blue-600 underline hover:text-blue-800', // optional styling
+        },
       }),
+
       Image.configure({
         inline: true,
         allowBase64: true,
@@ -81,7 +107,8 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         HTMLAttributes: {
           class: 'w-full aspect-video rounded border border-gray-200',
           referrerpolicy: 'strict-origin-when-cross-origin',
-          allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+          allow:
+            'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
         },
       }),
     ],
@@ -99,7 +126,8 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none prose-headings:font-bold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h1:mb-4 prose-h2:mb-3 prose-h3:mb-2 prose-p:mb-2',
+        class:
+          'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl mx-auto focus:outline-none prose-headings:font-bold prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-h1:mb-4 prose-h2:mb-3 prose-h3:mb-2 prose-p:mb-2',
         style: 'text-align: inherit;',
       },
     },
@@ -114,7 +142,12 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
 
   const addLink = () => {
     if (linkUrl) {
-      editor?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl }).run()
+      editor
+        ?.chain()
+        .focus()
+        .extendMarkRange('link')
+        .setLink({ href: linkUrl })
+        .run()
       setLinkUrl('')
       setIsLinkDialogOpen(false)
     }
@@ -123,7 +156,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   const addYouTube = () => {
     if (!youtubeUrl) return
     const id = extractYouTubeId(youtubeUrl)
-    const finalUrl = id ? `https://www.youtube-nocookie.com/embed/${id}` : youtubeUrl
+    const finalUrl = id
+      ? `https://www.youtube-nocookie.com/embed/${id}`
+      : youtubeUrl
 
     // Map size to width/height while keeping responsive aspect via CSS on render
     let width = 720
@@ -136,14 +171,18 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
       height = 540
     }
 
-    editor?.chain().focus().setYoutubeVideo({
-      src: finalUrl,
-      width,
-      height,
-      controls: true,
-      nocookie: true,
-      allowFullscreen: true,
-    }).run()
+    editor
+      ?.chain()
+      .focus()
+      .setYoutubeVideo({
+        src: finalUrl,
+        width,
+        height,
+        controls: true,
+        nocookie: true,
+        allowFullscreen: true,
+      })
+      .run()
 
     setYoutubeUrl('')
     setYoutubeSize('medium')
@@ -196,18 +235,23 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
   }
 
   return (
-    <div className={`border border-gray-300 rounded-md bg-white relative ${className}`}>
+    <div
+      className={`border border-gray-300 rounded-md bg-white relative ${className}`}
+    >
       {/* Toolbar */}
       <div className="sticky top-0 z-10 border-b border-gray-200 p-3 flex flex-wrap gap-1 bg-white rounded-t-md">
         {/* Text Format Dropdown */}
         <Select
           value={
-            editor.isActive('heading', { level: 1 }) ? 'h1' :
-            editor.isActive('heading', { level: 2 }) ? 'h2' :
-            editor.isActive('heading', { level: 3 }) ? 'h3' :
-            'paragraph'
+            editor.isActive('heading', { level: 1 })
+              ? 'h1'
+              : editor.isActive('heading', { level: 2 })
+                ? 'h2'
+                : editor.isActive('heading', { level: 3 })
+                  ? 'h3'
+                  : 'paragraph'
           }
-          onValueChange={(value) => {
+          onValueChange={value => {
             if (value === 'paragraph') {
               editor.chain().focus().clearNodes().setParagraph().run()
             } else if (value === 'h1') {
@@ -231,10 +275,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         </Select>
 
         {/* Font Size Dropdown */}
-        <Select
-          value={fontSize}
-          onValueChange={applyFontSize}
-        >
+        <Select value={fontSize} onValueChange={applyFontSize}>
           <SelectTrigger className="w-20">
             <SelectValue />
           </SelectTrigger>
@@ -261,7 +302,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleBold().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 2h6a4 4 0 014 4c0 1.1-.45 2.1-1.17 2.83A4 4 0 0114 13v1H4V2zm2 2v4h4a2 2 0 100-4H6zm0 6v4h6a2 2 0 100-4H6z"/>
+            <path d="M4 2h6a4 4 0 014 4c0 1.1-.45 2.1-1.17 2.83A4 4 0 0114 13v1H4V2zm2 2v4h4a2 2 0 100-4H6zm0 6v4h6a2 2 0 100-4H6z" />
           </svg>
         </Button>
 
@@ -271,7 +312,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleItalic().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M8 2h8v2h-2.4l-1.2 12H10l1.2-12H8V2z"/>
+            <path d="M8 2h8v2h-2.4l-1.2 12H10l1.2-12H8V2z" />
           </svg>
         </Button>
 
@@ -281,7 +322,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleUnderline().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 18h14v1H3v-1zm2-16h2v8a3 3 0 006 0V2h2v8a5 5 0 01-10 0V2z"/>
+            <path d="M3 18h14v1H3v-1zm2-16h2v8a3 3 0 006 0V2h2v8a5 5 0 01-10 0V2z" />
           </svg>
         </Button>
 
@@ -291,7 +332,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleStrike().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 2h2v4.5h4v2h-4v1a1.5 1.5 0 003 0v-.5h2V9a3.5 3.5 0 01-7 0v-1H5V6h4V2z"/>
+            <path d="M9 2h2v4.5h4v2h-4v1a1.5 1.5 0 003 0v-.5h2V9a3.5 3.5 0 01-7 0v-1H5V6h4V2z" />
           </svg>
         </Button>
 
@@ -305,40 +346,46 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           title="Align Left"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM3 8a1 1 0 000 2h7a1 1 0 100-2H3zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM3 16a1 1 0 100 2h7a1 1 0 100-2H3z"/>
+            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM3 8a1 1 0 000 2h7a1 1 0 100-2H3zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM3 16a1 1 0 100 2h7a1 1 0 100-2H3z" />
           </svg>
         </Button>
 
         <Button
-          variant={editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'}
+          variant={
+            editor.isActive({ textAlign: 'center' }) ? 'default' : 'ghost'
+          }
           size="sm"
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           title="Align Center"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM5 8a1 1 0 000 2h10a1 1 0 100-2H5zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM5 16a1 1 0 100 2h10a1 1 0 100-2H5z"/>
+            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM5 8a1 1 0 000 2h10a1 1 0 100-2H5zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM5 16a1 1 0 100 2h10a1 1 0 100-2H5z" />
           </svg>
         </Button>
 
         <Button
-          variant={editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'}
+          variant={
+            editor.isActive({ textAlign: 'right' }) ? 'default' : 'ghost'
+          }
           size="sm"
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           title="Align Right"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM7 8a1 1 0 100 2h7a1 1 0 100-2H7zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM7 16a1 1 0 100 2h7a1 1 0 100-2H7z"/>
+            <path d="M3 4a1 1 0 000 2h11a1 1 0 100-2H3zM7 8a1 1 0 100 2h7a1 1 0 100-2H7zM3 12a1 1 0 100 2h11a1 1 0 100-2H3zM7 16a1 1 0 100 2h7a1 1 0 100-2H7z" />
           </svg>
         </Button>
 
         <Button
-          variant={editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'}
+          variant={
+            editor.isActive({ textAlign: 'justify' }) ? 'default' : 'ghost'
+          }
           size="sm"
           onClick={() => editor.chain().focus().setTextAlign('justify').run()}
           title="Justify"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM2 8a1 1 0 000 2h16a1 1 0 100-2H2zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM2 16a1 1 0 100 2h16a1 1 0 100-2H2z"/>
+            <path d="M2 4a1 1 0 000 2h16a1 1 0 100-2H2zM2 8a1 1 0 000 2h16a1 1 0 100-2H2zM2 12a1 1 0 100 2h16a1 1 0 100-2H2zM2 16a1 1 0 100 2h16a1 1 0 100-2H2z" />
           </svg>
         </Button>
 
@@ -351,7 +398,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleBulletList().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 4a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1zM7 4a1 1 0 000 2h11a1 1 0 100-2H7zM7 9a1 1 0 100 2h11a1 1 0 100-2H7zM7 14a1 1 0 100 2h11a1 1 0 100-2H7z"/>
+            <path d="M2 4a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1zM7 4a1 1 0 000 2h11a1 1 0 100-2H7zM7 9a1 1 0 100 2h11a1 1 0 100-2H7zM7 14a1 1 0 100 2h11a1 1 0 100-2H7z" />
           </svg>
         </Button>
 
@@ -361,7 +408,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M2 4a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1zM7 4a1 1 0 000 2h11a1 1 0 100-2H7zM7 9a1 1 0 100 2h11a1 1 0 100-2H7zM7 14a1 1 0 100 2h11a1 1 0 100-2H7z"/>
+            <path d="M2 4a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V9zm0 5a1 1 0 011-1h1a1 1 0 011 1v1a1 1 0 01-1 1H3a1 1 0 01-1-1v-1zM7 4a1 1 0 000 2h11a1 1 0 100-2H7zM7 9a1 1 0 100 2h11a1 1 0 100-2H7zM7 14a1 1 0 100 2h11a1 1 0 100-2H7z" />
           </svg>
         </Button>
 
@@ -374,11 +421,9 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           onClick={() => editor.chain().focus().toggleCode().run()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"/>
+            <path d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" />
           </svg>
         </Button>
-
-
 
         {/* Link */}
         <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
@@ -388,7 +433,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
               size="sm"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"/>
+                <path d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" />
               </svg>
             </Button>
           </DialogTrigger>
@@ -405,13 +450,16 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                 <Input
                   id="link-url"
                   value={linkUrl}
-                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onChange={e => setLinkUrl(e.target.value)}
                   placeholder="https://example.com"
                 />
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsLinkDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsLinkDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={addLink}>Add Link</Button>
@@ -424,7 +472,11 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd"/>
+                <path
+                  fillRule="evenodd"
+                  d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                  clipRule="evenodd"
+                />
               </svg>
             </Button>
           </DialogTrigger>
@@ -441,7 +493,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                 <Input
                   id="image-url"
                   value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
+                  onChange={e => setImageUrl(e.target.value)}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -469,7 +521,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                       id="image-width"
                       type="number"
                       value={imageWidth}
-                      onChange={(e) => setImageWidth(e.target.value)}
+                      onChange={e => setImageWidth(e.target.value)}
                       placeholder="400"
                     />
                   </div>
@@ -479,7 +531,7 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                       id="image-height"
                       type="number"
                       value={imageHeight}
-                      onChange={(e) => setImageHeight(e.target.value)}
+                      onChange={e => setImageHeight(e.target.value)}
                       placeholder="auto"
                     />
                   </div>
@@ -487,7 +539,10 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
               )}
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsImageDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={addImage}>Add Image</Button>
@@ -496,18 +551,23 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         </Dialog>
 
         {/* YouTube */}
-        <Dialog open={isYoutubeDialogOpen} onOpenChange={setIsYoutubeDialogOpen}>
+        <Dialog
+          open={isYoutubeDialogOpen}
+          onOpenChange={setIsYoutubeDialogOpen}
+        >
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" title="Insert YouTube">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.3 3.5 12 3.5 12 3.5s-7.3 0-9.4.6A3 3 0 00.5 6.2 31.2 31.2 0 000 12a31.2 31.2 0 00.5 5.8 3 3 0 002.1 2.1c2.1.6 9.4.6 9.4.6s7.3 0 9.4-.6a3 3 0 002.1-2.1A31.2 31.2 0 0024 12a31.2 31.2 0 00-.5-5.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>
+                <path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.3 3.5 12 3.5 12 3.5s-7.3 0-9.4.6A3 3 0 00.5 6.2 31.2 31.2 0 000 12a31.2 31.2 0 00.5 5.8 3 3 0 002.1 2.1c2.1.6 9.4.6 9.4.6s7.3 0 9.4-.6a3 3 0 002.1-2.1A31.2 31.2 0 0024 12a31.2 31.2 0 00-.5-5.8zM9.75 15.02V8.98L15.5 12l-5.75 3.02z" />
               </svg>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Insert YouTube video</DialogTitle>
-              <DialogDescription>Paste a YouTube URL. It will be embedded responsively.</DialogDescription>
+              <DialogDescription>
+                Paste a YouTube URL. It will be embedded responsively.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -515,13 +575,18 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
                 <Input
                   id="youtube-url"
                   value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  onChange={e => setYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="youtube-size">Size</Label>
-                <Select value={youtubeSize} onValueChange={(v) => setYoutubeSize(v as 'small' | 'medium' | 'large')}>
+                <Select
+                  value={youtubeSize}
+                  onValueChange={v =>
+                    setYoutubeSize(v as 'small' | 'medium' | 'large')
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -534,7 +599,10 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
               </div>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsYoutubeDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsYoutubeDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={addYouTube}>Insert</Button>
@@ -546,10 +614,16 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 000 2h1.4l.7 4.5a1 1 0 00.98.75h7.84a1 1 0 00.98-.75L15.6 6H17a1 1 0 100-2H3zM6 8h8v8H6V8z"/>
+            <path d="M3 4a1 1 0 000 2h1.4l.7 4.5a1 1 0 00.98.75h7.84a1 1 0 00.98-.75L15.6 6H17a1 1 0 100-2H3zM6 8h8v8H6V8z" />
           </svg>
         </Button>
 
@@ -563,7 +637,11 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           disabled={!editor.can().undo()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8l3.707-3.707a1 1 0 011.414 0z" clipRule="evenodd"/>
+            <path
+              fillRule="evenodd"
+              d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414L2.586 8l3.707-3.707a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
           </svg>
         </Button>
 
@@ -574,7 +652,11 @@ const RichTextEditor = ({ content, onChange, placeholder, className }: RichTextE
           disabled={!editor.can().redo()}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M12.293 3.293a1 1 0 011.414 0L17.414 7l-3.707 3.707a1 1 0 01-1.414-1.414L14.586 7H9a5 5 0 00-5 5v2a1 1 0 11-2 0v-2a7 7 0 017-7h5.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd"/>
+            <path
+              fillRule="evenodd"
+              d="M12.293 3.293a1 1 0 011.414 0L17.414 7l-3.707 3.707a1 1 0 01-1.414-1.414L14.586 7H9a5 5 0 00-5 5v2a1 1 0 11-2 0v-2a7 7 0 017-7h5.586l-2.293-2.293a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </Button>
       </div>

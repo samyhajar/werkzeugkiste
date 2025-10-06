@@ -1,13 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { formatDateSafely } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -48,32 +54,34 @@ interface StorageTemplate {
 }
 
 interface ApiResponse<T> {
-  success?: boolean;
-  data?: T;
-  error?: string;
+  success?: boolean
+  data?: T
+  error?: string
 }
 
 interface CertificatesResponse extends ApiResponse<Certificate[]> {
-  certificates?: Certificate[];
+  certificates?: Certificate[]
 }
 
 interface UsersResponse extends ApiResponse<User[]> {
-  users?: User[];
+  users?: User[]
 }
 
 interface ModulesResponse extends ApiResponse<Module[]> {
-  modules?: Module[];
+  modules?: Module[]
 }
 
 interface StorageTemplatesResponse extends ApiResponse<StorageTemplate[]> {
-  templates?: StorageTemplate[];
+  templates?: StorageTemplate[]
 }
 
 export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [modules, setModules] = useState<Module[]>([])
-  const [storageTemplates, setStorageTemplates] = useState<StorageTemplate[]>([])
+  const [storageTemplates, setStorageTemplates] = useState<StorageTemplate[]>(
+    []
+  )
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [selectedUser, setSelectedUser] = useState('')
@@ -90,7 +98,7 @@ export default function CertificatesPage() {
           fetchCertificates(),
           fetchUsers(),
           fetchModules(),
-          fetchStorageTemplates()
+          fetchStorageTemplates(),
         ])
       } catch (error) {
         console.error('Error loading data:', error)
@@ -110,12 +118,12 @@ export default function CertificatesPage() {
     return () => clearTimeout(timeoutId)
   }, [])
 
-    const fetchCertificates = async () => {
+  const fetchCertificates = async () => {
     try {
       const response = await fetch('/api/admin/certificates')
 
       if (response.ok) {
-        const _data = await response.json() as CertificatesResponse
+        const _data = (await response.json()) as CertificatesResponse
         setCertificates(_data.certificates || [])
       } else {
         const errorData = await response.json()
@@ -127,7 +135,7 @@ export default function CertificatesPage() {
     }
   }
 
-    const fetchUsers = async () => {
+  const fetchUsers = async () => {
     try {
       const response = await fetch('/api/admin/users')
 
@@ -144,7 +152,7 @@ export default function CertificatesPage() {
     }
   }
 
-    const fetchModules = async () => {
+  const fetchModules = async () => {
     try {
       const response = await fetch('/api/admin/modules')
 
@@ -161,12 +169,12 @@ export default function CertificatesPage() {
     }
   }
 
-    const fetchStorageTemplates = async () => {
+  const fetchStorageTemplates = async () => {
     try {
       const response = await fetch('/api/admin/storage-templates')
 
       if (response.ok) {
-        const _data = await response.json() as StorageTemplatesResponse
+        const _data = (await response.json()) as StorageTemplatesResponse
         if (_data.success) {
           setStorageTemplates(_data.templates || [])
         } else {
@@ -196,8 +204,8 @@ export default function CertificatesPage() {
           templateId: selectedTemplate,
           showName,
           showDate,
-          showCertificateNumber
-        })
+          showCertificateNumber,
+        }),
       })
 
       if (response.ok) {
@@ -209,7 +217,10 @@ export default function CertificatesPage() {
       } else {
         const errorData = await response.json()
         console.error('Error generating certificate:', errorData)
-        alert('Fehler beim Generieren des Zertifikats: ' + (errorData.error || 'Unbekannter Fehler'))
+        alert(
+          'Fehler beim Generieren des Zertifikats: ' +
+            (errorData.error || 'Unbekannter Fehler')
+        )
       }
     } catch (error) {
       console.error('Error generating certificate:', error)
@@ -221,27 +232,34 @@ export default function CertificatesPage() {
 
   const downloadCertificate = async (fileUrl: string) => {
     try {
-      // Get signed URL for the certificate
-      const response = await fetch(`/api/admin/certificates/download?url=${encodeURIComponent(fileUrl)}`)
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'certificate.pdf'
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
-      } else {
-        console.error('Error downloading certificate')
+      const response = await fetch(
+        `/api/admin/certificates/download?url=${encodeURIComponent(fileUrl)}`
+      )
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Error downloading certificate:', errorData)
+        alert(
+          'Fehler beim Herunterladen des Zertifikats: ' +
+            (errorData.error || 'Unbekannter Fehler')
+        )
+        return
       }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'certificate.pdf'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error('Error downloading certificate:', error)
+      alert('Fehler beim Herunterladen des Zertifikats')
     }
   }
 
-    const deleteCertificate = async (userId: string, moduleId: string) => {
+  const deleteCertificate = async (userId: string, moduleId: string) => {
     try {
       const response = await fetch(`/api/admin/certificates/delete`, {
         method: 'DELETE',
@@ -272,7 +290,7 @@ export default function CertificatesPage() {
 
       const response = await fetch('/api/admin/upload-template', {
         method: 'POST',
-        body: formData
+        body: formData,
       })
 
       if (response.ok) {
@@ -281,7 +299,10 @@ export default function CertificatesPage() {
       } else {
         const errorData = await response.json()
         console.error('Error uploading template:', errorData)
-        alert('Fehler beim Hochladen der Vorlage: ' + (errorData.error || 'Unbekannter Fehler'))
+        alert(
+          'Fehler beim Hochladen der Vorlage: ' +
+            (errorData.error || 'Unbekannter Fehler')
+        )
       }
     } catch (error) {
       console.error('Error uploading template:', error)
@@ -322,7 +343,9 @@ export default function CertificatesPage() {
       {/* Generate Certificate */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Zertifikat generieren</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Zertifikat generieren
+          </h2>
           <p className="text-gray-600">
             Erstellen Sie ein neues Zertifikat für einen Benutzer.
           </p>
@@ -330,13 +353,15 @@ export default function CertificatesPage() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="user" className="text-sm font-medium text-gray-700">Benutzer</Label>
+            <Label htmlFor="user" className="text-sm font-medium text-gray-700">
+              Benutzer
+            </Label>
             <Select value={selectedUser} onValueChange={setSelectedUser}>
               <SelectTrigger className="bg-white border-gray-300 focus:border-[#486681] focus:ring-[#486681]">
                 <SelectValue placeholder="Benutzer auswählen" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-300">
-                {users.map((user) => (
+                {users.map(user => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name} ({user.email})
                   </SelectItem>
@@ -346,13 +371,18 @@ export default function CertificatesPage() {
           </div>
 
           <div>
-            <Label htmlFor="module" className="text-sm font-medium text-gray-700">Modul</Label>
+            <Label
+              htmlFor="module"
+              className="text-sm font-medium text-gray-700"
+            >
+              Modul
+            </Label>
             <Select value={selectedModule} onValueChange={setSelectedModule}>
               <SelectTrigger className="bg-white border-gray-300 focus:border-[#486681] focus:ring-[#486681]">
                 <SelectValue placeholder="Modul auswählen" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-300">
-                {modules.map((module) => (
+                {modules.map(module => (
                   <SelectItem key={module.id} value={module.id}>
                     {module.title}
                   </SelectItem>
@@ -362,13 +392,21 @@ export default function CertificatesPage() {
           </div>
 
           <div>
-            <Label htmlFor="template" className="text-sm font-medium text-gray-700">Vorlage</Label>
-            <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+            <Label
+              htmlFor="template"
+              className="text-sm font-medium text-gray-700"
+            >
+              Vorlage
+            </Label>
+            <Select
+              value={selectedTemplate}
+              onValueChange={setSelectedTemplate}
+            >
               <SelectTrigger className="bg-white border-gray-300 focus:border-[#486681] focus:ring-[#486681]">
                 <SelectValue placeholder="Vorlage auswählen" />
               </SelectTrigger>
               <SelectContent className="bg-white border-gray-300">
-                {storageTemplates.map((template) => (
+                {storageTemplates.map(template => (
                   <SelectItem key={template.id} value={template.id}>
                     {template.name}
                   </SelectItem>
@@ -382,31 +420,45 @@ export default function CertificatesPage() {
               <Checkbox
                 id="showName"
                 checked={showName}
-                onCheckedChange={(checked) => setShowName(checked)}
+                onCheckedChange={checked => setShowName(checked)}
               />
-              <Label htmlFor="showName" className="text-sm text-gray-700">Namen anzeigen</Label>
+              <Label htmlFor="showName" className="text-sm text-gray-700">
+                Namen anzeigen
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="showDate"
                 checked={showDate}
-                onCheckedChange={(checked) => setShowDate(checked)}
+                onCheckedChange={checked => setShowDate(checked)}
               />
-              <Label htmlFor="showDate" className="text-sm text-gray-700">Datum anzeigen</Label>
+              <Label htmlFor="showDate" className="text-sm text-gray-700">
+                Datum anzeigen
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="showCertificateNumber"
                 checked={showCertificateNumber}
-                onCheckedChange={(checked) => setShowCertificateNumber(checked)}
+                onCheckedChange={checked => setShowCertificateNumber(checked)}
               />
-              <Label htmlFor="showCertificateNumber" className="text-sm text-gray-700">Zertifikatsnummer anzeigen</Label>
+              <Label
+                htmlFor="showCertificateNumber"
+                className="text-sm text-gray-700"
+              >
+                Zertifikatsnummer anzeigen
+              </Label>
             </div>
           </div>
 
           <Button
             onClick={() => void generateCertificate()}
-            disabled={generating || !selectedUser || !selectedModule || !selectedTemplate}
+            disabled={
+              generating ||
+              !selectedUser ||
+              !selectedModule ||
+              !selectedTemplate
+            }
             className="w-full bg-[#486681] hover:bg-[#3e5570] text-white"
           >
             {generating ? 'Generiere...' : 'Zertifikat generieren'}
@@ -417,14 +469,19 @@ export default function CertificatesPage() {
       {/* Upload Template */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Vorlage hochladen</h2>
-          <p className="text-gray-600">
-            Laden Sie eine PDF-Vorlage hoch.
-          </p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Vorlage hochladen
+          </h2>
+          <p className="text-gray-600">Laden Sie eine PDF-Vorlage hoch.</p>
         </div>
 
         <div>
-          <Label htmlFor="fileUpload" className="text-sm font-medium text-gray-700">PDF-Datei auswählen</Label>
+          <Label
+            htmlFor="fileUpload"
+            className="text-sm font-medium text-gray-700"
+          >
+            PDF-Datei auswählen
+          </Label>
           <Input
             id="fileUpload"
             type="file"
@@ -438,14 +495,14 @@ export default function CertificatesPage() {
       {/* Existing Certificates */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Vorhandene Zertifikate</h2>
-          <p className="text-gray-600">
-            Alle generierten Zertifikate.
-          </p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Vorhandene Zertifikate
+          </h2>
+          <p className="text-gray-600">Alle generierten Zertifikate.</p>
         </div>
 
         <div className="space-y-4">
-                    {certificates
+          {certificates
             .filter(certificate => certificate.user_id && certificate.module_id)
             .map((certificate, index) => (
               <div
@@ -454,10 +511,16 @@ export default function CertificatesPage() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="bg-[#486681] text-white">
+                    <Badge
+                      variant="secondary"
+                      className="bg-[#486681] text-white"
+                    >
                       {certificate.user?.full_name || 'Unbekannter Benutzer'}
                     </Badge>
-                    <Badge variant="outline" className="border-gray-300 text-gray-700">
+                    <Badge
+                      variant="outline"
+                      className="border-gray-300 text-gray-700"
+                    >
                       {certificate.module?.title || 'Unbekanntes Modul'}
                     </Badge>
                   </div>
@@ -469,7 +532,9 @@ export default function CertificatesPage() {
                   {certificate.pdf_url && (
                     <Button
                       size="sm"
-                      onClick={() => void downloadCertificate(certificate.pdf_url)}
+                      onClick={() =>
+                        void downloadCertificate(certificate.pdf_url)
+                      }
                       className="bg-[#486681] hover:bg-[#3e5570] text-white"
                     >
                       Herunterladen
@@ -477,7 +542,12 @@ export default function CertificatesPage() {
                   )}
                   <Button
                     size="sm"
-                    onClick={() => void deleteCertificate(certificate.user_id, certificate.module_id)}
+                    onClick={() =>
+                      void deleteCertificate(
+                        certificate.user_id,
+                        certificate.module_id
+                      )
+                    }
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     Löschen
@@ -493,7 +563,8 @@ export default function CertificatesPage() {
           {certificates.filter(c => !c.user_id || !c.module_id).length > 0 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-yellow-800 text-sm">
-                ⚠️ {certificates.filter(c => !c.user_id || !c.module_id).length} Zertifikat(e) mit ungültigen Daten gefunden und ausgeblendet.
+                ⚠️ {certificates.filter(c => !c.user_id || !c.module_id).length}{' '}
+                Zertifikat(e) mit ungültigen Daten gefunden und ausgeblendet.
               </p>
             </div>
           )}
@@ -503,14 +574,14 @@ export default function CertificatesPage() {
       {/* Storage Templates */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Hochgeladene Vorlagen</h2>
-          <p className="text-gray-600">
-            Alle verfügbaren PDF-Vorlagen.
-          </p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Hochgeladene Vorlagen
+          </h2>
+          <p className="text-gray-600">Alle verfügbaren PDF-Vorlagen.</p>
         </div>
 
         <div className="space-y-4">
-          {storageTemplates.map((template) => (
+          {storageTemplates.map(template => (
             <div
               key={template.id}
               className="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50"
@@ -524,7 +595,11 @@ export default function CertificatesPage() {
                   Aktualisiert: {formatDateSafely(template.updated_at)}
                 </p>
               </div>
-              <Button size="sm" variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
                 Verwenden
               </Button>
             </div>

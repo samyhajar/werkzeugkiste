@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
 
     const { lesson_id } = await request.json()
 
+    // Diagnostics: log who is writing progress and what
+    console.log('[progress:POST] incoming', {
+      env_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      lesson_id,
+      time: new Date().toISOString(),
+    })
+
     if (!lesson_id) {
       return NextResponse.json(
         { success: false, error: 'lesson_id is required' },
@@ -44,19 +51,24 @@ export async function POST(request: NextRequest) {
     )
 
     if (error) {
-      console.error('Error updating lesson progress:', error)
+      console.error('[progress:POST] upsert error', error)
       return NextResponse.json(
         { success: false, error: 'Failed to update progress' },
         { status: 500 }
       )
     }
 
+    console.log('[progress:POST] upsert ok', {
+      user_id: user.id,
+      lesson_id,
+    })
+
     return NextResponse.json({
       success: true,
       message: 'Lesson marked as complete',
     })
   } catch (error) {
-    console.error('Progress API error:', error)
+    console.error('[progress:POST] error', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

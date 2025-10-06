@@ -8,6 +8,13 @@ export async function POST(
   try {
     const { id } = await params
     const { answers, textAnswers = {} } = await request.json()
+    console.log('[quiz:submit] incoming', {
+      env_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      quiz_id: id,
+      answers_keys: Object.keys(answers || {}),
+      text_keys: Object.keys(textAnswers || {}),
+      time: new Date().toISOString(),
+    })
     const supabase = await createClient()
 
     // Get current user
@@ -140,12 +147,20 @@ export async function POST(
       .single()
 
     if (attemptError) {
-      console.error('Error saving quiz attempt:', attemptError)
+      console.error('[quiz:submit] upsert error', attemptError)
       return NextResponse.json(
         { success: false, error: 'Failed to save quiz attempt' },
         { status: 500 }
       )
     }
+
+    console.log('[quiz:submit] upsert ok', {
+      user_id: user.id,
+      quiz_id: id,
+      attempt_id: attempt.id,
+      passed,
+      scorePercentage,
+    })
 
     return NextResponse.json({
       success: true,

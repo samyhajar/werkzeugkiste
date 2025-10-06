@@ -11,7 +11,7 @@ export default async function AdminPagesList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white">Seiten</h1>
-          <p className="text-white mt-2">Statische Inhalte wie Über uns, Fragen und Digi-Sammlung</p>
+          <p className="text-white mt-2">Statische Inhalte wie Über uns, sogehts und Digi-Sammlung</p>
         </div>
       </div>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">

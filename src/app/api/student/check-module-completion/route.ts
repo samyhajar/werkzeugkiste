@@ -28,6 +28,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 0. Fetch all modules ordered by 'order' to determine the first four modules
+    const { data: allModules, error: modulesError } = await supabase
+      .from('modules')
+      .select('id, order')
+      .order('order', { ascending: true })
+
+    if (modulesError || !allModules || allModules.length < 4) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Module list error or less than 4 modules exist',
+        },
+        { status: 500 }
+      )
+    }
+
+    // Get the first four modules by order
+    const firstFourModules = allModules.slice(0, 4)
+    const firstFourModuleIds = firstFourModules.map(m => m.id)
+    const isFirstFourModule = firstFourModuleIds.includes(moduleId)
+
     // 1. Get all courses for this module
     const { data: moduleCourses, error: coursesError } = await supabase
       .from('courses')
@@ -161,12 +182,107 @@ export async function POST(request: NextRequest) {
       allQuizzesPassed = true
     }
 
-    // 4. If all lessons are completed AND all quizzes are passed, generate certificates for each course
+    // 4. If all lessons are completed AND all quizzes are passed, check all first four modules
     if (
       allLessonsCompleted &&
       allQuizzesPassed &&
       completedCourses.length > 0
     ) {
+      // Only proceed if this is one of the first four modules
+      if (!isFirstFourModule) {
+        return NextResponse.json({
+          success: true,
+          message:
+            'Module completed! Certificate is only issued after completing the first four modules.',
+          certificatesGenerated: 0,
+          lessonsCompleted: allLessonsCompleted,
+          quizzesPassed: allQuizzesPassed,
+          passedQuizzes,
+          failedQuizzes,
+          totalQuizzes: allQuizzes?.length || 0,
+        })
+      }
+
+      // Check if user has completed all lessons and quizzes in ALL first four modules
+      let allFirstFourModulesComplete = true
+      for (const mod of firstFourModules) {
+        // Get all courses for this module
+        const { data: modCourses } = await supabase
+          .from('courses')
+          .select('id')
+          .eq('module_id', mod.id)
+        if (!modCourses) {
+          allFirstFourModulesComplete = false
+          break
+        }
+        // Get all lessons for these courses
+        const { data: modLessons } = await supabase
+          .from('lessons')
+          .select('id')
+          .in(
+            'course_id',
+            modCourses.map(c => c.id)
+          )
+        // Get all quizzes for these courses
+        const { data: modQuizzes } = await supabase
+          .from('enhanced_quizzes')
+          .select('id')
+          .in(
+            'course_id',
+            modCourses.map(c => c.id)
+          )
+        // Check lesson completion — if no lessons exist, consider lessons requirement satisfied
+        let allLessonsDone = true
+        if (modLessons && modLessons.length > 0) {
+          const { data: modCompletedLessons } = await supabase
+            .from('lesson_progress')
+            .select('lesson_id')
+            .eq('student_id', user.id)
+            .in(
+              'lesson_id',
+              modLessons.map(l => l.id)
+            )
+          allLessonsDone =
+            !!modCompletedLessons &&
+            modCompletedLessons.length === modLessons.length
+        }
+        // Check quiz completion — if no quizzes exist, consider quizzes requirement satisfied
+        let allQuizzesDone = true
+        if (modQuizzes && modQuizzes.length > 0) {
+          const { data: modQuizAttempts } = await supabase
+            .from('enhanced_quiz_attempts')
+            .select('quiz_id, passed')
+            .eq('user_id', user.id)
+            .in(
+              'quiz_id',
+              modQuizzes.map(q => q.id)
+            )
+          for (const quiz of modQuizzes) {
+            const attempt = modQuizAttempts?.find(a => a.quiz_id === quiz.id)
+            if (!attempt || !attempt.passed) {
+              allQuizzesDone = false
+              break
+            }
+          }
+        }
+        if (!allLessonsDone || !allQuizzesDone) {
+          allFirstFourModulesComplete = false
+          break
+        }
+      }
+      if (!allFirstFourModulesComplete) {
+        return NextResponse.json({
+          success: true,
+          message:
+            'Module completed! Certificate is only issued after completing all lessons and quizzes in the first four modules.',
+          certificatesGenerated: 0,
+          lessonsCompleted: allLessonsCompleted,
+          quizzesPassed: allQuizzesPassed,
+          passedQuizzes,
+          failedQuizzes,
+          totalQuizzes: allQuizzes?.length || 0,
+        })
+      }
       // Get user profile for certificate generation
       const { data: userProfile } = await supabase
         .from('profiles')
@@ -174,19 +290,20 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      // Get module information
+      // Program certificate: bind to the 4th module by order
+      const programModuleId = firstFourModules[3].id
       const { data: module } = await supabase
         .from('modules')
         .select('title')
-        .eq('id', moduleId)
+        .eq('id', programModuleId)
         .single()
 
-      // Check if certificate already exists
+      // Check if program certificate already exists (tied to 4th module)
       const { data: existingCertificate } = await supabase
         .from('certificates')
         .select('id')
         .eq('user_id', user.id)
-        .eq('module_id', moduleId)
+        .eq('module_id', programModuleId)
         .single()
 
       if (existingCertificate) {
@@ -287,7 +404,7 @@ export async function POST(request: NextRequest) {
         const pdfBytes = await pdf.save()
 
         // Upload the generated certificate to storage
-        const certificatePath = `certificates/${user.id}/${moduleId}.pdf`
+        const certificatePath = `certificates/${user.id}/${programModuleId}.pdf`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('certificates')
           .upload(certificatePath, pdfBytes, {
@@ -308,7 +425,7 @@ export async function POST(request: NextRequest) {
           .from('certificates')
           .insert({
             user_id: user.id,
-            module_id: moduleId,
+            module_id: programModuleId,
             pdf_url: certificatePath,
             issued_at: new Date().toISOString(),
           })

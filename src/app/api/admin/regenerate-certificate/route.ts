@@ -1,10 +1,10 @@
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server-client'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const body = await request.json()
     const { userId, moduleId } = body
 
@@ -22,98 +22,87 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
       .single()
 
-    // Get module information
-    const { data: module } = await supabase
+    // Ensure module exists (needed for FK constraint)
+    const { data: module, error: moduleError } = await supabase
       .from('modules')
-      .select('title')
+      .select('id')
       .eq('id', moduleId)
       .single()
 
-    if (!module) {
+    if (moduleError || !module) {
       return NextResponse.json(
         { success: false, error: 'Module not found' },
         { status: 404 }
       )
     }
 
-    // Generate PDF certificate
+    // Load JPG certificate template
+    const { data: templateData, error: templateError } = await supabase.storage
+      .from('certificates')
+      .download('templates/zertifikat-leer-3.jpg')
+
+    if (templateError || !templateData) {
+      console.error('Template download error:', templateError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to load certificate template.' },
+        { status: 500 }
+      )
+    }
+
+    const templateBytes = await templateData.arrayBuffer()
+
+    // Create PDF
     const pdf = await PDFDocument.create()
-    const page = pdf.addPage([595.28, 841.89]) // A4 portrait
+    const page = pdf.addPage([595, 842]) // A4 portrait
+
+    // Embed JPG as background
+    const jpgImage = await pdf.embedJpg(templateBytes)
+    page.drawImage(jpgImage, {
+      x: 0,
+      y: 0,
+      width: page.getWidth(),
+      height: page.getHeight(),
+    })
 
     const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold)
     const fontRegular = await pdf.embedFont(StandardFonts.Helvetica)
+    const centerX = page.getWidth() / 2
 
-    // Add text to the certificate
-    page.drawText('ZERTIFIKAT', {
-      x: 150,
-      y: 700,
-      size: 24,
-      font: fontBold,
-      color: rgb(0, 0, 0),
-    })
-    page.drawText('Digi+ Werkzeugkiste', {
-      x: 150,
-      y: 670,
-      size: 16,
-      font: fontRegular,
-      color: rgb(0, 0, 0),
-    })
-    page.drawText('Hiermit wird bestätigt, dass', {
-      x: 150,
-      y: 600,
-      size: 14,
-      font: fontRegular,
-      color: rgb(0, 0, 0),
-    })
+    const drawCenteredText = (
+      text: string,
+      y: number,
+      size: number,
+      font: any
+    ) => {
+      const textWidth = font.widthOfTextAtSize(text, size)
+      page.drawText(text, {
+        x: centerX - textWidth / 2,
+        y,
+        size,
+        font,
+        color: rgb(0, 0, 0),
+      })
+    }
+
+    // Certificate content
+    drawCenteredText('ZERTIFIKAT', 700, 28, fontBold)
+    drawCenteredText('Digi+ Werkzeugkiste', 670, 18, fontRegular)
+    drawCenteredText('Hiermit wird bestätigt, dass', 620, 14, fontRegular)
 
     const userName = userProfile?.full_name || 'Unbekannter Benutzer'
-    page.drawText(userName, {
-      x: 150,
-      y: 570,
-      size: 20,
-      font: fontBold,
-      color: rgb(0, 0, 0),
-    })
-    page.drawText('erfolgreich abgeschlossen hat:', {
-      x: 150,
-      y: 540,
-      size: 14,
-      font: fontRegular,
-      color: rgb(0, 0, 0),
-    })
+    drawCenteredText(userName, 590, 22, fontBold)
 
-    // Module title
-    page.drawText(module.title, {
-      x: 150,
-      y: 500,
-      size: 16,
-      font: fontBold,
-      color: rgb(0, 0, 0),
-    })
+    drawCenteredText('erfolgreich abgeschlossen hat.', 560, 14, fontRegular)
 
-    // Date
+    // Date + certificate number
     const date = new Date().toLocaleDateString('de-AT')
-    page.drawText(`Ausgestellt am: ${date}`, {
-      x: 150,
-      y: 400,
-      size: 12,
-      font: fontRegular,
-      color: rgb(0, 0, 0),
-    })
-
-    // Certificate number
     const certNumber = `ZERT-${Date.now().toString().slice(-6)}`
-    page.drawText(`Zertifikat-Nr.: ${certNumber}`, {
-      x: 150,
-      y: 380,
-      size: 10,
-      font: fontRegular,
-      color: rgb(0, 0, 0),
-    })
+    drawCenteredText(`Ausgestellt am: ${date}`, 500, 12, fontRegular)
+    drawCenteredText(`Zertifikat-Nr.: ${certNumber}`, 480, 10, fontRegular)
 
     const pdfBytes = await pdf.save()
 
-    // Upload the generated certificate to storage
+    // Upload certificate to storage
     const certificatePath = `certificates/${userId}/${moduleId}.pdf`
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('certificates')
@@ -133,17 +122,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update or insert certificate record
+    // Save record (now with valid module_id)
     const { error: upsertError } = await supabase.from('certificates').upsert(
       {
         user_id: userId,
-        module_id: moduleId,
+        module_id: moduleId, // required by FK + NOT NULL
         pdf_url: certificatePath,
         issued_at: new Date().toISOString(),
       },
-      {
-        onConflict: 'user_id,module_id',
-      }
+      { onConflict: 'user_id,module_id' }
     )
 
     if (upsertError) {
@@ -157,18 +144,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(
-      `Certificate regenerated for user ${userId}, module ${moduleId}`
-    )
-
     return NextResponse.json({
       success: true,
-      message: 'Certificate regenerated successfully',
+      message: 'Certificate generated successfully',
       certificatePath,
       uploadData,
     })
   } catch (error) {
-    console.error('Certificate regeneration error:', error)
+    console.error('Certificate generation error:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
