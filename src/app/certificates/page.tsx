@@ -73,6 +73,15 @@ export default function CertificatesPage() {
             (module: { id: string }) => module.id === cert.module_id
           ) || {},
       }))
+      console.table(
+        certsWithModules.map(cert => ({
+          moduleId: cert.module_id,
+          moduleTitle: cert.module?.title,
+          pdfUrl: cert.pdf_url,
+          issuedAt: cert.issued_at,
+        })),
+        ['moduleId', 'moduleTitle', 'pdfUrl', 'issuedAt']
+      )
       setCertificates(certsWithModules)
     } catch (error) {
       console.error('Error fetching certificates:', error)
@@ -98,22 +107,53 @@ export default function CertificatesPage() {
       setDownloadingId(certificate.module_id)
       const supabase = getBrowserClient()
 
-      const storedPath = certificate.pdf_url
+      const storedPath = certificate.pdf_url ?? ''
       const fallbackPath = `${certificate.user_id}/${certificate.module_id}.pdf`
-      const normalizedPath = (storedPath || fallbackPath).replace(/^certificates\//, '')
 
-      const { data: publicData } = supabase.storage
-        .from('certificates')
-        .getPublicUrl(normalizedPath)
+      const candidatePaths = Array.from(
+        new Set(
+          [
+            storedPath.replace(/^certificates\//, ''),
+            storedPath,
+            fallbackPath,
+            `certificates/${fallbackPath}`,
+          ].filter(Boolean),
+        ),
+      )
 
-      const downloadUrl = publicData?.publicUrl
+      console.debug('Downloading certificate', {
+        storedPath,
+        fallbackPath,
+        candidatePaths,
+      })
 
-      if (!downloadUrl) {
-        throw new Error('Certificate URL could not be resolved')
+      let signedUrl: string | undefined
+      let lastError: unknown
+
+      for (const path of candidatePaths) {
+        try {
+          const { data, error } = await supabase.storage
+            .from('certificates')
+            .createSignedUrl(path, 60 * 60)
+
+          if (error || !data?.signedUrl) {
+            lastError = error || new Error('Signed URL missing')
+            continue
+          }
+
+          signedUrl = data.signedUrl
+          break
+        } catch (error) {
+          lastError = error
+        }
+      }
+
+      if (!signedUrl) {
+        throw lastError || new Error('Signed URL missing')
       }
 
       const a = document.createElement('a')
-      a.href = downloadUrl
+      a.href = signedUrl
       a.download = `zertifikat-${certificate.module_id}.pdf`
       document.body.appendChild(a)
       a.click()

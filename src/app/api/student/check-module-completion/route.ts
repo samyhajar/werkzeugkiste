@@ -221,19 +221,19 @@ export async function POST(request: NextRequest) {
       }
 
       if (objectExists) {
-        return NextResponse.json({
-          success: true,
-          message: 'Module completed! Certificate already exists.',
-          certificatesGenerated: 0,
-          lessonsCompleted: true,
-          quizzesPassed: true,
-          passedQuizzes,
-          failedQuizzes,
-          totalQuizzes,
-          certificatePath: existingCertificate.pdf_url,
-          issuedAt: existingCertificate.issued_at,
-          certificateNumber: existingCertificateNumber,
-        })
+      return NextResponse.json({
+        success: true,
+        message: 'Module completed! Certificate already exists.',
+        certificatesGenerated: 0,
+        lessonsCompleted: true,
+        quizzesPassed: true,
+        passedQuizzes,
+        failedQuizzes,
+        totalQuizzes,
+        certificatePath: existingCertificate.pdf_url,
+        issuedAt: existingCertificate.issued_at,
+        certificateNumber: existingCertificateNumber,
+      })
       }
 
       console.warn('Existing certificate record found but file missing, regenerating.', {
