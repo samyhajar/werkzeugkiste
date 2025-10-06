@@ -78,7 +78,7 @@ const RichTextEditor = ({
         HTMLAttributes: {
           target: '_blank',
           rel: 'noopener noreferrer',
-          class: 'text-blue-600 underline hover:text-blue-800', // optional styling
+          class: 'text-[#de0647] underline hover:text-[#b0033d]', // optional styling
         },
       }),
 

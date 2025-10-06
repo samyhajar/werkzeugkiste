@@ -93,7 +93,7 @@ export default function FragenPage() {
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-[#de0449] mb-6">Ungeklärte Fragen?</h1>
         <p className="text-gray-700">
-          Schreib&apos; eine E-Mail an <a href="mailto:digiplus@arbeitplus.at" className="text-blue-600 underline">digiplus@arbeitplus.at</a>!
+          Schreib&apos; eine E-Mail an <a href="mailto:digiplus@arbeitplus.at" className="text-[#de0647] underline">digiplus@arbeitplus.at</a>!
         </p>
       </div>
 
