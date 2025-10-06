@@ -98,16 +98,29 @@ export default function CertificatesPage() {
       setDownloadingId(moduleId)
       const supabase = getBrowserClient()
 
-      const { data, error } = await supabase.storage
+      const { data: signedData, error: signedError } = await supabase.storage
         .from('certificates')
         .createSignedUrl(`${userId}/${moduleId}.pdf`, 60 * 60)
 
-      if (error || !data?.signedUrl) {
-        throw error || new Error('Signed URL missing')
+      let downloadUrl: string | undefined
+
+      if (!signedError && signedData?.signedUrl) {
+        downloadUrl = signedData.signedUrl
+      } else {
+        console.warn('Signed download failed, falling back to public URL', signedError)
+        const { data: publicData } = supabase.storage
+          .from('certificates')
+          .getPublicUrl(`${userId}/${moduleId}.pdf`)
+
+        downloadUrl = publicData?.publicUrl
+      }
+
+      if (!downloadUrl) {
+        throw signedError || new Error('Could not resolve certificate URL')
       }
 
       const a = document.createElement('a')
-      a.href = data.signedUrl
+      a.href = downloadUrl
       a.download = `zertifikat-${moduleId}.pdf`
       document.body.appendChild(a)
       a.click()
