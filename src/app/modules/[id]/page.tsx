@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { sanitizeLessonHtml } from '@/lib/sanitize'
 import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
@@ -70,6 +71,16 @@ interface QuizContentProps {
   onBack: () => void
   onQuizCompleted?: () => void
   user?: any
+}
+
+interface CertificateModalState {
+  open: boolean
+  message?: string
+  certificateUrl?: string
+  certificateNumber?: string
+  moduleTitle?: string
+  issuedAt?: string | null
+  isNew?: boolean
 }
 
 function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) {
@@ -500,12 +511,129 @@ export default function ModuleDetailPage() {
   // Removing LoginModal in favor of dedicated login route
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+  const hasCheckedModuleCompletion = useRef(false)
+  const [certificateModal, setCertificateModal] = useState<CertificateModalState>({ open: false })
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 
   // Use AuthContext for authentication state
   const { user, loading: authLoading } = useAuth()
 
   // Add progress tracking hook
   const { markLessonComplete, isMarking } = useProgressTracking()
+
+  const buildCertificateUrl = useCallback((path?: string | null) => {
+    if (!path) {
+      return undefined
+    }
+    if (path.startsWith('http')) {
+      return path
+    }
+    if (!supabaseUrl) {
+      return undefined
+    }
+    return `${supabaseUrl}/storage/v1/object/public/${path}`
+  }, [supabaseUrl])
+
+  const handleCertificateModalClose = useCallback(() => {
+    setCertificateModal(prev => ({ ...prev, open: false }))
+  }, [])
+
+  const handleViewCertificate = useCallback(() => {
+    if (certificateModal.certificateUrl) {
+      window.open(certificateModal.certificateUrl, '_blank', 'noopener,noreferrer')
+    }
+  }, [certificateModal.certificateUrl])
+
+  const handleOpenCertificates = useCallback(() => {
+    router.push('/certificates')
+    handleCertificateModalClose()
+  }, [handleCertificateModalClose, router])
+
+  const formattedCertificateDate = certificateModal.issuedAt
+    ? new Date(certificateModal.issuedAt).toLocaleDateString('de-AT')
+    : null
+
+  const checkModuleCompletion = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!user || !moduleId) return
+
+    try {
+      const response = await fetch('/api/student/check-module-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          moduleId: moduleId,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        if (data.success) {
+          const certificateUrl = buildCertificateUrl(data.certificatePath)
+          const moduleTitle = module?.title || 'Modul'
+
+          if (!silent && data.certificatesGenerated > 0) {
+            const successToast = document.createElement('div')
+            successToast.className = 'fixed top-20 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+            successToast.innerHTML = `
+              <div class="flex items-center gap-3">
+                <div class="text-2xl">🎉</div>
+                <div>
+                  <div class="font-semibold">Modul abgeschlossen!</div>
+                  <div class="text-sm opacity-90">${data.message}</div>
+                  <div class="text-sm opacity-90 mt-1">${data.certificatesGenerated} Zertifikat(e) generiert!</div>
+                </div>
+              </div>
+            `
+            document.body.appendChild(successToast)
+
+            setTimeout(() => {
+              successToast.style.opacity = '0'
+              setTimeout(() => document.body.removeChild(successToast), 300)
+            }, 5000)
+          }
+
+          if (certificateUrl && (!silent || data.certificatesGenerated > 0)) {
+            setCertificateModal({
+              open: true,
+              message: data.message || 'Herzlichen Glückwunsch! Dein Zertifikat ist bereit.',
+              certificateUrl,
+              certificateNumber: data.certificateNumber,
+              moduleTitle,
+              issuedAt: data.issuedAt || (data.certificatesGenerated > 0 ? new Date().toISOString() : null),
+              isNew: data.certificatesGenerated > 0,
+            })
+          }
+        } else if (!silent && data.completedCourses > 0 && data.totalCourses) {
+          const progressToast = document.createElement('div')
+          progressToast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+          progressToast.innerHTML = `
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">📚</div>
+              <div>
+                <div class="font-semibold">Fortschritt!</div>
+                <div class="text-sm opacity-90">${data.completedCourses} von ${data.totalCourses} Kursen abgeschlossen</div>
+              </div>
+            </div>
+          `
+          document.body.appendChild(progressToast)
+
+          setTimeout(() => {
+            progressToast.style.opacity = '0'
+            setTimeout(() => document.body.removeChild(progressToast), 300)
+          }, 3000)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking module completion:', error)
+    }
+  }, [buildCertificateUrl, module, moduleId, user])
+
+  useEffect(() => {
+    hasCheckedModuleCompletion.current = false
+  }, [moduleId])
 
   const updateQueryParams = useCallback((updates: { lessonId?: string | null; quizId?: string | null }) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -598,13 +726,6 @@ export default function ModuleDetailPage() {
     }
   }, [lastRefetchTime, fetchModule])
 
-  useEffect(() => {
-    if (moduleId) {
-      void fetchModule()
-      void fetchUserAndProgress()
-    }
-  }, [moduleId, fetchModule])
-
   // Fetch user and progress data (only for authenticated users)
   const fetchUserAndProgress = useCallback(async () => {
     try {
@@ -655,6 +776,13 @@ export default function ModuleDetailPage() {
     }
   }, [user, moduleId, module])
 
+  useEffect(() => {
+    if (moduleId) {
+      void fetchModule()
+      void fetchUserAndProgress()
+    }
+  }, [moduleId, fetchModule, fetchUserAndProgress])
+
     // Helper function to get module-specific progress data
   const getModuleProgressData = () => {
     if (!module) return { totalLessons: 0, completedLessons: 0, percentage: 0 }
@@ -694,6 +822,19 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId, fetchModule, fetchUserAndProgress])
 
+  useEffect(() => {
+    if (!user || !module) {
+      return
+    }
+
+    if (hasCheckedModuleCompletion.current) {
+      return
+    }
+
+    hasCheckedModuleCompletion.current = true
+    void checkModuleCompletion({ silent: true })
+  }, [user, module, checkModuleCompletion])
+
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {
       const newSet = new Set(prev)
@@ -726,7 +867,7 @@ export default function ModuleDetailPage() {
     }
   }, [module, updateQueryParams])
 
-  const handleLessonComplete = async (lesson: Lesson) => {
+  const handleLessonComplete = useCallback(async (lesson: Lesson) => {
     if (!user || !lesson.id || completedLessons.has(lesson.id)) {
       return
     }
@@ -765,7 +906,7 @@ export default function ModuleDetailPage() {
         setTimeout(() => document.body.removeChild(toast), 300)
       }, 3000)
     }
-  }
+  }, [user, completedLessons, markLessonComplete, checkModuleCompletion])
 
   const selectQuiz = useCallback((quiz: Quiz, options: { updateParams?: boolean } = {}) => {
     const { updateParams = true } = options
@@ -831,70 +972,6 @@ export default function ModuleDetailPage() {
       }
     }
   }, [module, searchParams, selectLesson, selectQuiz, clearSelectedQuiz, selectedLesson, selectedQuiz, updateQueryParams])
-
-  const checkModuleCompletion = async () => {
-    if (!user || !moduleId) return
-
-    try {
-      const response = await fetch('/api/student/check-module-completion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          moduleId: moduleId,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.certificatesGenerated > 0) {
-          // Show module completion success message
-          const successToast = document.createElement('div')
-          successToast.className = 'fixed top-20 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
-          successToast.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">🎉</div>
-              <div>
-                <div class="font-semibold">Modul abgeschlossen!</div>
-                <div class="text-sm opacity-90">${data.message}</div>
-                <div class="text-sm opacity-90 mt-1">${data.certificatesGenerated} Zertifikat(e) generiert!</div>
-              </div>
-            </div>
-          `
-          document.body.appendChild(successToast)
-
-          // Remove toast after 5 seconds
-          setTimeout(() => {
-            successToast.style.opacity = '0'
-            setTimeout(() => document.body.removeChild(successToast), 300)
-          }, 5000)
-        } else if (data.success && data.completedCourses > 0) {
-          // Show progress message
-          const progressToast = document.createElement('div')
-          progressToast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
-          progressToast.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="text-2xl">📚</div>
-              <div>
-                <div class="font-semibold">Fortschritt!</div>
-                <div class="text-sm opacity-90">${data.completedCourses} von ${data.totalCourses} Kursen abgeschlossen</div>
-              </div>
-            </div>
-          `
-          document.body.appendChild(progressToast)
-
-          // Remove toast after 3 seconds
-          setTimeout(() => {
-            progressToast.style.opacity = '0'
-            setTimeout(() => document.body.removeChild(progressToast), 300)
-          }, 3000)
-        }
-      }
-    } catch (error) {
-      console.error('Error checking module completion:', error)
-    }
-  }
 
   const getTotalLessons = () => {
     if (!module) return 0
@@ -1316,6 +1393,7 @@ export default function ModuleDetailPage() {
                       onQuizCompleted={() => {
                         // Refresh quiz progress when a quiz is completed
                         setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
+                        void checkModuleCompletion()
                       }}
                       user={user}
                     />
@@ -1336,6 +1414,58 @@ export default function ModuleDetailPage() {
       </div>
 
       {/* Login modal removed; modules page uses redirect to /auth/login */}
+
+      <Dialog
+        open={certificateModal.open}
+        onOpenChange={(open) =>
+          setCertificateModal(prev => ({
+            ...prev,
+            open,
+          }))
+        }
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {certificateModal.isNew ? 'Zertifikat erstellt 🎉' : 'Zertifikat verfügbar'}
+            </DialogTitle>
+            <DialogDescription>
+              {certificateModal.message ||
+                'Du hast dieses Modul erfolgreich abgeschlossen. Dein Zertifikat steht jetzt bereit.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-2 text-sm text-gray-600">
+            {certificateModal.moduleTitle && (
+              <p className="font-medium text-gray-800">
+                Modul: {certificateModal.moduleTitle}
+              </p>
+            )}
+            {certificateModal.certificateNumber && (
+              <p>Zertifikat-Nr.: {certificateModal.certificateNumber}</p>
+            )}
+            {formattedCertificateDate && (
+              <p>Ausgestellt am: {formattedCertificateDate}</p>
+            )}
+            <p className="text-gray-500">
+              Du kannst das Zertifikat direkt ansehen und anschließend herunterladen oder alle Zertifikate im Überblick öffnen.
+            </p>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <Button variant="ghost" onClick={handleCertificateModalClose}>
+              Später
+            </Button>
+            <Button variant="outline" onClick={handleOpenCertificates}>
+              Zu meinen Zertifikaten
+            </Button>
+            <Button
+              onClick={handleViewCertificate}
+              disabled={!certificateModal.certificateUrl}
+            >
+              Zertifikat ansehen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
