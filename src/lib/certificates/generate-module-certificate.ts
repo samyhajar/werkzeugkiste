@@ -71,14 +71,16 @@ export async function generateAndStoreModuleCertificate({
     })
   }
 
-  drawCenteredText('ZERTIFIKAT', 700, 28, fontBold)
-  drawCenteredText('Digi+ Werkzeugkiste', 670, 18, fontRegular)
-  drawCenteredText('Hiermit wird bestätigt, dass', 620, 14, fontRegular)
-  drawCenteredText(userName, 590, 22, fontBold)
-  drawCenteredText('erfolgreich abgeschlossen hat.', 560, 14, fontRegular)
-  drawCenteredText(`Modul: ${moduleTitle}`, 520, 16, fontBold)
-  drawCenteredText(`Ausgestellt am: ${formattedDate}`, 500, 12, fontRegular)
-  drawCenteredText(`Zertifikat-Nr.: ${certificateNumber}`, 480, 10, fontRegular)
+  const verticalShift = -100
+
+  drawCenteredText('ZERTIFIKAT', 700 + verticalShift, 28, fontBold)
+  drawCenteredText('Digi+ Werkzeugkiste', 670 + verticalShift, 18, fontRegular)
+  drawCenteredText('Hiermit wird bestätigt, dass', 620 + verticalShift, 14, fontRegular)
+  drawCenteredText(userName, 590 + verticalShift, 22, fontBold)
+  drawCenteredText('erfolgreich abgeschlossen hat.', 560 + verticalShift, 14, fontRegular)
+  drawCenteredText(`Modul: ${moduleTitle}`, 520 + verticalShift, 16, fontBold)
+  drawCenteredText(`Ausgestellt am: ${formattedDate}`, 500 + verticalShift, 12, fontRegular)
+  drawCenteredText(`Zertifikat-Nr.: ${certificateNumber}`, 480 + verticalShift, 10, fontRegular)
 
   const pdfBytes = await pdf.save()
 

@@ -93,14 +93,30 @@ export default function CertificatesPage() {
     }
   }
 
-  const handleDownload = (moduleId: string, userId: string) => {
-    const publicUrl = `https://bdjluwlwxqdgkulkjozj.supabase.co/storage/v1/object/public/certificates/${userId}/${moduleId}.pdf`
-    const a = document.createElement('a')
-    a.href = publicUrl
-    a.download = `zertifikat-${moduleId}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+  const handleDownload = async (moduleId: string, userId: string) => {
+    try {
+      setDownloadingId(moduleId)
+      const supabase = getBrowserClient()
+
+      const { data, error } = await supabase.storage
+        .from('certificates')
+        .createSignedUrl(`${userId}/${moduleId}.pdf`, 60 * 60)
+
+      if (error || !data?.signedUrl) {
+        throw error || new Error('Signed URL missing')
+      }
+
+      const a = document.createElement('a')
+      a.href = data.signedUrl
+      a.download = `zertifikat-${moduleId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+    } catch (downloadError) {
+      console.error('Failed to download certificate:', downloadError)
+    } finally {
+      setDownloadingId(null)
+    }
   }
 
   if (authLoading || loading) {

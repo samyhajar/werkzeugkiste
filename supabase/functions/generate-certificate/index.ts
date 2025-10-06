@@ -40,7 +40,7 @@ serve(async req => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${internalSecret}`,
+        Authorization: `Bearer ${internalSecret}`,
         },
         body: JSON.stringify({ userId, moduleId }),
       })

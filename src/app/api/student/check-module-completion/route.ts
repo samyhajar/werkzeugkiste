@@ -203,18 +203,43 @@ export async function POST(request: NextRequest) {
         : null
 
     if (existingCertificate) {
-      return NextResponse.json({
-        success: true,
-        message: 'Module completed! Certificate already exists.',
-        certificatesGenerated: 0,
-        lessonsCompleted: true,
-        quizzesPassed: true,
-        passedQuizzes,
-        failedQuizzes,
-        totalQuizzes,
+      const supabaseUrl =
+        process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? null
+
+      let objectExists = false
+
+      if (supabaseUrl && existingCertificate.pdf_url) {
+        try {
+          const headResponse = await fetch(
+            `${supabaseUrl}/storage/v1/object/public/${existingCertificate.pdf_url}`,
+            { method: 'HEAD' },
+          )
+          objectExists = headResponse.ok
+        } catch (storageCheckError) {
+          console.warn('Failed to verify existing certificate object:', storageCheckError)
+        }
+      }
+
+      if (objectExists) {
+        return NextResponse.json({
+          success: true,
+          message: 'Module completed! Certificate already exists.',
+          certificatesGenerated: 0,
+          lessonsCompleted: true,
+          quizzesPassed: true,
+          passedQuizzes,
+          failedQuizzes,
+          totalQuizzes,
+          certificatePath: existingCertificate.pdf_url,
+          issuedAt: existingCertificate.issued_at,
+          certificateNumber: existingCertificateNumber,
+        })
+      }
+
+      console.warn('Existing certificate record found but file missing, regenerating.', {
+        userId: user.id,
+        moduleId,
         certificatePath: existingCertificate.pdf_url,
-        issuedAt: existingCertificate.issued_at,
-        certificateNumber: existingCertificateNumber,
       })
     }
 
