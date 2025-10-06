@@ -93,35 +93,28 @@ export default function CertificatesPage() {
     }
   }
 
-  const handleDownload = async (moduleId: string, userId: string) => {
+  const handleDownload = async (certificate: Certificate) => {
     try {
-      setDownloadingId(moduleId)
+      setDownloadingId(certificate.module_id)
       const supabase = getBrowserClient()
 
-      const { data: signedData, error: signedError } = await supabase.storage
+      const storedPath = certificate.pdf_url
+      const fallbackPath = `${certificate.user_id}/${certificate.module_id}.pdf`
+      const normalizedPath = (storedPath || fallbackPath).replace(/^certificates\//, '')
+
+      const { data: publicData } = supabase.storage
         .from('certificates')
-        .createSignedUrl(`${userId}/${moduleId}.pdf`, 60 * 60)
+        .getPublicUrl(normalizedPath)
 
-      let downloadUrl: string | undefined
-
-      if (!signedError && signedData?.signedUrl) {
-        downloadUrl = signedData.signedUrl
-      } else {
-        console.warn('Signed download failed, falling back to public URL', signedError)
-        const { data: publicData } = supabase.storage
-          .from('certificates')
-          .getPublicUrl(`${userId}/${moduleId}.pdf`)
-
-        downloadUrl = publicData?.publicUrl
-      }
+      const downloadUrl = publicData?.publicUrl
 
       if (!downloadUrl) {
-        throw signedError || new Error('Could not resolve certificate URL')
+        throw new Error('Certificate URL could not be resolved')
       }
 
       const a = document.createElement('a')
       a.href = downloadUrl
-      a.download = `zertifikat-${moduleId}.pdf`
+      a.download = `zertifikat-${certificate.module_id}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -212,9 +205,7 @@ export default function CertificatesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        handleDownload(cert.module_id, cert.user_id)
-                      }
+                      onClick={() => handleDownload(cert)}
                       disabled={downloadingId === cert.module_id}
                     >
                       {downloadingId === cert.module_id ? (
