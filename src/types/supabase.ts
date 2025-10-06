@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -157,6 +157,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: string
+          image_url: string | null
           slug: string
           sort_order: number
           title: string
@@ -166,6 +167,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_url?: string | null
           slug: string
           sort_order?: number
           title: string
@@ -175,6 +177,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          image_url?: string | null
           slug?: string
           sort_order?: number
           title?: string
@@ -1213,24 +1216,24 @@ export type Database = {
     Functions: {
       award_lesson_xp: {
         Args: {
-          user_uuid: string
           lesson_uuid: string
-          xp_amount?: number
           reason?: string
+          user_uuid: string
+          xp_amount?: number
         }
         Returns: undefined
       }
       award_quiz_xp: {
         Args: {
-          user_uuid: string
           quiz_uuid: string
-          xp_amount?: number
           reason?: string
+          user_uuid: string
+          xp_amount?: number
         }
         Returns: undefined
       }
       check_module_completion: {
-        Args: { p_student_id: string; p_module_id: string }
+        Args: { p_module_id: string; p_student_id: string }
         Returns: boolean
       }
       create_legacy_mapping: {
@@ -1239,10 +1242,10 @@ export type Database = {
       }
       create_user_with_profile: {
         Args: {
+          confirm_email?: boolean
           user_email: string
           user_password: string
           user_role?: string
-          confirm_email?: boolean
         }
         Returns: string
       }
@@ -1289,10 +1292,10 @@ export type Database = {
       validate_quiz_integrity: {
         Args: Record<PropertyKey, never>
         Returns: {
+          details: Json
           issue: string
           quiz_id: string
           quiz_legacy: string
-          details: Json
         }[]
       }
     }

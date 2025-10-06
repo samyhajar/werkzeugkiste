@@ -14,22 +14,18 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-6 text-blue-100">
-          <a
-            href="https://niederoesterreich.arbeitplus.at/impressum/"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/impressum"
             className="hover:text-white transition-colors"
           >
             Impressum
-          </a>
-          <a
-            href="https://niederoesterreich.arbeitplus.at/datenschutzerklaerung/"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            href="/datenschutzerklaerung"
             className="hover:text-white transition-colors"
           >
-            Datenschutz
-          </a>
+            Datenschutzerklaerung
+          </Link>
           <a
             href="https://niederoesterreich.arbeitplus.at/ueber-uns/team/"
             target="_blank"

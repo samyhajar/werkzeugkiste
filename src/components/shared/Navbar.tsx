@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation'
 const links = [
   { href: '/', label: 'Home' },
   { href: '/digi-sammlung', label: 'Digi-Sammlung' },
-  { href: '/fragen', label: 'Fragen' },
+  { href: '/sogehts', label: "So geht's" },
   { href: '/ueber-uns', label: 'Über uns' },
 ]
 
