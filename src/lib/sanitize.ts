@@ -25,8 +25,18 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
     }
   }
 
+  // Force links to open in a new tab consistently across lessons
+  const anchorTargetHook = (node: Element) => {
+    if (node.nodeName.toLowerCase() === 'a') {
+      const anchor = node as HTMLAnchorElement
+      anchor.setAttribute('target', '_blank')
+      anchor.setAttribute('rel', 'noopener noreferrer')
+    }
+  }
+
   // Add hook, sanitize, then remove hook to avoid global side effects
   ;(DOMPurify as any).addHook?.('uponSanitizeElement', iframeWhitelistHook)
+  ;(DOMPurify as any).addHook?.('afterSanitizeAttributes', anchorTargetHook)
   try {
     return DOMPurify.sanitize(html, {
       USE_PROFILES: { html: true },
@@ -40,12 +50,15 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
         'referrerpolicy',
         'width',
         'height',
+        'target',
+        'rel',
       ],
       FORBID_TAGS: ['script', 'style'],
       // Do NOT set ALLOWED_URI_REGEXP globally to keep <img src>, <a href>, etc. working
     })
   } finally {
     ;(DOMPurify as any).removeHook?.('uponSanitizeElement', iframeWhitelistHook)
+    ;(DOMPurify as any).removeHook?.('afterSanitizeAttributes', anchorTargetHook)
   }
 }
 
