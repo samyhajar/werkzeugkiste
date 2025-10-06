@@ -23,7 +23,7 @@ serve(async req => {
     const siteUrl =
       Deno.env.get('NEXT_PUBLIC_SITE_URL') ??
       Deno.env.get('SITE_URL') ??
-      'http://localhost:3000'
+      'https://werkzeugkiste.arbeitplus.at'
     const internalSecret =
       Deno.env.get('INTERNAL_API_SECRET') ?? 'local-dev-secret'
 
