@@ -66,7 +66,7 @@ export default function CertificatesPage() {
       if (moduleError) throw moduleError
 
       // Map module info to certificates
-      const certsWithModules = certs.map((cert: { module_id: string }) => ({
+      const certsWithModules = certs.map((cert: Certificate) => ({
         ...cert,
         module:
           modules?.find(
@@ -74,7 +74,7 @@ export default function CertificatesPage() {
           ) || {},
       }))
       console.table(
-        certsWithModules.map(cert => ({
+        certsWithModules.map((cert: Certificate) => ({
           moduleId: cert.module_id,
           moduleTitle: cert.module?.title,
           pdfUrl: cert.pdf_url,
