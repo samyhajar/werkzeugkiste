@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { CERTIFICATE_TEMPLATE_VERSION } from '@/lib/certificates/template'
 
 export async function POST(request: NextRequest) {
   try {
@@ -210,8 +211,12 @@ export async function POST(request: NextRequest) {
 
       if (supabaseUrl && existingCertificate.pdf_url) {
         try {
+          const encodedPath = existingCertificate.pdf_url
+            .split('/')
+            .map(encodeURIComponent)
+            .join('/')
           const headResponse = await fetch(
-            `${supabaseUrl}/storage/v1/object/public/${existingCertificate.pdf_url}`,
+            `${supabaseUrl}/storage/v1/object/public/${encodedPath}`,
             { method: 'HEAD' },
           )
           objectExists = headResponse.ok
@@ -221,19 +226,37 @@ export async function POST(request: NextRequest) {
       }
 
       if (objectExists) {
-      return NextResponse.json({
-        success: true,
-        message: 'Module completed! Certificate already exists.',
-        certificatesGenerated: 0,
-        lessonsCompleted: true,
-        quizzesPassed: true,
-        passedQuizzes,
-        failedQuizzes,
-        totalQuizzes,
-        certificatePath: existingCertificate.pdf_url,
-        issuedAt: existingCertificate.issued_at,
-        certificateNumber: existingCertificateNumber,
-      })
+        // Check template version; regenerate if outdated or missing
+        const metaObj =
+          typeof existingCertificate === 'object' && existingCertificate?.meta && typeof existingCertificate.meta === 'object'
+            ? (existingCertificate.meta as Record<string, unknown>)
+            : null
+        const templateVersion = metaObj?.templateVersion as string | null
+        const templateLoaded = (metaObj?.templateLoaded as boolean | undefined) ?? false
+
+        if (templateVersion === CERTIFICATE_TEMPLATE_VERSION && templateLoaded) {
+          return NextResponse.json({
+            success: true,
+            message: 'Module completed! Certificate already exists.',
+            certificatesGenerated: 0,
+            lessonsCompleted: true,
+            quizzesPassed: true,
+            passedQuizzes,
+            failedQuizzes,
+            totalQuizzes,
+            certificatePath: existingCertificate.pdf_url,
+            issuedAt: existingCertificate.issued_at,
+            certificateNumber: existingCertificateNumber,
+          })
+        }
+
+        console.info('Outdated or invalid certificate detected; regenerating.', {
+          userId: user.id,
+          moduleId,
+          existingVersion: templateVersion,
+          expectedVersion: CERTIFICATE_TEMPLATE_VERSION,
+          templateLoaded,
+        })
       }
 
       console.warn('Existing certificate record found but file missing, regenerating.', {

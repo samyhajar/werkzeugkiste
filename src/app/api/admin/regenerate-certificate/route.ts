@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Get user profile
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, email')
       .eq('id', userId)
       .single()
 
@@ -47,12 +47,14 @@ export async function POST(request: NextRequest) {
     }
 
     const userName = userProfile?.full_name || 'Unbekannter Benutzer'
+    const userEmail = userProfile?.email || undefined
 
     const { certificatePath, certificateNumber, issuedAt } = await generateAndStoreModuleCertificate({
       supabase,
       userId,
       moduleId,
       userName,
+      userEmail,
       moduleTitle: module.title || 'Modul',
     })
 

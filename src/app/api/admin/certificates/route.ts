@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { generateAndStoreModuleCertificate } from '@/lib/certificates/generate-module-certificate'
 import type { Database } from '@/types/supabase'
 
 type Certificate = Database['public']['Tables']['certificates']['Row']
@@ -104,5 +105,110 @@ export async function GET(_request: NextRequest) {
       { success: false, error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+
+    // Auth check
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Admin check
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    if (profileError || !profile || profile.role !== 'admin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Parse input
+    const body = await request.json().catch(() => ({}))
+    const {
+      userId,
+      moduleId,
+      templateId,
+      showName = true,
+      showDate = true,
+      showCertificateNumber = true,
+    } = body || {}
+
+    if (!userId || !moduleId) {
+      return NextResponse.json(
+        { success: false, error: 'userId and moduleId are required' },
+        { status: 400 },
+      )
+    }
+
+    // Resolve template path from storage list if provided a templateId
+    let resolvedTemplatePath: string | undefined
+    if (templateId) {
+      // If it already looks like a path (contains slash or ends with .pdf), use as-is
+      if (typeof templateId === 'string' && (templateId.includes('/') || /\.(pdf|PDF)$/.test(templateId))) {
+        resolvedTemplatePath = templateId.startsWith('templates/') ? templateId : `templates/${templateId}`
+      } else {
+        // Look up by id in the templates folder
+        const { data: files } = await supabase.storage
+          .from('certificates')
+          .list('templates', { limit: 100 })
+
+        const match = files?.find(f => f.id === templateId || f.name === templateId)
+        if (match) {
+          resolvedTemplatePath = `templates/${match.name}`
+        }
+      }
+    }
+
+    // Fetch user + module details for rendering
+    const { data: userProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', userId)
+      .single()
+
+    const { data: module } = await supabase
+      .from('modules')
+      .select('id, title')
+      .eq('id', moduleId)
+      .single()
+
+    if (!userProfile || !module) {
+      return NextResponse.json(
+        { success: false, error: 'User or module not found' },
+        { status: 404 },
+      )
+    }
+
+    // Generate and store
+    const { certificatePath, certificateNumber, issuedAt } = await generateAndStoreModuleCertificate({
+      supabase,
+      userId,
+      moduleId,
+      userName: userProfile.full_name || 'Unbekannter Benutzer',
+      userEmail: userProfile.email || undefined,
+      moduleTitle: module.title,
+      templateOverridePath: resolvedTemplatePath,
+      showName,
+      displayDate: showDate,
+    })
+
+    return NextResponse.json({
+      success: true,
+      certificatePath,
+      certificateNumber,
+      issuedAt,
+    })
+  } catch (error) {
+    console.error('Error generating certificate (admin):', error)
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }

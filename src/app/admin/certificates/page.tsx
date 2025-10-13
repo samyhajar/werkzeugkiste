@@ -527,6 +527,19 @@ export default function CertificatesPage() {
                   <p className="text-sm text-gray-600">
                     Erstellt am: {formatDateSafely(certificate.issued_at)}
                   </p>
+                  {certificate.meta && (
+                    <div className="mt-1 space-y-1 text-xs text-gray-500">
+                      {certificate.meta?.templatePath && (
+                        <p>Vorlage: {String(certificate.meta.templatePath)}</p>
+                      )}
+                      {certificate.meta?.templateSource && (
+                        <p>Quelle: {String(certificate.meta.templateSource)}</p>
+                      )}
+                      {certificate.meta?.templateVersion && (
+                        <p>Version: {String(certificate.meta.templateVersion)}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {certificate.pdf_url && (
