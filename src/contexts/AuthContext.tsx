@@ -182,7 +182,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const defaultProfile: UserProfile = {
               id: userData.id,
               email: userData.email!,
-              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+              full_name:
+                userData.user_metadata?.full_name ||
+                [userData.user_metadata?.first_name, userData.user_metadata?.last_name]
+                  .filter(Boolean)
+                  .join(' ').trim() ||
+                userData.email?.split('@')[0] ||
+                null,
               role: userData.user_metadata?.role || 'student',
               first_name: userData.user_metadata?.first_name || null,
               created_at: userData.created_at || null,
@@ -195,8 +201,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const newProfileData = {
               id: userData.id,
               email: userData.email,
-              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
-              role: userData.user_metadata?.role || 'student'
+              full_name:
+                userData.user_metadata?.full_name ||
+                [userData.user_metadata?.first_name, userData.user_metadata?.last_name]
+                  .filter(Boolean)
+                  .join(' ').trim() ||
+                userData.email?.split('@')[0] ||
+                null,
+              role: userData.user_metadata?.role || 'student',
+              first_name: userData.user_metadata?.first_name || null,
             }
 
             console.log('[AuthContext] Creating profile in background:', newProfileData)
@@ -232,7 +245,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const defaultProfile: UserProfile = {
               id: userData.id,
               email: userData.email!,
-              full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
+              full_name:
+                userData.user_metadata?.full_name ||
+                [userData.user_metadata?.first_name, userData.user_metadata?.last_name]
+                  .filter(Boolean)
+                  .join(' ').trim() ||
+                userData.email?.split('@')[0] || null,
               role: userData.user_metadata?.role || 'student',
               first_name: userData.user_metadata?.first_name || null,
               created_at: userData.created_at || null,
@@ -264,15 +282,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create fallback profile even on exceptions
       const userData = user || session?.user
       if (userData) {
-        const defaultProfile: UserProfile = {
-          id: userData.id,
-          email: userData.email!,
-          full_name: userData.user_metadata?.full_name || userData.email?.split('@')[0] || null,
-          role: userData.user_metadata?.role || 'student',
-          first_name: userData.user_metadata?.first_name || null,
-          created_at: userData.created_at || null,
-          updated_at: userData.updated_at || null
-        }
+          const defaultProfile: UserProfile = {
+            id: userData.id,
+            email: userData.email!,
+            full_name:
+              userData.user_metadata?.full_name ||
+              [userData.user_metadata?.first_name, userData.user_metadata?.last_name]
+                .filter(Boolean)
+                .join(' ').trim() ||
+              userData.email?.split('@')[0] || null,
+            role: userData.user_metadata?.role || 'student',
+            first_name: userData.user_metadata?.first_name || null,
+            created_at: userData.created_at || null,
+            updated_at: userData.updated_at || null
+          }
         console.log('[AuthContext] Using fallback profile after exception:', defaultProfile)
         setProfile(defaultProfile)
       }

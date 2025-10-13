@@ -1457,12 +1457,6 @@ export default function ModuleDetailPage() {
             <Button variant="outline" onClick={handleOpenCertificates}>
               Zu meinen Zertifikaten
             </Button>
-            <Button
-              onClick={handleViewCertificate}
-              disabled={!certificateModal.certificateUrl}
-            >
-              Zertifikat ansehen
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

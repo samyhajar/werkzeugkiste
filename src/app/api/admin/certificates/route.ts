@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { generateAndStoreModuleCertificate } from '@/lib/certificates/generate-module-certificate'
 import type { Database } from '@/types/supabase'
 
@@ -169,9 +170,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch user + module details for rendering
+    const adminClient = createAdminClient()
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('full_name, email')
+      .select('full_name, email, first_name')
       .eq('id', userId)
       .single()
 
@@ -189,11 +191,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate and store
+    // Build a proper display name if profile.full_name is an email
+    let userName = userProfile?.full_name?.trim() || ''
+    const looksLikeEmail = (val?: string | null) => !!val && /@/.test(val)
+    if (!userName || looksLikeEmail(userName)) {
+      try {
+        const { data: authUser } = await adminClient.auth.admin.getUserById(userId)
+        const meta = authUser?.user?.user_metadata || {}
+        const composedName = meta.full_name || [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() || ''
+        if (composedName) userName = composedName
+      } catch { /* ignore */ }
+    }
+
     const { certificatePath, certificateNumber, issuedAt } = await generateAndStoreModuleCertificate({
       supabase,
       userId,
       moduleId,
-      userName: userProfile.full_name || 'Unbekannter Benutzer',
+      userName: userName || 'Unbekannter Benutzer',
       userEmail: userProfile.email || undefined,
       moduleTitle: module.title,
       templateOverridePath: resolvedTemplatePath,

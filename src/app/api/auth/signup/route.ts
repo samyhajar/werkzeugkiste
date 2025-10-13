@@ -11,12 +11,20 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+    // Build name fields
+    const firstName: string | undefined = body.first_name?.trim() || undefined
+    const lastName: string | undefined = body.last_name?.trim() || undefined
+    const fullName: string | undefined = (body.full_name?.trim() || [firstName, lastName].filter(Boolean).join(' ').trim()) || undefined
+
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: body.email,
       password: body.password,
       options: {
         data: {
           role: body.role || 'student',
+          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
         },
       },
     })
@@ -37,13 +45,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create user profile
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: authData.user.id,
-      email: authData.user.email,
-      role: body.role || 'student',
-      full_name: body.full_name || '',
-    })
+    // Ensure a corresponding profile row exists and has correct fields
+    // Use upsert to avoid PK conflicts with DB trigger (handle_new_user)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: authData.user.id,
+          email: authData.user.email,
+          role: body.role || 'student',
+          full_name: fullName || '',
+          // Store first_name when available (column exists in schema)
+          first_name: firstName || null,
+        },
+        { onConflict: 'id' },
+      )
 
     if (profileError) {
       console.error('[Signup API] Profile creation error:', profileError)

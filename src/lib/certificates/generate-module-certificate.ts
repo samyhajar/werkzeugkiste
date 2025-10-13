@@ -153,7 +153,7 @@ export async function generateAndStoreModuleCertificate({
   const fontRegular = await pdf.embedFont(StandardFonts.Helvetica)
 
   // Overlay dynamic fields onto the template
-  // - Email: under "Hiermit wird bestätigt"
+  // - Name: under "Hiermit wird bestätigt"
   // - Module title: above "erfolgreich absolviert hat"
   // - Date: bottom-right, after "St Pölten, am"
 
@@ -162,11 +162,16 @@ export async function generateAndStoreModuleCertificate({
   // Conservative initial positions for A4 (595x842). Tuned per feedback.
   // Keep module fixed where it was (~467 on A4), raise email, and move date up/right.
   const yModule = pageHeight - 375 // ~467 (unchanged)
-  const yEmail = pageHeight - 290  // higher (~552)
+  const yName = pageHeight - 290   // higher (~552)
   const yDate = 190               // higher from bottom
 
-  if (userEmail) {
-    drawCenteredText(userEmail, yEmail, 14, fontRegular)
+  // Prefer the user's full name; fall back to email only if necessary
+  const displayName = (userName && userName.trim().length > 0)
+    ? userName.trim()
+    : (userEmail || '')
+
+  if (displayName) {
+    drawCenteredText(displayName, yName, 14, fontRegular)
   }
 
   if (moduleTitle) {

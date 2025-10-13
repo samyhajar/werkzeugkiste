@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Get user profile
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('full_name, email')
+      .select('full_name, email, first_name')
       .eq('id', userId)
       .single()
 
@@ -46,8 +46,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const userName = userProfile?.full_name || 'Unbekannter Benutzer'
+    // Determine a proper display name; avoid using email when stored in full_name
+    let userName = userProfile?.full_name?.trim() || ''
     const userEmail = userProfile?.email || undefined
+
+    // If full_name looks like an email or is empty, try auth metadata
+    const looksLikeEmail = (val?: string | null) => !!val && /@/.test(val)
+    if (!userName || looksLikeEmail(userName)) {
+      try {
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+        const meta = authUser?.user?.user_metadata || {}
+        const composedName =
+          meta.full_name ||
+          [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() ||
+          ''
+        if (composedName) {
+          userName = composedName
+        }
+      } catch (e) {
+        // ignore and fall back
+      }
+    }
+
+    if (!userName) {
+      userName = 'Unbekannter Benutzer'
+    }
 
     const { certificatePath, certificateNumber, issuedAt } = await generateAndStoreModuleCertificate({
       supabase,

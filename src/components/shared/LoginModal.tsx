@@ -27,7 +27,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [role, setRole] = useState('student')
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +57,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     setEmail('')
     setPassword('')
     setConfirmPassword('')
-    setFullName('')
+    setFirstName('')
+    setLastName('')
     setRole('student')
     setRememberMe(false)
     setError('')
@@ -130,7 +132,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password || !confirmPassword || !fullName) {
+    if (!email || !password || !confirmPassword || !firstName || !lastName) {
       setError('Alle Felder sind erforderlich')
       return
     }
@@ -149,6 +151,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     setError('')
 
     try {
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -158,6 +161,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
           email,
           password,
           full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
           role
         }),
         credentials: 'include'
@@ -356,23 +361,43 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
 
             <TabsContent value="signup" className="space-y-6 mt-0">
               <form onSubmit={handleSignUp} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Vollständiger Name
-                  </Label>
-                  <CustomInput
-                    id="signup-name"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Max Mustermann"
-                    required
-                    disabled={isLoading}
-                    autoComplete="name"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-first-name" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Vorname
+                    </Label>
+                    <CustomInput
+                      id="signup-first-name"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Max"
+                      required
+                      disabled={isLoading}
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-last-name" className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#486681]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Nachname
+                    </Label>
+                    <CustomInput
+                      id="signup-last-name"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Mustermann"
+                      required
+                      disabled={isLoading}
+                      autoComplete="family-name"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

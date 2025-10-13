@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server-client'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateAndStoreModuleCertificate } from '@/lib/certificates/generate-module-certificate'
 
@@ -11,6 +12,7 @@ export async function POST(
     const { moduleId } = await params
 
     const supabase = await createClient()
+    const adminSupabase = createAdminClient()
 
     // Check if user is authenticated and is admin
     const {
@@ -42,7 +44,7 @@ export async function POST(
     // 1) load user + module data
     const { data: userProfile } = await supabase
       .from('profiles')
-      .select('full_name, email')
+      .select('full_name, email, first_name')
       .eq('id', userId)
       .single()
 
@@ -59,12 +61,26 @@ export async function POST(
       )
     }
 
+    // Build a proper display name (avoid email-like full_name)
+    let userName = userProfile?.full_name?.trim() || ''
+    const looksLikeEmail = (val?: string | null) => !!val && /@/.test(val)
+    if (!userName || looksLikeEmail(userName)) {
+      try {
+        const { data: adminUser } = await adminSupabase.auth.admin.getUserById(userId)
+        const meta = adminUser?.user?.user_metadata || {}
+        const composedName =
+          meta.full_name ||
+          [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() || ''
+        if (composedName) userName = composedName
+      } catch { /* ignore */ }
+    }
+
     const { certificatePath, certificateNumber, issuedAt } =
       await generateAndStoreModuleCertificate({
         supabase,
         userId,
         moduleId,
-        userName: userProfile.full_name ?? 'Unbekannter Benutzer',
+        userName: userName || 'Unbekannter Benutzer',
         userEmail: userProfile.email ?? undefined,
         moduleTitle: module.title,
         showName,
