@@ -1,5 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
-import type { PDFFont } from 'pdf-lib'
+import type { PDFFont, PDFPage } from 'pdf-lib'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 import { CERTIFICATE_TEMPLATE_PATH, CERTIFICATE_TEMPLATE_VERSION } from './template'
@@ -40,8 +40,9 @@ export async function generateAndStoreModuleCertificate({
   const issuedAtIso = issuedAt.toISOString()
   
   // Try to load the new A4 PDF template from storage; fall back to public URL
-  let pdf: PDFDocument
-  let page
+  // Initialize with a blank A4 page to satisfy TS definite assignment.
+  let pdf: PDFDocument = await PDFDocument.create()
+  let page: PDFPage = pdf.addPage([595, 842])
   let templateSource: 'storage' | 'public-url' | 'fallback' = 'fallback'
   let templateLoaded = false
 
@@ -110,12 +111,7 @@ export async function generateAndStoreModuleCertificate({
     }
   }
 
-  // Fallback: blank A4 page
-  if (!templateLoaded) {
-    pdf = await PDFDocument.create()
-    page = pdf.addPage([595, 842])
-    templateSource = 'fallback'
-  }
+  // If neither storage nor public URL worked, we keep the initialized fallback.
 
   try {
     console.info('[certificates] Using template', {
