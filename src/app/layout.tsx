@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={assistant.variable} suppressHydrationWarning>
+    <html lang="de-at" className={assistant.variable} suppressHydrationWarning>
       <body
         className={`${assistant.variable} antialiased`}
       >

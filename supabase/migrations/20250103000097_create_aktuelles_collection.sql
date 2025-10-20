@@ -56,9 +56,3 @@ INSERT INTO public.aktuelles (title, content, sort_order, is_active) VALUES
 ('Lorem Ipsum', E'Neque porro quisquam est, qui dolorem. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magnåes eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem.', 3, true);
 
 END;
-
-
-
-
-
-
