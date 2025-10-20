@@ -228,3 +228,28 @@ input[type='number'] {
   -ms-user-select: text !important;
   user-select: text !important;
 }
+
+/* DataReporter Privacy Notice h2 styling */
+#dr-privacynotice-div h2 {
+  font-size: 1.5rem; /* text-2xl equivalent */
+  font-weight: 600; /* font-semibold */
+  line-height: 2rem; /* leading-8 */
+  margin-top: 2rem; /* mt-8 */
+  margin-bottom: 1rem; /* mb-4 */
+  color: hsl(var(--foreground));
+}
+
+/* Ensure proper spacing for first h2 in the container */
+#dr-privacynotice-div h2:first-child {
+  margin-top: 0;
+}
+
+/* Responsive h2 sizing for mobile */
+@media (max-width: 640px) {
+  #dr-privacynotice-div h2 {
+    font-size: 1.25rem; /* text-xl on mobile */
+    line-height: 1.75rem; /* leading-7 on mobile */
+    margin-top: 1.5rem; /* mt-6 on mobile */
+    margin-bottom: 0.75rem; /* mb-3 on mobile */
+  }
+}
