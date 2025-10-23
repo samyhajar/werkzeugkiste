@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 
-import { X } from 'lucide-react'
+import { X, CheckCircle } from 'lucide-react'
 
 export interface LoginModalRef {
   show: (tab?: 'login' | 'signup', redirectUrl?: string) => void
@@ -37,6 +37,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [redirectUrl, setRedirectUrl] = useState<string | undefined>()
+  const [showEmailToast, setShowEmailToast] = useState(false)
 
 
   const router = useRouter()
@@ -67,6 +68,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
     setShowPassword(false)
     setShowConfirmPassword(false)
     setRedirectUrl(undefined)
+    setShowEmailToast(false)
   }
 
   const handleClose = () => {
@@ -171,22 +173,17 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
       const data = await response.json()
 
       if (data.success) {
-        console.log('[LoginModal] Signup successful, closing modal first...')
+        console.log('[LoginModal] Signup successful, showing email confirmation toast...')
 
-        // Close modal immediately to prevent UI issues
-        handleClose()
+        // Show email confirmation toast
+        setShowEmailToast(true)
 
-        console.log('[LoginModal] Modal closed, signup successful')
-
-        // Small delay to ensure modal is closed before any navigation
+        // Hide toast after 5 seconds
         setTimeout(() => {
-          console.log('[LoginModal] Signup process completed - AuthContext will handle redirects')
+          setShowEmailToast(false)
+        }, 5000)
 
-          // Handle redirect if needed (mostly handled by AuthContext now)
-          if (redirectUrl) {
-            router.push(redirectUrl)
-          }
-        }, 100)
+        console.log('[LoginModal] Email confirmation toast shown')
       } else {
         setError(data.error || 'Registrierung fehlgeschlagen')
       }
@@ -210,6 +207,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
   }
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent showCloseButton={false} className="sm:max-w-lg bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden z-50">
         {/* Close Button */}
@@ -360,6 +358,35 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-6 mt-0">
+              {/* Email Confirmation Toast */}
+              {showEmailToast && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-green-800">
+                        E-Mail-Bestätigung erforderlich
+                      </h3>
+                      <div className="mt-1 text-sm text-green-700">
+                        <p>
+                          Vielen Dank für Ihre Registrierung! Wir haben eine Bestätigungs-E-Mail an{' '}
+                          <span className="font-medium">{email}</span> gesendet.
+                        </p>
+                        <p className="mt-1">
+                          Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den Bestätigungslink,
+                          um Ihre Registrierung abzuschließen.
+                        </p>
+                        <p className="mt-1 text-xs text-green-600">
+                          Falls Sie die E-Mail nicht erhalten haben, überprüfen Sie bitte auch Ihren Spam-Ordner.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSignUp} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -530,6 +557,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(({ initialTab = 'l
         </div>
             </DialogContent>
     </Dialog>
+    </>
   )
 })
 

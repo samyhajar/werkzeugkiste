@@ -178,7 +178,7 @@ export default async function Home({
       </section>
 
       {/* Error Messages */}
-      {error && (
+      {error && !error_description?.includes('both auth code and code verifier should be non-empty') && (
         <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex">
