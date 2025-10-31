@@ -26,6 +26,8 @@ interface ModuleOverlayProps {
 export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onStartLogin }: ModuleOverlayProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'presenter'>('content')
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
+  const presenterMaterialsContent = module.presenter_materials_content ?? ''
+  const hasPresenterMaterialsContent = presenterMaterialsContent.trim().length > 0
 
   const toggleCourse = (courseId: string) => {
     const newExpanded = new Set(expandedCourses)
@@ -199,9 +201,16 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
           {activeTab === 'presenter' && (
             <div className="space-y-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">Materialien für Vortragende</h2>
-              <div className="prose max-w-none">
-                {module.presenter_materials_content || 'Für dieses Modul sind keine besonderen Materialien für Vortragende verfügbar.'}
-              </div>
+              {hasPresenterMaterialsContent ? (
+                <div
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{ __html: presenterMaterialsContent }}
+                />
+              ) : (
+                <div className="prose max-w-none">
+                  Für dieses Modul sind keine besonderen Materialien für Vortragende verfügbar.
+                </div>
+              )}
               {module.presenter_materials_urls && Array.isArray(module.presenter_materials_urls) && module.presenter_materials_urls.length > 0 && (
                 <div className="mt-8 space-y-3">
                   <h3 className="text-lg font-semibold text-gray-800">PDF Materialien</h3>

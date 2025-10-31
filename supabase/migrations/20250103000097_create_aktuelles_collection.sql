@@ -57,3 +57,4 @@ INSERT INTO public.aktuelles (title, content, sort_order, is_active) VALUES
 
 END;
 
+
