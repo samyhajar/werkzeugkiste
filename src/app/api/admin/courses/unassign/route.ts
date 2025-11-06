@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface UnassignCourseRequest {
   course_id: string
@@ -29,7 +32,9 @@ export async function PATCH(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -46,7 +51,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update the course to remove module_id and order (make it unassigned)
-    const { data: course, error } = await supabase
+    const { data: course, error } = await (supabase as any)
       .from('courses')
       .update({ module_id: null, order: null })
       .eq('id', course_id)

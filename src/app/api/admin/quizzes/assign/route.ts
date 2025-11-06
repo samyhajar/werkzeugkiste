@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface AssignQuizRequest {
   elementId: string
@@ -44,17 +47,19 @@ export async function POST(request: NextRequest) {
         .order('sort_order', { ascending: false })
         .limit(1)
 
-      if (existingQuizzes && existingQuizzes.length > 0) {
-        sortOrder = (existingQuizzes[0].sort_order || 0) + 1
+      const existingQuizzesData = (existingQuizzes || []) as { sort_order: number | null }[]
+
+      if (existingQuizzesData && existingQuizzesData.length > 0) {
+        sortOrder = (existingQuizzesData[0].sort_order || 0) + 1
       }
     }
 
     updateData.sort_order = sortOrder
 
     // Update the enhanced quiz
-    const { data: quiz, error } = await supabase
+    const { data: quiz, error } = await (supabase as any)
       .from('enhanced_quizzes')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', elementId)
       .select()
       .single()
@@ -101,7 +106,9 @@ export async function PATCH(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -118,7 +125,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // First, assign the quiz to the course
-    const { data: quiz, error } = await supabase
+    const { data: quiz, error } = await (supabase as any)
       .from('enhanced_quizzes')
       .update({ course_id } as any)
       .eq('id', quiz_id)

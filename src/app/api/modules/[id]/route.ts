@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Course = Database['public']['Tables']['courses']['Row']
+type Module = Database['public']['Tables']['modules']['Row']
+type Lesson = Database['public']['Tables']['lessons']['Row']
 
 export async function GET(
   request: NextRequest,
@@ -21,7 +26,9 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (moduleError || !module) {
+    const moduleData = module as Module | null
+
+    if (moduleError || !moduleData) {
       return NextResponse.json(
         { success: false, error: 'Module not found' },
         { status: 404 }
@@ -35,6 +42,8 @@ export async function GET(
       .eq('module_id', id)
       .order('order', { ascending: true })
 
+    const coursesData = (courses || []) as Course[]
+
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
       return NextResponse.json(
@@ -45,7 +54,7 @@ export async function GET(
 
     // For each course, fetch its lessons and quizzes
     const coursesWithContent = await Promise.all(
-      (courses || []).map(async course => {
+      coursesData.map(async (course: Course) => {
         // Fetch lessons for this course
         const { data: lessons, error: _lessonsError } = await supabase
           .from('lessons')
@@ -63,7 +72,7 @@ export async function GET(
             .order('sort_order', { ascending: true })
 
         // Fetch lesson-specific quizzes from enhanced_quizzes table
-        const lessonIds = lessons?.map(l => l.id) || []
+        const lessonIds = (lessons || [] as Lesson[]).map((l: Lesson) => l.id)
         let lessonQuizzes: any[] = []
         if (lessonIds.length > 0) {
           const { data: lessonQuizzesData, error: lessonQuizzesError } =
@@ -92,7 +101,7 @@ export async function GET(
 
     // Combine module with its courses
     const moduleWithContent = {
-      ...module,
+      ...moduleData,
       courses: coursesWithContent,
     }
 

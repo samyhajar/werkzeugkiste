@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(_request: NextRequest) {
   try {
@@ -22,7 +25,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -87,7 +92,9 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -130,9 +137,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new enhanced quiz
-    const { data: newQuiz, error } = await supabase
+    const { data: newQuiz, error } = await (supabase as any)
       .from('enhanced_quizzes')
-      .insert(quizData)
+      .insert(quizData as any)
       .select(
         `
         *,
@@ -152,15 +159,17 @@ export async function POST(request: NextRequest) {
       )
       .single()
 
-    if (error) {
+    const newQuizData = newQuiz as { id: string } | null
+
+    if (error || !newQuizData) {
       console.error('Error creating quiz:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: error?.message || 'Failed to create quiz' }, { status: 500 })
     }
 
     // If questions are provided, create them
     if (questions && questions.length > 0) {
       const questionData = questions.map((q: any, index: number) => ({
-        quiz_id: newQuiz.id,
+        quiz_id: newQuizData.id,
         type:
           q.type === 'multiple_choice'
             ? 'multiple'
@@ -176,10 +185,12 @@ export async function POST(request: NextRequest) {
         meta: {},
       }))
 
-      const { data: createdQuestions, error: questionsError } = await supabase
+      const { data: createdQuestions, error: questionsError } = await (supabase as any)
         .from('quiz_questions')
-        .insert(questionData)
+        .insert(questionData as any)
         .select()
+
+      const createdQuestionsData = (createdQuestions || []) as { id: string }[]
 
       if (questionsError) {
         console.error('Error creating questions:', questionsError)
@@ -189,7 +200,7 @@ export async function POST(request: NextRequest) {
         const answerData: any[] = []
 
         questions.forEach((q: any, index: number) => {
-          const questionId = createdQuestions?.[index]?.id
+          const questionId = createdQuestionsData?.[index]?.id
           if (!questionId) return
 
           if (q.type === 'true_false') {
@@ -237,9 +248,9 @@ export async function POST(request: NextRequest) {
 
         // Insert answer options if any exist
         if (answerData.length > 0) {
-          const { error: answersError } = await supabase
-            .from('quiz_answers')
-            .insert(answerData)
+        const { error: answersError } = await (supabase as any)
+          .from('quiz_answers')
+          .insert(answerData as any)
 
           if (answersError) {
             console.error('Error creating answers:', answersError)
@@ -248,10 +259,10 @@ export async function POST(request: NextRequest) {
 
         // Update max_points based on actual questions created
         const totalPoints = questions.length
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from('enhanced_quizzes')
-          .update({ max_points: totalPoints })
-          .eq('id', newQuiz.id)
+          .update({ max_points: totalPoints } as any)
+          .eq('id', newQuizData.id)
 
         if (updateError) {
           console.error('Error updating max_points:', updateError)

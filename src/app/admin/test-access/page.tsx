@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 // Force dynamic rendering to prevent static generation issues
 export const dynamic = 'force-dynamic'
@@ -32,6 +35,8 @@ export default async function AdminTestPage() {
     .eq('id', user.id)
     .single()
 
+  const profileData = profile as Pick<Profile, 'role' | 'full_name'> | null
+
   if (profileError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -45,7 +50,7 @@ export default async function AdminTestPage() {
     )
   }
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profileData || profileData.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -53,8 +58,8 @@ export default async function AdminTestPage() {
           <p className="text-gray-600 mb-4">User does not have admin role</p>
           <p className="text-sm text-gray-500">User ID: {user.id}</p>
           <p className="text-sm text-gray-500">Email: {user.email}</p>
-          <p className="text-sm text-gray-500">Profile Role: {profile?.role || 'null'}</p>
-          <p className="text-sm text-gray-500">Profile Name: {profile?.full_name || 'null'}</p>
+          <p className="text-sm text-gray-500">Profile Role: {profileData?.role || 'null'}</p>
+          <p className="text-sm text-gray-500">Profile Name: {profileData?.full_name || 'null'}</p>
         </div>
       </div>
     )
@@ -67,8 +72,8 @@ export default async function AdminTestPage() {
         <p className="text-gray-600 mb-4">User has admin access!</p>
         <p className="text-sm text-gray-500">User ID: {user.id}</p>
         <p className="text-sm text-gray-500">Email: {user.email}</p>
-        <p className="text-sm text-gray-500">Profile Role: {profile.role}</p>
-        <p className="text-sm text-gray-500">Profile Name: {profile.full_name}</p>
+        <p className="text-sm text-gray-500">Profile Role: {profileData.role}</p>
+        <p className="text-sm text-gray-500">Profile Name: {profileData.full_name}</p>
         <div className="mt-4">
           <a
             href="/admin"

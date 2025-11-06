@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(_request: NextRequest) {
   try {
@@ -25,7 +28,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -88,7 +93,9 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new lesson
-    const { data: newLesson, error } = await supabase
+    const { data: newLesson, error } = await (supabase as any)
       .from('lessons')
       .insert([
         {
@@ -107,7 +114,7 @@ export async function POST(request: NextRequest) {
           content: content || null,
           course_id: course_id || null, // Allow null for unassigned lessons
           order: null, // Start with null order (unassigned)
-        },
+        } as any,
       ])
       .select(
         `

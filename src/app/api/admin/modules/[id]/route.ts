@@ -124,7 +124,7 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     }
 
-    const { data: module, error } = await supabase
+    const { data: module, error } = await (supabase as any)
       .from('modules')
       .update(updateData)
       .eq('id', id)
@@ -189,7 +189,7 @@ export async function DELETE(
     }
 
     // Use the database function to safely delete the module with all cascade
-    const { data: result, error: deleteError } = await supabase.rpc(
+    const { data: result, error: deleteError } = await (supabase as any).rpc(
       'delete_module_with_cascade',
       { module_id: moduleId }
     )

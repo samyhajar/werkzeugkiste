@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Ensure a corresponding profile row exists and has correct fields
     // Use upsert to avoid PK conflicts with DB trigger (handle_new_user)
-    const { error: profileError } = await supabase
+    const { error: profileError } = await (supabase as any)
       .from('profiles')
       .upsert(
         {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
           full_name: fullName || '',
           // Store first_name when available (column exists in schema)
           first_name: firstName || null,
-        },
+        } as any,
         { onConflict: 'id' },
       )
 

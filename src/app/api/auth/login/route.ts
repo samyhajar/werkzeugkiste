@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface LoginRequest {
   email: string
@@ -75,6 +78,8 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
       .single()
 
+    const profileData = profile as Pick<Profile, 'id' | 'full_name' | 'role'> | null
+
     if (profileError) {
       console.error('[Login API] Profile fetch error:', profileError)
       // Continue with default values if profile not found
@@ -99,8 +104,8 @@ export async function POST(request: NextRequest) {
       user: {
         id: userId,
         email: userEmail,
-        role: profile?.role || 'student',
-        full_name: profile?.full_name || '',
+        role: profileData?.role || 'student',
+        full_name: profileData?.full_name || '',
       },
       session: {
         access_token: session.access_token,

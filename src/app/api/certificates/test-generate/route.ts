@@ -1,6 +1,10 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import { createClient } from '@/lib/supabase/server-client'
 import { NextRequest, NextResponse } from 'next/server'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+type Module = Database['public']['Tables']['modules']['Row']
 
 export async function POST(_req: NextRequest) {
   try {
@@ -26,7 +30,9 @@ export async function POST(_req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -40,7 +46,9 @@ export async function POST(_req: NextRequest) {
       .limit(1)
       .single()
 
-    if (!module) {
+    const moduleData = module as Pick<Module, 'id' | 'title'> | null
+
+    if (!moduleData) {
       return NextResponse.json(
         { success: false, error: 'No modules found' },
         { status: 404 }
@@ -144,7 +152,7 @@ export async function POST(_req: NextRequest) {
         })
 
         // Module title
-        page.drawText(module.title, {
+        page.drawText(moduleData.title, {
           x: 150,
           y: 500,
           size: 16,
@@ -175,7 +183,7 @@ export async function POST(_req: NextRequest) {
         const pdfBytes = await pdf.save()
 
         // 4) upload to Supabase Storage
-        const path = `certificates/test/${userId}/${module.id}.pdf`
+        const path = `certificates/test/${userId}/${moduleData.id}.pdf`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('certificates')
           .upload(path, pdfBytes, {
@@ -188,14 +196,14 @@ export async function POST(_req: NextRequest) {
         }
 
         // 5) insert DB record
-        const { error: insertError } = await supabase
+        const { error: insertError } = await (supabase as any)
           .from('certificates')
           .insert({
             user_id: userId,
-            module_id: module.id,
+            module_id: moduleData.id,
             pdf_url: uploadData?.path,
             issued_at: new Date().toISOString(),
-          })
+          } as any)
 
         if (insertError) {
           throw new Error(`Insert error: ${insertError.message}`)

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Lesson = Database['public']['Tables']['lessons']['Row']
+type Course = Database['public']['Tables']['courses']['Row']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(
   request: NextRequest,
@@ -21,7 +26,9 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (courseError || !course) {
+    const courseData = course as Course | null
+
+    if (courseError || !courseData) {
       return NextResponse.json(
         { success: false, error: 'Course not found' },
         { status: 404 }
@@ -52,7 +59,7 @@ export async function GET(
       .order('sort_order', { ascending: true })
 
     // Fetch lesson-specific quizzes from enhanced_quizzes table
-    const lessonIds = lessons?.map(l => l.id) || []
+    const lessonIds = (lessons || [] as Lesson[]).map((l: Lesson) => l.id)
     let lessonQuizzes: any[] = []
     if (lessonIds.length > 0) {
       const { data: lessonQuizzesData, error: lessonQuizzesError } =
@@ -83,7 +90,7 @@ export async function GET(
 
     // Combine course with its lessons and quizzes
     const courseWithContent = {
-      ...course,
+      ...courseData,
       lessons: lessons || [],
       quizzes: allQuizzes,
     }
@@ -128,7 +135,9 @@ export async function DELETE(
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (!profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }

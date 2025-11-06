@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +33,9 @@ export async function POST(
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -38,7 +43,7 @@ export async function POST(
     }
 
     // Insert question
-    const { data: question, error: questionError } = await supabase
+    const { data: question, error: questionError } = await (supabase as any)
       .from('quiz_questions')
       .insert({
         quiz_id: id,
@@ -49,7 +54,7 @@ export async function POST(
         category: body.question.category,
         explanation_html: body.question.explanation_html,
         meta: body.question.meta || {},
-      })
+      } as any)
       .select()
       .single()
 
@@ -74,9 +79,9 @@ export async function POST(
         meta: answer.meta || {},
       }))
 
-      const { error: answersError } = await supabase
+      const { error: answersError } = await (supabase as any)
         .from('quiz_answers')
-        .insert(answersToInsert)
+        .insert(answersToInsert as any)
 
       if (answersError) {
         console.error('Error creating answers:', answersError)
@@ -125,7 +130,9 @@ export async function GET(
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -154,14 +161,14 @@ export async function GET(
 
     // Format questions to match the expected structure
     const formattedQuestions =
-      questions?.map(q => ({
+      (questions || [] as any[]).map((q: any) => ({
         id: q.id,
         type: q.type === 'single' ? 'single' : q.type,
         question_text: q.question_html || '',
         explanation: q.explanation_html || '',
         sort_order: q.sort_order || 0,
         options:
-          q.quiz_answers?.map(o => ({
+          (q.quiz_answers || [] as any[]).map((o: any) => ({
             id: o.id,
             text: o.answer_html || '',
             is_correct: o.is_correct || false,
@@ -209,7 +216,9 @@ export async function PUT(
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -246,7 +255,7 @@ export async function PUT(
       const question = questions[i]
 
       // Insert question
-      const { data: questionData, error: questionError } = await supabase
+      const { data: questionData, error: questionError } = await (supabase as any)
         .from('quiz_questions')
         .insert({
           quiz_id: quizId,
@@ -255,7 +264,7 @@ export async function PUT(
           explanation_html: question.explanation || '',
           points: 1,
           sort_order: i,
-        })
+        } as any)
         .select()
         .single()
 
@@ -278,9 +287,9 @@ export async function PUT(
           })
         )
 
-        const { error: optionsError } = await supabase
+        const { error: optionsError } = await (supabase as any)
           .from('quiz_answers')
-          .insert(answersToInsert)
+          .insert(answersToInsert as any)
 
         if (optionsError) {
           console.error('Error inserting options:', optionsError)

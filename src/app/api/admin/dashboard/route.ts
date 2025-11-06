@@ -1,5 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+
+type LessonActivity = {
+  lesson_id: string
+  student_id: string
+  completed_at: string | null
+  profiles: { full_name: string | null } | null
+  lessons: { title: string } | null
+}
+
+type QuizActivity = {
+  quiz_id: string
+  user_id: string
+  completed_at: string | null
+  passed: boolean | null
+  profiles: { full_name: string | null } | null
+  quizzes: { title: string; pass_percentage: number | null } | null
+}
 
 interface RecentActivity {
   id: string
@@ -49,7 +69,9 @@ export async function GET(
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -118,7 +140,7 @@ export async function GET(
 
     // Process lesson activities
     const processedLessonActivities: RecentActivity[] = (
-      lessonActivities || []
+      (lessonActivities || []) as LessonActivity[]
     ).map(activity => ({
       id: `lesson-${activity.lesson_id}-${activity.student_id}`,
       timestamp: activity.completed_at || '',
@@ -128,7 +150,7 @@ export async function GET(
 
     // Process quiz activities
     const processedQuizActivities: RecentActivity[] = (
-      quizActivities || []
+      (quizActivities || []) as QuizActivity[]
     ).map(activity => ({
       id: `quiz-${activity.quiz_id}-${activity.user_id}`,
       timestamp: activity.completed_at || '',

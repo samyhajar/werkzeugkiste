@@ -18,7 +18,6 @@ export function UnsubscribeClient({ emailFromUrl }: { emailFromUrl?: string }) {
     if (emailFromUrl && canSubmit) {
       void handleSubmit()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleSubmit(event?: React.FormEvent<HTMLFormElement>) {

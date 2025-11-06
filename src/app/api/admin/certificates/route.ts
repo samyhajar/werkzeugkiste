@@ -7,6 +7,7 @@ import type { Database } from '@/types/supabase'
 type Certificate = Database['public']['Tables']['certificates']['Row']
 type User = Database['public']['Tables']['profiles']['Row']
 type Course = Database['public']['Tables']['courses']['Row']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface CertificateWithDetails extends Certificate {
   user?: { id: string; full_name: string | null }
@@ -37,7 +38,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -128,7 +131,8 @@ export async function POST(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
     }
 
@@ -183,7 +187,10 @@ export async function POST(request: NextRequest) {
       .eq('id', moduleId)
       .single()
 
-    if (!userProfile || !module) {
+    const userProfileData = userProfile as Pick<User, 'full_name' | 'email' | 'first_name'> | null
+    const moduleData = module as Pick<Database['public']['Tables']['modules']['Row'], 'id' | 'title'> | null
+
+    if (!userProfileData || !moduleData) {
       return NextResponse.json(
         { success: false, error: 'User or module not found' },
         { status: 404 },
@@ -192,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     // Generate and store
     // Build a proper display name if profile.full_name is an email
-    let userName = userProfile?.full_name?.trim() || ''
+    let userName = userProfileData?.full_name?.trim() || ''
     const looksLikeEmail = (val?: string | null) => !!val && /@/.test(val)
     if (!userName || looksLikeEmail(userName)) {
       try {
@@ -204,12 +211,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { certificatePath, certificateNumber, issuedAt } = await generateAndStoreModuleCertificate({
-      supabase,
+      supabase: supabase as any,
       userId,
       moduleId,
       userName: userName || 'Unbekannter Benutzer',
-      userEmail: userProfile.email || undefined,
-      moduleTitle: module.title,
+      userEmail: userProfileData.email || undefined,
+      moduleTitle: moduleData.title,
       templateOverridePath: resolvedTemplatePath,
       showName,
       displayDate: showDate,

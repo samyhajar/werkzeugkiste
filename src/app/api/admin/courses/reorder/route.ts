@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+type Course = Pick<Database['public']['Tables']['courses']['Row'], 'module_id' | 'order'>
+type CourseOrder = Pick<Database['public']['Tables']['courses']['Row'], 'id' | 'order'>
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +30,9 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -48,21 +55,23 @@ export async function POST(request: NextRequest) {
       .eq('id', courseId)
       .single()
 
-    if (currentError || !currentCourse) {
+    const courseData = currentCourse as Course | null
+
+    if (currentError || !courseData) {
       return NextResponse.json(
         { success: false, error: 'Course not found' },
         { status: 404 }
       )
     }
 
-    const moduleId = currentCourse.module_id
+    const moduleId = courseData.module_id
     if (!moduleId) {
       return NextResponse.json(
         { success: false, error: 'Course not assigned to a module' },
         { status: 400 }
       )
     }
-    const currentOrder = currentCourse.order || 0
+    const currentOrder = courseData.order || 0
 
     // Get all courses in the same module
     const { data: moduleCourses, error: moduleError } = await supabase
@@ -70,6 +79,8 @@ export async function POST(request: NextRequest) {
       .select('id, order')
       .eq('module_id', moduleId)
       .order('order', { ascending: true })
+
+    const coursesData = (moduleCourses || []) as CourseOrder[]
 
     if (moduleError) {
       return NextResponse.json(
@@ -79,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate new order values
-    const updatedCourses = moduleCourses.map((course, index) => {
+    const updatedCourses = coursesData.map((course, index) => {
       let newOrderValue: number
       const courseOrder = course.order || 0
 
@@ -110,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Update all courses with their new order values
     for (const course of updatedCourses) {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('courses')
         .update({ order: course.order })
         .eq('id', course.id)

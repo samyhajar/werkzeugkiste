@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+type Certificate = Pick<Database['public']['Tables']['certificates']['Row'], 'pdf_url'>
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -25,7 +29,9 @@ export async function DELETE(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -49,6 +55,8 @@ export async function DELETE(request: NextRequest) {
       .eq('module_id', module_id)
       .single()
 
+    const certificateData = certificate as Certificate | null
+
     if (fetchError) {
       console.error('Error fetching certificate:', fetchError)
       return NextResponse.json(
@@ -58,10 +66,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the file from storage if it exists
-    if (certificate.pdf_url) {
+    if (certificateData?.pdf_url) {
       const { error: storageError } = await supabase.storage
         .from('certificates')
-        .remove([certificate.pdf_url])
+        .remove([certificateData.pdf_url])
 
       if (storageError) {
         console.error('Error deleting file from storage:', storageError)

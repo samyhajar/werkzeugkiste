@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Course = Database['public']['Tables']['courses']['Row']
+type Module = Database['public']['Tables']['modules']['Row']
 
 export async function GET(
   request: NextRequest,
@@ -16,7 +20,9 @@ export async function GET(
       .eq('id', id)
       .single()
 
-    if (courseError || !course) {
+    const courseData = course as Pick<Course, 'module_id'> | null
+
+    if (courseError || !courseData) {
       return NextResponse.json(
         { success: false, error: 'Course not found' },
         { status: 404 }
@@ -27,10 +33,12 @@ export async function GET(
     const { data: module, error: moduleError } = await supabase
       .from('modules')
       .select('id, title')
-      .eq('id', course.module_id || '')
+      .eq('id', courseData.module_id || '')
       .single()
 
-    if (moduleError || !module) {
+    const moduleData = module as Pick<Module, 'id' | 'title'> | null
+
+    if (moduleError || !moduleData) {
       return NextResponse.json(
         { success: false, error: 'Module not found' },
         { status: 404 }
@@ -39,7 +47,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      module: module,
+      module: moduleData,
     })
   } catch (error) {
     console.error('Module API error:', error)

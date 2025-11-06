@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+type Lesson = Pick<Database['public']['Tables']['lessons']['Row'], 'course_id' | 'order'>
+type LessonOrder = Pick<Database['public']['Tables']['lessons']['Row'], 'id' | 'order'>
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +30,9 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -48,21 +55,23 @@ export async function POST(request: NextRequest) {
       .eq('id', lessonId)
       .single()
 
-    if (currentError || !currentLesson) {
+    const currentLessonData = currentLesson as Lesson | null
+
+    if (currentError || !currentLessonData) {
       return NextResponse.json(
         { success: false, error: 'Lesson not found' },
         { status: 404 }
       )
     }
 
-    const courseId = currentLesson.course_id
+    const courseId = currentLessonData.course_id
     if (!courseId) {
       return NextResponse.json(
         { success: false, error: 'Lesson not assigned to a course' },
         { status: 400 }
       )
     }
-    const currentOrder = currentLesson.order || 0
+    const currentOrder = currentLessonData.order || 0
 
     // Get all lessons in the same course
     const { data: courseLessons, error: courseError } = await supabase
@@ -70,6 +79,8 @@ export async function POST(request: NextRequest) {
       .select('id, "order"')
       .eq('course_id', courseId)
       .order('"order"', { ascending: true })
+
+    const courseLessonsData = (courseLessons || []) as LessonOrder[]
 
     if (courseError) {
       return NextResponse.json(
@@ -79,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate new order values
-    const updatedLessons = courseLessons.map((lesson, index) => {
+    const updatedLessons = courseLessonsData.map((lesson, index) => {
       let newOrderValue: number
       const lessonOrder = lesson.order || 0
 
@@ -110,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // Update all lessons with their new order values
     for (const lesson of updatedLessons) {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('lessons')
         .update({ order: lesson.order })
         .eq('id', lesson.id)

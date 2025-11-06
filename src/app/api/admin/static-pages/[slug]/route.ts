@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(
   _request: NextRequest,
@@ -21,7 +24,8 @@ export async function GET(
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profile?.role !== 'admin')
+    const profileData = profile as Pick<Profile, 'role'> | null
+    if (profileData?.role !== 'admin')
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -62,7 +66,8 @@ export async function PUT(
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profile?.role !== 'admin')
+    const profileData = profile as Pick<Profile, 'role'> | null
+    if (profileData?.role !== 'admin')
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -75,7 +80,7 @@ export async function PUT(
       content_json?: unknown | null
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('static_pages')
       .upsert(
         {
@@ -83,7 +88,7 @@ export async function PUT(
           title: title ?? slug,
           content_html: content_html ?? null,
           content_json: (content_json as any) ?? null,
-        },
+        } as any,
         { onConflict: 'slug' }
       )
       .select('*')

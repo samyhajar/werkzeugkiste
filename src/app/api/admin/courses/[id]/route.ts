@@ -142,7 +142,7 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     }
 
-    const { data: updatedCourse, error: updateError } = await supabase
+    const { data: updatedCourse, error: updateError } = await (supabase as any)
       .from('courses')
       .update(updateData)
       .eq('id', courseId)

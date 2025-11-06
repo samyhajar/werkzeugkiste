@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Question = Database['public']['Tables']['quiz_questions']['Row'] & {
+  quiz_answers?: Array<Database['public']['Tables']['quiz_answers']['Row']>
+}
+type Quiz = Database['public']['Tables']['enhanced_quizzes']['Row']
 
 export async function POST(
   request: NextRequest,
@@ -48,7 +54,8 @@ export async function POST(
     let earnedPoints = 0
     const questionResults: any[] = []
 
-    questions?.forEach(question => {
+    const questionsList = (questions || []) as Question[]
+    questionsList.forEach((question: Question) => {
       const correctAnswers = question.quiz_answers?.filter(a => a.is_correct)
       const studentAnswerIds = answers[question.id] || []
       const studentTextAnswer = textAnswers[question.id] || ''
@@ -115,7 +122,8 @@ export async function POST(
 
     const scorePercentage =
       totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0
-    const passed = scorePercentage >= (quiz.pass_percent || 0)
+    const quizData = quiz as Quiz | null
+    const passed = scorePercentage >= (quizData?.pass_percent || 0)
 
     // Return results without saving to database (guest mode)
     return NextResponse.json({

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -34,7 +37,8 @@ export async function POST(req: NextRequest) {
     .select('role')
     .eq('id', user.id)
     .single()
-  if (profile?.role !== 'admin')
+  const profileData = profile as Pick<Profile, 'role'> | null
+  if (profileData?.role !== 'admin')
     return NextResponse.json(
       { success: false, error: 'Forbidden' },
       { status: 403 }
@@ -79,11 +83,11 @@ export async function POST(req: NextRequest) {
     logo_url,
     sort_order,
   }
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from('digi_resources')
-    .upsert(payload, { onConflict: 'id' })
+    .upsert(payload as any, { onConflict: 'id' })
     .select('*')
-    .single()
+    .single() as any)
   if (error)
     return NextResponse.json(
       { success: false, error: error.message },
@@ -107,7 +111,8 @@ export async function DELETE(req: NextRequest) {
     .select('role')
     .eq('id', user.id)
     .single()
-  if (profile?.role !== 'admin')
+  const profileData = profile as Pick<Profile, 'role'> | null
+  if (profileData?.role !== 'admin')
     return NextResponse.json(
       { success: false, error: 'Forbidden' },
       { status: 403 }

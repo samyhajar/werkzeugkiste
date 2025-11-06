@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server-client'
 import type { Database } from '@/types/supabase'
 
 type ModuleInsert = Database['public']['Tables']['modules']['Insert']
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 interface CreateModuleRequest {
   title: string
@@ -36,7 +37,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -90,7 +93,9 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (!profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (!profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Admin access required' },
         { status: 403 }
@@ -123,9 +128,9 @@ export async function POST(request: NextRequest) {
       presenter_materials_urls: presenter_materials_urls || [],
     }
 
-    const { data: module, error } = await supabase
+    const { data: module, error } = await (supabase as any)
       .from('modules')
-      .insert([moduleData])
+      .insert([moduleData as any])
       .select()
       .single()
 

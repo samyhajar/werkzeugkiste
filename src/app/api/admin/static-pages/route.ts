@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(_request: NextRequest) {
   const supabase = await createClient()
@@ -20,7 +23,8 @@ export async function GET(_request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profile?.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+    if (profileData?.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }

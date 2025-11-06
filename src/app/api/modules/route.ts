@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Module = Database['public']['Tables']['modules']['Row']
+type Course = Database['public']['Tables']['courses']['Row']
+type Lesson = Database['public']['Tables']['lessons']['Row']
 
 export async function GET(_request: NextRequest) {
   try {
@@ -11,6 +16,8 @@ export async function GET(_request: NextRequest) {
       .select('*')
       .order('order', { ascending: true })
 
+    const modulesData = (modules || []) as Module[]
+
     if (modulesError) {
       console.error('Error fetching modules:', modulesError)
       return NextResponse.json(
@@ -19,7 +26,7 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    if (!modules || modules.length === 0) {
+    if (!modulesData || modulesData.length === 0) {
       return NextResponse.json(
         {
           success: true,
@@ -40,7 +47,7 @@ export async function GET(_request: NextRequest) {
       .select('*')
       .in(
         'module_id',
-        modules.map(m => m.id)
+        modulesData.map(m => m.id)
       )
       .not('module_id', 'is', null) // Only show courses that are assigned to modules
       .order('order', { ascending: true })
@@ -57,7 +64,7 @@ export async function GET(_request: NextRequest) {
     const { data: lessons, error: lessonsError } = await supabase
       .from('lessons')
       .select('*')
-      .in('course_id', courses?.map(c => c.id) || [])
+      .in('course_id', (courses || [] as Course[]).map((c: Course) => c.id))
       .order('order', { ascending: true })
 
     if (lessonsError) {
@@ -72,7 +79,7 @@ export async function GET(_request: NextRequest) {
     const { data: quizzes, error: quizzesError } = await supabase
       .from('enhanced_quizzes')
       .select('*')
-      .in('course_id', courses?.map(c => c.id) || [])
+      .in('course_id', (courses || [] as Course[]).map((c: Course) => c.id))
       .eq('scope', 'course')
       .order('sort_order', { ascending: true })
 
@@ -85,15 +92,15 @@ export async function GET(_request: NextRequest) {
     }
 
     // Build the hierarchical structure
-    const modulesWithCourses = modules.map(module => {
+    const modulesWithCourses = modulesData.map((module: Module) => {
       const moduleCourses =
-        courses?.filter(course => course.module_id === module.id) || []
+        (courses || [] as Course[]).filter((course: Course) => course.module_id === module.id)
 
-      const coursesWithContent = moduleCourses.map(course => {
+      const coursesWithContent = moduleCourses.map((course: Course) => {
         const courseLessons =
-          lessons?.filter(lesson => lesson.course_id === course.id) || []
+          (lessons || [] as Lesson[]).filter((lesson: Lesson) => lesson.course_id === course.id)
         const courseQuizzes =
-          quizzes?.filter(quiz => quiz.course_id === course.id) || []
+          (quizzes || [] as any[]).filter((quiz: any) => quiz.course_id === course.id)
 
         return {
           ...course,

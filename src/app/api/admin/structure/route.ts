@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export async function GET(_request: NextRequest) {
   try {
@@ -25,7 +28,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -97,22 +102,22 @@ export async function GET(_request: NextRequest) {
       )
 
       for (let i = 0; i < sortedLessons.length; i++) {
-        const lesson = sortedLessons[i]
+        const lesson = sortedLessons[i] as { sort_order?: number; id: string }
         if (lesson.sort_order !== i + 1) {
-          await supabase
+          await (supabase as any)
             .from('lessons')
-            .update({ sort_order: i + 1 })
+            .update({ sort_order: i + 1 } as any)
             .eq('id', lesson.id)
         }
       }
     }
 
     // Normalize all orders before building structure
-    for (const moduleItem of modules || []) {
+    for (const moduleItem of (modules || []) as { id: string }[]) {
       const moduleCourses =
         courses?.filter((course: any) => course.module_id === moduleItem.id) ||
         []
-      for (const course of moduleCourses) {
+      for (const course of moduleCourses as { id: string }[]) {
         await normalizeLessonOrder(course.id)
       }
     }
@@ -288,7 +293,9 @@ export async function PUT(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: 'Forbidden' },
         { status: 403 }
@@ -307,9 +314,9 @@ export async function PUT(request: NextRequest) {
 
     if (lessonUpdates.length > 0) {
       for (const update of lessonUpdates) {
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('lessons')
-          .update({ sort_order: update.sort_order })
+          .update({ sort_order: update.sort_order } as any)
           .eq('id', update.id)
 
         if (error) {

@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Quiz = Database['public']['Tables']['enhanced_quizzes']['Row'] & {
+  lessons?: Array<{
+    id: string
+    title: string
+    course_id: string
+    courses?: {
+      id: string
+      title: string
+    }
+  }>
+}
+type Question = Database['public']['Tables']['quiz_questions']['Row'] & {
+  quiz_answers?: Array<Database['public']['Tables']['quiz_answers']['Row']>
+}
 
 export async function GET(
   request: NextRequest,
@@ -83,9 +99,11 @@ export async function GET(
       attempts = userAttempts || []
     }
 
+    const quizData = quiz as Quiz | null
+    const questionsList = (questions || []) as Question[]
     const quizWithAttempts = {
-      ...quiz,
-      questions: questions || [],
+      ...(quizData || {}),
+      questions: questionsList,
       user_attempts: attempts,
       best_score:
         attempts && attempts.length > 0

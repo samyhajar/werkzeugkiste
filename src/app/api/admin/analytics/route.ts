@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
+type Course = Pick<Database['public']['Tables']['courses']['Row'], 'id' | 'title' | 'created_at'>
+type Lesson = Pick<Database['public']['Tables']['lessons']['Row'], 'id' | 'title' | 'created_at'>
+type Student = Pick<Database['public']['Tables']['profiles']['Row'], 'id' | 'created_at'>
 
 export async function GET(_request: NextRequest) {
   try {
@@ -22,7 +28,9 @@ export async function GET(_request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    const profileData = profile as Pick<Profile, 'role'> | null
+
+    if (profileError || !profileData || profileData.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -41,9 +49,9 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
-    const courses = coursesResult.data || []
-    const lessons = lessonsResult.data || []
-    const students = studentsResult.data || []
+    const courses = (coursesResult.data || []) as Course[]
+    const lessons = (lessonsResult.data || []) as Lesson[]
+    const students = (studentsResult.data || []) as Student[]
 
     // Calculate overview statistics
     const totalCourses = courses.length
