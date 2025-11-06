@@ -3,89 +3,134 @@
 
 -- First, let's check and fix any missing CASCADE constraints
 DO $$
+DECLARE
+    constraint_exists BOOLEAN;
+    delete_rule_value TEXT;
 BEGIN
     -- Check if enhanced_quizzes has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'enhanced_quizzes_course_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE enhanced_quizzes DROP CONSTRAINT enhanced_quizzes_course_id_fkey;
-        ALTER TABLE enhanced_quizzes ADD CONSTRAINT enhanced_quizzes_course_id_fkey
-            FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'enhanced_quizzes_course_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'enhanced_quizzes_course_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE enhanced_quizzes DROP CONSTRAINT enhanced_quizzes_course_id_fkey;
+            ALTER TABLE enhanced_quizzes ADD CONSTRAINT enhanced_quizzes_course_id_fkey
+                FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if enhanced_quizzes has proper CASCADE constraints for lesson_id
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'enhanced_quizzes_lesson_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE enhanced_quizzes DROP CONSTRAINT enhanced_quizzes_lesson_id_fkey;
-        ALTER TABLE enhanced_quizzes ADD CONSTRAINT enhanced_quizzes_lesson_id_fkey
-            FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'enhanced_quizzes_lesson_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'enhanced_quizzes_lesson_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE enhanced_quizzes DROP CONSTRAINT enhanced_quizzes_lesson_id_fkey;
+            ALTER TABLE enhanced_quizzes ADD CONSTRAINT enhanced_quizzes_lesson_id_fkey
+                FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if quiz_questions has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'quiz_questions_quiz_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE quiz_questions DROP CONSTRAINT quiz_questions_quiz_id_fkey;
-        ALTER TABLE quiz_questions ADD CONSTRAINT quiz_questions_quiz_id_fkey
-            FOREIGN KEY (quiz_id) REFERENCES enhanced_quizzes(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'quiz_questions_quiz_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'quiz_questions_quiz_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE quiz_questions DROP CONSTRAINT quiz_questions_quiz_id_fkey;
+            ALTER TABLE quiz_questions ADD CONSTRAINT quiz_questions_quiz_id_fkey
+                FOREIGN KEY (quiz_id) REFERENCES enhanced_quizzes(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if quiz_answers has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'quiz_answers_question_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE quiz_answers DROP CONSTRAINT quiz_answers_question_id_fkey;
-        ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_question_id_fkey
-            FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'quiz_answers_question_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'quiz_answers_question_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE quiz_answers DROP CONSTRAINT quiz_answers_question_id_fkey;
+            ALTER TABLE quiz_answers ADD CONSTRAINT quiz_answers_question_id_fkey
+                FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if enhanced_quiz_attempts has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'enhanced_quiz_attempts_quiz_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE enhanced_quiz_attempts DROP CONSTRAINT enhanced_quiz_attempts_quiz_id_fkey;
-        ALTER TABLE enhanced_quiz_attempts ADD CONSTRAINT enhanced_quiz_attempts_quiz_id_fkey
-            FOREIGN KEY (quiz_id) REFERENCES enhanced_quizzes(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'enhanced_quiz_attempts_quiz_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'enhanced_quiz_attempts_quiz_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE enhanced_quiz_attempts DROP CONSTRAINT enhanced_quiz_attempts_quiz_id_fkey;
+            ALTER TABLE enhanced_quiz_attempts ADD CONSTRAINT enhanced_quiz_attempts_quiz_id_fkey
+                FOREIGN KEY (quiz_id) REFERENCES enhanced_quizzes(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if lesson_progress has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'lesson_progress_lesson_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE lesson_progress DROP CONSTRAINT lesson_progress_lesson_id_fkey;
-        ALTER TABLE lesson_progress ADD CONSTRAINT lesson_progress_lesson_id_fkey
-            FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'lesson_progress_lesson_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'lesson_progress_lesson_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE lesson_progress DROP CONSTRAINT lesson_progress_lesson_id_fkey;
+            ALTER TABLE lesson_progress ADD CONSTRAINT lesson_progress_lesson_id_fkey
+                FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if certificates has proper CASCADE constraints
-    IF EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE constraint_name = 'certificates_module_id_fkey'
-        AND delete_rule != 'CASCADE'
-    ) THEN
-        -- Drop and recreate the constraint with CASCADE
-        ALTER TABLE certificates DROP CONSTRAINT certificates_module_id_fkey;
-        ALTER TABLE certificates ADD CONSTRAINT certificates_module_id_fkey
-            FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE;
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc
+        WHERE tc.constraint_name = 'certificates_module_id_fkey'
+    ) INTO constraint_exists;
+
+    IF constraint_exists THEN
+        SELECT delete_rule INTO delete_rule_value
+        FROM information_schema.referential_constraints
+        WHERE constraint_name = 'certificates_module_id_fkey';
+
+        IF delete_rule_value != 'CASCADE' THEN
+            ALTER TABLE certificates DROP CONSTRAINT certificates_module_id_fkey;
+            ALTER TABLE certificates ADD CONSTRAINT certificates_module_id_fkey
+                FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE;
+        END IF;
     END IF;
 
     -- Check if rewards has proper CASCADE constraints for source_id (this is more complex)

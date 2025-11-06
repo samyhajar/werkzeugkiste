@@ -5,7 +5,7 @@ import { sanitizeLessonHtml } from '@/lib/sanitize'
 import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, User, BarChart3, CheckCircle } from 'lucide-react'
+import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, User, BarChart3, CheckCircle, Menu, X } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useProgressTracking } from '@/hooks/useProgressTracking'
 import { useAuth } from '@/contexts/AuthContext'
@@ -508,6 +508,7 @@ export default function ModuleDetailPage() {
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
   const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set())
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   // Removing LoginModal in favor of dedicated login route
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
@@ -862,6 +863,9 @@ export default function ModuleDetailPage() {
       setExpandedCourses(new Set([course.id]))
     }
 
+    // Close mobile sidebar when lesson is selected
+    setIsMobileSidebarOpen(false)
+
     if (updateParams) {
       updateQueryParams({ lessonId: lesson.id, quizId: null })
     }
@@ -919,6 +923,9 @@ export default function ModuleDetailPage() {
     if (course) {
       setExpandedCourses(new Set([course.id]))
     }
+
+    // Close mobile sidebar when quiz is selected
+    setIsMobileSidebarOpen(false)
 
     if (updateParams) {
       updateQueryParams({ quizId: quiz.id, lessonId: null })
@@ -1012,7 +1019,20 @@ export default function ModuleDetailPage() {
     <>
       <div className="h-screen bg-gray-50 flex overflow-hidden">
         {/* Continuous Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-6">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-4 sm:px-6">
+          {/* Mobile: Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            className="lg:hidden mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            {isMobileSidebarOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </button>
+
           {/* Right: Progress Bar and User Info */}
           <div className="flex items-center gap-6 ml-auto">
             {/* Module-specific Progress Bar - only show for authenticated users */}
@@ -1070,8 +1090,8 @@ export default function ModuleDetailPage() {
         </div>
 
         {/* Back to Modules Link - Above Sidebar */}
-        <div className="fixed top-16 left-0 w-96 bg-white border-b border-gray-200 z-40">
-          <div className="p-4">
+        <div className={`fixed top-16 left-0 ${isMobileSidebarOpen ? 'w-full lg:w-96' : 'w-0 lg:w-96'} bg-white border-b border-gray-200 z-40 transition-all duration-300 overflow-hidden lg:block`}>
+          <div className="p-4 w-96 lg:w-full">
             <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors">
               <ChevronLeft className="w-4 h-4" />
               Zurück zu Modulen
@@ -1080,7 +1100,9 @@ export default function ModuleDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <aside className="w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm sticky top-0 mt-28">
+        <aside className={`fixed lg:sticky top-28 left-0 h-[calc(100vh-7rem)] w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm z-30 transition-transform duration-300 ${
+          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
 
           {/* Module Name */}
           <div className="p-4 border-b border-gray-200 bg-white">
@@ -1240,8 +1262,17 @@ export default function ModuleDetailPage() {
           </div>
         </aside>
 
+        {/* Mobile: Overlay when sidebar is open */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden mt-32">
+        <div className="flex-1 flex flex-col overflow-hidden mt-32 lg:ml-0">
           {selectedLesson ? (
             <div className="flex-1 overflow-y-auto">
               {/* Enhanced Lesson Header */}
