@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data, error } = await supabase.rpc('check_module_completion', {
+  const { data, error } = await (supabase as any).rpc('check_module_completion', {
     p_student_id: user.id,
     p_module_id: module_id,
   })
@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (data) {
-    const { error: insertError } = await supabase.from('certificates').insert({
+    const { error: insertError } = await (supabase as any).from('certificates').insert({
       user_id: user.id,
       module_id: module_id,
       pdf_url: 'pending-generation', // Placeholder until PDF is generated
       issued_at: new Date().toISOString(),
-    })
+    } as any)
 
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Certificate = Pick<Database['public']['Tables']['certificates']['Row'], 'user_id' | 'pdf_url' | 'module_id'>
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,6 +39,8 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
+    const certificateData = certificate as Certificate | null
+
     if (certError) {
       console.error('Database error:', certError)
       return NextResponse.json(
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (!certificate) {
+    if (!certificateData) {
       console.error(
         'Certificate not found for user:',
         user.id,
@@ -84,7 +89,7 @@ export async function GET(request: NextRequest) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId: user.id,
-              moduleId: certificate.module_id,
+              moduleId: certificateData.module_id,
             }),
           }
         )

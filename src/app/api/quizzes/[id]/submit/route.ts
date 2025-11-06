@@ -132,7 +132,7 @@ export async function POST(
     const passed = scorePercentage >= (quizData?.pass_percent || 0)
 
     // Save quiz attempt
-    const { data: attempt, error: attemptError } = await supabase
+    const { data: attempt, error: attemptError } = await (supabase as any)
       .from('enhanced_quiz_attempts')
       .insert({
         quiz_id: id,
