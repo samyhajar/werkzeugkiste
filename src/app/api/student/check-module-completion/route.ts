@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 import { CERTIFICATE_TEMPLATE_VERSION } from '@/lib/certificates/template'
+import type { Database } from '@/types/supabase'
+
+type Module = Pick<Database['public']['Tables']['modules']['Row'], 'id' | 'title'>
+type Course = Pick<Database['public']['Tables']['courses']['Row'], 'id' | 'title'>
+type Lesson = Pick<Database['public']['Tables']['lessons']['Row'], 'id' | 'title'>
+type LessonProgress = Pick<Database['public']['Tables']['lesson_progress']['Row'], 'lesson_id'>
+type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
+type QuizAttempt = { quiz_id: string; passed: boolean | null; score_percent: number | null }
+type ExistingCertificate = Pick<Database['public']['Tables']['certificates']['Row'], 'id' | 'pdf_url' | 'issued_at' | 'meta'>
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +42,9 @@ export async function POST(request: NextRequest) {
       .eq('id', moduleId)
       .single()
 
-    if (moduleError || !module) {
+    const moduleData = module as Module | null
+
+    if (moduleError || !moduleData) {
       return NextResponse.json(
         { success: false, error: 'Module not found' },
         { status: 404 },
@@ -45,6 +56,8 @@ export async function POST(request: NextRequest) {
       .select('id, title')
       .eq('module_id', moduleId)
 
+    const moduleCoursesData = (moduleCourses || []) as Course[]
+
     if (coursesError) {
       console.error('Error fetching module courses:', coursesError)
       return NextResponse.json(
@@ -53,7 +66,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!moduleCourses || moduleCourses.length === 0) {
+    if (!moduleCoursesData || moduleCoursesData.length === 0) {
       return NextResponse.json(
         { success: false, error: 'No courses found for this module' },
         { status: 404 },
@@ -63,12 +76,14 @@ export async function POST(request: NextRequest) {
     let allLessonsCompleted = true
     let completedCourseCount = 0
 
-    for (const course of moduleCourses) {
+    for (const course of moduleCoursesData) {
       const { data: lessons, error: lessonsError } = await supabase
         .from('lessons')
         .select('id, title')
         .eq('course_id', course.id)
         .order('sort_order', { ascending: true })
+
+      const lessonsData = (lessons || []) as Lesson[]
 
       if (lessonsError) {
         console.error('Error fetching lessons:', lessonsError)
@@ -78,7 +93,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!lessons || lessons.length === 0) {
+      if (!lessonsData || lessonsData.length === 0) {
         completedCourseCount += 1
         continue
       }
@@ -89,8 +104,10 @@ export async function POST(request: NextRequest) {
         .eq('student_id', user.id)
         .in(
           'lesson_id',
-          lessons.map(lesson => lesson.id),
+          lessonsData.map(lesson => lesson.id),
         )
+
+      const completedLessonsData = (completedLessons || []) as LessonProgress[]
 
       if (progressError) {
         console.error('Error fetching lesson progress:', progressError)
@@ -100,8 +117,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const completedLessonIds = completedLessons?.map(lesson => lesson.lesson_id) || []
-      const allLessonsInCourse = lessons.every(lesson =>
+      const completedLessonIds = completedLessonsData.map(lesson => lesson.lesson_id) || []
+      const allLessonsInCourse = lessonsData.every(lesson =>
         completedLessonIds.includes(lesson.id),
       )
 
@@ -117,8 +134,10 @@ export async function POST(request: NextRequest) {
       .select('id, title, course_id, lesson_id')
       .in(
         'course_id',
-        moduleCourses.map(course => course.id),
+        moduleCoursesData.map(course => course.id),
       )
+
+    const allQuizzesData = (allQuizzes || []) as Quiz[]
 
     if (quizzesError) {
       console.error('Error fetching quizzes:', quizzesError)
@@ -132,15 +151,17 @@ export async function POST(request: NextRequest) {
     const passedQuizzes: Array<{ id: string; title: string; score?: number | null }> = []
     const failedQuizzes: Array<{ id: string; title: string }> = []
 
-    if (allQuizzes && allQuizzes.length > 0) {
+    if (allQuizzesData && allQuizzesData.length > 0) {
       const { data: quizAttempts, error: attemptsError } = await supabase
         .from('enhanced_quiz_attempts')
         .select('quiz_id, passed, score_percent')
         .eq('user_id', user.id)
         .in(
           'quiz_id',
-          allQuizzes.map(quiz => quiz.id),
+          allQuizzesData.map(quiz => quiz.id),
         )
+
+      const quizAttemptsData = (quizAttempts || []) as QuizAttempt[]
 
       if (attemptsError) {
         console.error('Error fetching quiz attempts:', attemptsError)
@@ -150,8 +171,8 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      for (const quiz of allQuizzes) {
-        const attempt = quizAttempts?.find(entry => entry.quiz_id === quiz.id)
+      for (const quiz of allQuizzesData) {
+        const attempt = quizAttemptsData.find(entry => entry.quiz_id === quiz.id)
 
         if (attempt && attempt.passed) {
           passedQuizzes.push({
@@ -190,6 +211,8 @@ export async function POST(request: NextRequest) {
       .eq('module_id', moduleId)
       .maybeSingle()
 
+    const existingCertificateData = existingCertificate as ExistingCertificate | null
+
     if (existingError) {
       console.error('Error checking existing certificate:', existingError)
       return NextResponse.json(
@@ -199,19 +222,19 @@ export async function POST(request: NextRequest) {
     }
 
     const existingCertificateNumber =
-      existingCertificate && typeof existingCertificate === 'object' && 'meta' in existingCertificate
-        ? (existingCertificate as { meta?: { certificateNumber?: string } }).meta?.certificateNumber ?? null
+      existingCertificateData && typeof existingCertificateData === 'object' && 'meta' in existingCertificateData
+        ? (existingCertificateData as { meta?: { certificateNumber?: string } }).meta?.certificateNumber ?? null
         : null
 
-    if (existingCertificate) {
+    if (existingCertificateData) {
       const supabaseUrl =
         process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? null
 
       let objectExists = false
 
-      if (supabaseUrl && existingCertificate.pdf_url) {
+      if (supabaseUrl && existingCertificateData.pdf_url) {
         try {
-          const encodedPath = existingCertificate.pdf_url
+          const encodedPath = existingCertificateData.pdf_url
             .split('/')
             .map(encodeURIComponent)
             .join('/')
@@ -228,8 +251,8 @@ export async function POST(request: NextRequest) {
       if (objectExists) {
         // Check template version; regenerate if outdated or missing
         const metaObj =
-          typeof existingCertificate === 'object' && existingCertificate?.meta && typeof existingCertificate.meta === 'object'
-            ? (existingCertificate.meta as Record<string, unknown>)
+          typeof existingCertificateData === 'object' && existingCertificateData?.meta && typeof existingCertificateData.meta === 'object'
+            ? (existingCertificateData.meta as Record<string, unknown>)
             : null
         const templateVersion = metaObj?.templateVersion as string | null
         const templateLoaded = (metaObj?.templateLoaded as boolean | undefined) ?? false
@@ -244,8 +267,8 @@ export async function POST(request: NextRequest) {
             passedQuizzes,
             failedQuizzes,
             totalQuizzes,
-            certificatePath: existingCertificate.pdf_url,
-            issuedAt: existingCertificate.issued_at,
+            certificatePath: existingCertificateData.pdf_url,
+            issuedAt: existingCertificateData.issued_at,
             certificateNumber: existingCertificateNumber,
           })
         }
@@ -262,7 +285,7 @@ export async function POST(request: NextRequest) {
       console.warn('Existing certificate record found but file missing, regenerating.', {
         userId: user.id,
         moduleId,
-        certificatePath: existingCertificate.pdf_url,
+        certificatePath: existingCertificateData.pdf_url,
       })
     }
 

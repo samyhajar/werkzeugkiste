@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert or update lesson progress with comprehensive tracking
-    const { error } = await supabase.from('lesson_progress').upsert(
+    const { error } = await (supabase as any).from('lesson_progress').upsert(
       {
         student_id: user.id,
         lesson_id: lesson_id,
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         progress_percent: 100, // Mark as fully completed when accessed
         xp_awarded: 10, // Award 10 XP for lesson completion
         reward_reason: 'Lesson accessed and completed',
-      },
+      } as any,
       {
         onConflict: 'student_id,lesson_id',
       }

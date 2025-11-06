@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button'
 import { Briefcase, MessageSquare, LifeBuoy } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server-client'
 import ResourceCarousel from './ResourceCarousel'
+import type { Database } from '@/types/supabase'
+
+type DigiCategory = Database['public']['Tables']['digi_categories']['Row']
+type DigiResource = Database['public']['Tables']['digi_resources']['Row']
 
 export const metadata = { title: 'Digi-Sammlung' }
 
@@ -75,7 +79,7 @@ async function fetchStructured() {
     .from('digi_resources')
     .select('*')
     .order('sort_order', { ascending: true })
-  return { cats: cats || [], res: res || [] }
+  return { cats: (cats || []) as DigiCategory[], res: (res || []) as DigiResource[] }
 }
 
 export default async function DigiSammlungPage() {

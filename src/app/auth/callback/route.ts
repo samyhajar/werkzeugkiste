@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { Database } from '@/types/supabase'
 
+type Profile = Database['public']['Tables']['profiles']['Row']
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
@@ -113,7 +115,9 @@ export async function GET(request: NextRequest) {
           .eq('id', user.id)
           .single()
 
-        if (profile?.role === 'admin') {
+        const profileData = profile as Pick<Profile, 'role'> | null
+
+        if (profileData?.role === 'admin') {
           redirectPath = '/admin'
         } else {
           redirectPath = '/'

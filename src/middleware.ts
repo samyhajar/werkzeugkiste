@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { Database } from '@/types/supabase'
 
+type Profile = Database['public']['Tables']['profiles']['Row']
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -71,7 +73,7 @@ export async function middleware(request: NextRequest) {
       .select('*')
       .eq('id', user.id)
       .single()
-    profile = data
+    profile = data as Profile | null
 
     // Fallback to user metadata if profile not found yet (timing issue)
     if (!profile && user.user_metadata?.role) {

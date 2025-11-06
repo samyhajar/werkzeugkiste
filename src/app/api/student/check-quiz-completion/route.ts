@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Course = Pick<Database['public']['Tables']['courses']['Row'], 'id' | 'title'>
+type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
+type QuizAttempt = { quiz_id: string; passed: boolean | null; score_percent: number | null }
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +38,8 @@ export async function POST(request: NextRequest) {
       .select('id, title')
       .eq('module_id', moduleId)
 
+    const moduleCoursesData = (moduleCourses || []) as Course[]
+
     if (coursesError) {
       console.error('Error fetching module courses:', coursesError)
       return NextResponse.json(
@@ -41,7 +48,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!moduleCourses || moduleCourses.length === 0) {
+    if (!moduleCoursesData || moduleCoursesData.length === 0) {
       return NextResponse.json(
         { success: false, error: 'No courses found for this module' },
         { status: 404 }
@@ -54,8 +61,10 @@ export async function POST(request: NextRequest) {
       .select('id, title, course_id, lesson_id')
       .in(
         'course_id',
-        moduleCourses.map(c => c.id)
+        moduleCoursesData.map(c => c.id)
       )
+
+    const allQuizzesData = (allQuizzes || []) as Quiz[]
 
     if (quizzesError) {
       console.error('Error fetching quizzes:', quizzesError)
@@ -65,7 +74,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!allQuizzes || allQuizzes.length === 0) {
+    if (!allQuizzesData || allQuizzesData.length === 0) {
       // No quizzes for this module, so quiz completion is not required
       return NextResponse.json({
         success: true,
@@ -83,8 +92,10 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
       .in(
         'quiz_id',
-        allQuizzes.map(q => q.id)
+        allQuizzesData.map(q => q.id)
       )
+
+    const quizAttemptsData = (quizAttempts || []) as QuizAttempt[]
 
     if (attemptsError) {
       console.error('Error fetching quiz attempts:', attemptsError)
@@ -99,8 +110,8 @@ export async function POST(request: NextRequest) {
     const failedQuizzes = []
     let allQuizzesPassed = true
 
-    for (const quiz of allQuizzes) {
-      const attempt = quizAttempts?.find(a => a.quiz_id === quiz.id)
+    for (const quiz of allQuizzesData) {
+      const attempt = quizAttemptsData.find(a => a.quiz_id === quiz.id)
 
       if (attempt && attempt.passed) {
         passedQuizzes.push({
@@ -122,10 +133,10 @@ export async function POST(request: NextRequest) {
       allQuizzesPassed,
       passedQuizzes,
       failedQuizzes,
-      totalQuizzes: allQuizzes.length,
+      totalQuizzes: allQuizzesData.length,
       message: allQuizzesPassed
         ? 'All quizzes passed!'
-        : `${passedQuizzes.length}/${allQuizzes.length} quizzes passed`,
+        : `${passedQuizzes.length}/${allQuizzesData.length} quizzes passed`,
     })
   } catch (error) {
     console.error('Quiz completion check error:', error)

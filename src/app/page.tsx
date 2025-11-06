@@ -3,7 +3,7 @@ import RegistrationButton from '@/components/shared/RegistrationButton'
 import LogoutCleanup from '@/components/shared/LogoutCleanup'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server-client'
-import { Tables } from '@/types/supabase'
+import { Tables, Database } from '@/types/supabase'
 import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
 import { Suspense } from 'react'
@@ -11,6 +11,15 @@ import { Suspense } from 'react'
 
 
 type Lesson = Tables<'lessons'>
+type Module = Database['public']['Tables']['modules']['Row']
+type Course = Database['public']['Tables']['courses']['Row']
+type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
+type ModuleWithCourses = Module & {
+  courses: (Course & {
+    lessons: Lesson[]
+    quizzes: Quiz[]
+  })[]
+}
 
 interface ProgressData {
   lesson_id: string
@@ -46,7 +55,7 @@ export default async function Home({
     .select('*')
     .order('order', { ascending: true })
 
-  const modules = fetchedModules ?? []
+  const modules = (fetchedModules ?? []) as Module[]
 
   // Fetch all courses for these modules (show all assigned courses regardless of status)
   const { data: courses } = await supabase
@@ -56,28 +65,34 @@ export default async function Home({
     .not('module_id', 'is', null) // Only show courses that are assigned to modules
     .order('order', { ascending: true })
 
+  const coursesData = (courses || []) as Course[]
+
   // Fetch all lessons for these courses
   const { data: lessons } = await supabase
     .from('lessons')
     .select('*')
-    .in('course_id', courses?.map(c => c.id) || [])
+    .in('course_id', coursesData.map(c => c.id))
     .order('order', { ascending: true })
+
+  const lessonsData = (lessons || []) as Lesson[]
 
   // Fetch all quizzes for these courses from enhanced_quizzes table
   const { data: quizzes } = await supabase
     .from('enhanced_quizzes')
     .select('*')
-    .in('course_id', courses?.map(c => c.id) || [])
+    .in('course_id', coursesData.map(c => c.id))
     .eq('scope', 'course')
     .order('sort_order', { ascending: true })
 
+  const quizzesData = (quizzes || []) as Quiz[]
+
   // Build the hierarchical structure
   const modulesWithCourses = modules.map(module => {
-    const moduleCourses = courses?.filter(course => course.module_id === module.id) || []
+    const moduleCourses = coursesData.filter(course => course.module_id === module.id)
 
     const coursesWithContent = moduleCourses.map(course => {
-      const courseLessons = lessons?.filter(lesson => lesson.course_id === course.id) || []
-      const courseQuizzes = quizzes?.filter(quiz => quiz.course_id === course.id) || []
+      const courseLessons = lessonsData.filter(lesson => lesson.course_id === course.id)
+      const courseQuizzes = quizzesData.filter(quiz => quiz.course_id === course.id)
 
       return {
         ...course,
@@ -121,7 +136,7 @@ export default async function Home({
         const { data: lessonCounts, error: countError } = await supabase
           .from('lessons')
           .select('course_id')
-          .in('course_id', courses.map(c => c.id))
+          .in('course_id', coursesData.map(c => c.id))
 
         if (lessonCounts && !countError) {
           // Count lessons per course
@@ -143,7 +158,7 @@ export default async function Home({
 
           // Calculate progress per module
           for (const moduleItem of modules) {
-            const moduleCourses = courses.filter(c => c.module_id === moduleItem.id)
+            const moduleCourses = coursesData.filter(c => c.module_id === moduleItem.id)
             let totalLessons = 0
             let completedLessons = 0
 
@@ -267,7 +282,7 @@ export default async function Home({
       }>
         <section id="modules" className="w-full pt-16 pb-12">
           <LiveModulesSection
-            initialModules={modulesWithCourses}
+            initialModules={modulesWithCourses as any}
             userProgress={userProgress}
             isLoggedIn={!!user}
           />

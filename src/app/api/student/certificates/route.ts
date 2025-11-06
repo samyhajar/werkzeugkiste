@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type Certificate = Database['public']['Tables']['certificates']['Row']
+type Module = Pick<Database['public']['Tables']['modules']['Row'], 'id' | 'title'>
 
 export async function GET(_request: NextRequest) {
   try {
@@ -25,6 +29,8 @@ export async function GET(_request: NextRequest) {
       .eq('user_id', user.id)
       .order('issued_at', { ascending: false })
 
+    const certificatesData = (certificates || []) as Certificate[]
+
     if (error) {
       console.error('Error fetching certificates:', error)
       return NextResponse.json(
@@ -34,7 +40,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // If no certificates exist, return empty array
-    if (!certificates || certificates.length === 0) {
+    if (!certificatesData || certificatesData.length === 0) {
       return NextResponse.json({
         success: true,
         certificates: [],
@@ -43,17 +49,19 @@ export async function GET(_request: NextRequest) {
 
     // Now let's get the course information for each certificate
     const certificatesWithModules = await Promise.all(
-      certificates.map(async (cert, index) => {
+      certificatesData.map(async (cert, index) => {
         const { data: module } = await supabase
           .from('modules')
           .select('id, title')
           .eq('id', cert.module_id)
           .single()
 
+        const moduleData = module as Module | null
+
         return {
           id: cert.id || `cert-${cert.user_id}-${cert.module_id}-${index}`,
-          courseName: module?.title || 'Unknown Module',
-          moduleName: module?.title || 'Unknown Module',
+          courseName: moduleData?.title || 'Unknown Module',
+          moduleName: moduleData?.title || 'Unknown Module',
           completedDate: cert.issued_at,
           fileUrl: cert.pdf_url,
           status: 'completed' as const,

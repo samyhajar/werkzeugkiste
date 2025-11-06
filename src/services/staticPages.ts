@@ -45,7 +45,7 @@ export async function getStaticPageBySlug(
     throw error
   }
 
-  return (data as StaticPage) || null
+  return data ? (data as StaticPage) : null
 }
 
 export async function upsertStaticPage(input: {
@@ -66,9 +66,9 @@ export async function upsertStaticPage(input: {
     meta: (input.meta as StaticPagesRow['meta']) ?? null,
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('static_pages')
-    .upsert(payload, { onConflict: 'slug' })
+    .upsert(payload as any, { onConflict: 'slug' })
     .select('*')
     .single()
 

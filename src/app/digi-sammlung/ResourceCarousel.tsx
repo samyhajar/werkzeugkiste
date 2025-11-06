@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server-client'
+import type { Database } from '@/types/supabase'
+
+type DigiResourceSlide = Database['public']['Tables']['digi_resource_slides']['Row']
 
 export const revalidate = 60
 
@@ -10,13 +13,15 @@ export default async function ResourceCarousel({ resourceId }: { resourceId: str
     .eq('resource_id', resourceId)
     .order('sort_order', { ascending: true })
 
-  if (!slides || slides.length === 0) {
+  const slidesData = (slides || []) as DigiResourceSlide[]
+
+  if (!slidesData || slidesData.length === 0) {
     return null
   }
 
   return (
     <div className="w-full overflow-x-auto flex gap-4 snap-x px-1 py-2">
-      {slides.map((s) => (
+      {slidesData.map((s) => (
         <div key={s.id} className="min-w-[280px] max-w-[320px] snap-start bg-white border rounded-lg shadow-sm p-4">
           {s.image_url && (
             <div className="h-28 w-full flex items-center justify-center overflow-hidden rounded mb-3">
