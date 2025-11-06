@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server-client'
 import { Card, CardContent } from '@/components/ui/card'
+import type { Database } from '@/types/supabase'
 import {
   Users,
   BookOpen,
@@ -10,6 +11,8 @@ import {
   TrendingUp,
   CheckCircle,
 } from 'lucide-react'
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 // Force dynamic rendering to prevent static generation issues
 // Keep default rendering; no force-dynamic to avoid unnecessary reload behavior
@@ -60,7 +63,9 @@ export default async function AdminDashboard() {
     .eq('id', user.id)
     .single()
 
-  if (profileError || !profile || profile.role !== 'admin') {
+  const profileData = profile as Pick<Profile, 'role'> | null
+
+  if (profileError || !profileData || profileData.role !== 'admin') {
     redirect('/')
   }
 
