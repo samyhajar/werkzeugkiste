@@ -1,15 +1,40 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { sanitizeLessonHtml } from '@/lib/sanitize'
-import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { FileText, HelpCircle, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, User, BarChart3, CheckCircle, Menu, X } from 'lucide-react'
-import { getBrowserClient } from '@/lib/supabase/browser-client'
-import { useProgressTracking } from '@/hooks/useProgressTracking'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
+import { useProgressTracking } from '@/hooks/useProgressTracking'
+import { sanitizeLessonHtml } from '@/lib/sanitize'
+import { getBrowserClient } from '@/lib/supabase/browser-client'
+import {
+  BarChart3,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  FileText,
+  HelpCircle,
+  Menu,
+  User,
+  X,
+} from 'lucide-react'
 import Link from 'next/link'
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 // Removed inline LoginModal usage; we redirect to dedicated login page instead
 
 interface Course {
@@ -83,11 +108,18 @@ interface CertificateModalState {
   isNew?: boolean
 }
 
-function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) {
+function QuizContent({
+  quiz,
+  onBack,
+  onQuizCompleted,
+  user,
+}: QuizContentProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [studentAnswers, setStudentAnswers] = useState<Record<string, string[]>>({})
+  const [studentAnswers, setStudentAnswers] = useState<
+    Record<string, string[]>
+  >({})
   const [textAnswers, setTextAnswers] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -96,7 +128,9 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
   // Helper function to get question type label
   const getQuestionTypeLabel = (type: string, answers?: QuizAnswer[]) => {
     // Check if this is a True/False question by looking at the answers
-    const isTrueFalse = answers && answers.length === 2 &&
+    const isTrueFalse =
+      answers &&
+      answers.length === 2 &&
       answers.some(a => a.answer_html === 'True') &&
       answers.some(a => a.answer_html === 'False')
 
@@ -140,16 +174,27 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
   }
 
   // Handle answer changes
-  const handleAnswerChange = (questionId: string, answerId: string, isChecked: boolean) => {
+  const handleAnswerChange = (
+    questionId: string,
+    answerId: string,
+    isChecked: boolean
+  ) => {
     setStudentAnswers(prev => {
       const currentAnswers = prev[questionId] || []
 
-      if (getInputType(questions.find(q => q.id === questionId)?.type || 'single') === 'checkbox') {
+      if (
+        getInputType(
+          questions.find(q => q.id === questionId)?.type || 'single'
+        ) === 'checkbox'
+      ) {
         // Multiple choice - toggle answer
         if (isChecked) {
           return { ...prev, [questionId]: [...currentAnswers, answerId] }
         } else {
-          return { ...prev, [questionId]: currentAnswers.filter(id => id !== answerId) }
+          return {
+            ...prev,
+            [questionId]: currentAnswers.filter(id => id !== answerId),
+          }
         }
       } else {
         // Single choice - replace answer
@@ -162,7 +207,7 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
   const handleTextAnswerChange = (questionId: string, value: string) => {
     setTextAnswers(prev => ({
       ...prev,
-      [questionId]: value
+      [questionId]: value,
     }))
   }
 
@@ -224,7 +269,7 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
               type: q.type,
               question_html: q.question_html,
               quiz_answers: q.quiz_answers,
-              quiz_answers_count: q.quiz_answers?.length || 0
+              quiz_answers_count: q.quiz_answers?.length || 0,
             })
           })
         }
@@ -260,10 +305,12 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
     return (
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
         <div className="text-red-600 text-6xl mb-4">⚠️</div>
-        <h2 className="text-xl font-semibold text-gray-600 mb-2">Fehler beim Laden</h2>
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">
+          Fehler beim Laden
+        </h2>
         <p className="text-gray-500 mb-6">{error}</p>
         <Button variant="outline" onClick={onBack}>
-          Zurück zur Übersicht
+          Zur Kursübersicht
         </Button>
       </div>
     )
@@ -275,27 +322,37 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Quiz Ergebnisse</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              Quiz Ergebnisse
+            </h3>
             <p className="text-gray-600">Quiz: {quiz.title}</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-blue-600">{Math.round(results.score_percentage)}%</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {Math.round(results.score_percentage)}%
+                </div>
                 <div className="text-sm text-gray-600">Erreichte Punktzahl</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">{results.earned_points}/{results.total_points}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {results.earned_points}/{results.total_points}
+                </div>
                 <div className="text-sm text-gray-600">Punkte</div>
               </div>
             </div>
 
             <div className="mt-4 text-center">
               {results.passed ? (
-                <div className="text-green-600 font-semibold">✅ Quiz bestanden!</div>
+                <div className="text-green-600 font-semibold">
+                  ✅ Quiz bestanden!
+                </div>
               ) : (
-                <div className="text-red-600 font-semibold">❌ Quiz nicht bestanden</div>
+                <div className="text-red-600 font-semibold">
+                  ❌ Quiz nicht bestanden
+                </div>
               )}
             </div>
 
@@ -303,7 +360,8 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
             {results.is_guest && (
               <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-800 text-sm text-center">
-                  {results.message || 'Ergebnisse werden nicht gespeichert. Melden Sie sich an, um Ihren Fortschritt zu verfolgen.'}
+                  {results.message ||
+                    'Ergebnisse werden nicht gespeichert. Melden Sie sich an, um Ihren Fortschritt zu verfolgen.'}
                 </p>
               </div>
             )}
@@ -312,14 +370,21 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
           <div className="space-y-4 mb-6">
             <h4 className="font-semibold text-gray-800">Fragen Details:</h4>
             {results.question_results.map((result: any, index: number) => (
-              <div key={index} className={`p-4 rounded-lg border ${
-                result.is_correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-              }`}>
+              <div
+                key={index}
+                className={`p-4 rounded-lg border ${
+                  result.is_correct
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
+                }`}
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">Frage {index + 1}</span>
-                  <span className={`text-sm font-medium ${
-                    result.is_correct ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <span
+                    className={`text-sm font-medium ${
+                      result.is_correct ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
                     {result.is_correct ? '✅ Richtig' : '❌ Falsch'}
                   </span>
                 </div>
@@ -330,15 +395,18 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
             ))}
           </div>
 
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Button variant="outline" onClick={onBack}>
-              Zurück zur Übersicht
+              Zur Kursübersicht
             </Button>
-            <Button onClick={() => {
-              setSubmitted(false)
-              setResults(null)
-              setStudentAnswers({})
-            }}>
+            <Button
+              onClick={() => {
+                setSubmitted(false)
+                setResults(null)
+                setStudentAnswers({})
+                setTextAnswers({})
+              }}
+            >
               Quiz wiederholen
             </Button>
           </div>
@@ -352,17 +420,23 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
     return (
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
         <div className="text-blue-400 text-6xl mb-4">❓</div>
-        <h2 className="text-xl font-semibold text-gray-600 mb-2">Quiz wird vorbereitet</h2>
-        <p className="text-gray-500 mb-6">Dieses Quiz ist derzeit in Entwicklung und wird bald verfügbar sein.</p>
-        <div className="flex gap-4 justify-center">
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">
+          Quiz wird vorbereitet
+        </h2>
+        <p className="text-gray-500 mb-6">
+          Dieses Quiz ist derzeit in Entwicklung und wird bald verfügbar sein.
+        </p>
+        <div className="flex gap-4 justify-center flex-wrap">
           <Button variant="outline" onClick={onBack}>
-            Zurück zur Übersicht
+            Zur Kursübersicht
           </Button>
           {quiz.lesson_id && (
-            <Button onClick={() => {
-              // This would need to be handled by the parent component
-              onBack()
-            }}>
+            <Button
+              onClick={() => {
+                // This would need to be handled by the parent component
+                onBack()
+              }}
+            >
               Zur Lektion
             </Button>
           )}
@@ -375,7 +449,9 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
       <div className="p-8">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">Quiz: {quiz.title}</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Quiz: {quiz.title}
+          </h3>
           {quiz.description && (
             <p className="text-gray-600">{quiz.description}</p>
           )}
@@ -383,19 +459,28 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
 
         <div className="space-y-6">
           {questions.map((question, index) => (
-            <div key={question.id} className="border border-gray-200 rounded-lg p-6">
+            <div
+              key={question.id}
+              className="border border-gray-200 rounded-lg p-6"
+            >
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-800 text-lg">
                     Frage {index + 1}
                   </h4>
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                    question.type === 'multiple' ? 'bg-purple-100 text-purple-800' :
-                    question.type === 'single' ? 'bg-blue-100 text-blue-800' :
-                    question.type === 'true_false' ? 'bg-green-100 text-green-800' :
-                    question.type === 'free_text' ? 'bg-orange-100 text-orange-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full font-medium ${
+                      question.type === 'multiple'
+                        ? 'bg-purple-100 text-purple-800'
+                        : question.type === 'single'
+                          ? 'bg-blue-100 text-blue-800'
+                          : question.type === 'true_false'
+                            ? 'bg-green-100 text-green-800'
+                            : question.type === 'free_text'
+                              ? 'bg-orange-100 text-orange-800'
+                              : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
                     {getQuestionTypeLabel(question.type, question.quiz_answers)}
                   </span>
                 </div>
@@ -406,12 +491,12 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
                 </div>
                 {question.explanation_html && (
                   <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
-                    <p className="text-sm text-blue-800">{question.explanation_html}</p>
+                    <p className="text-sm text-blue-800">
+                      {question.explanation_html}
+                    </p>
                   </div>
                 )}
               </div>
-
-
 
               {question.quiz_answers && question.quiz_answers.length > 0 && (
                 <div className="space-y-2">
@@ -419,30 +504,44 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
                     {question.type === 'multiple'
                       ? 'Wählen Sie alle zutreffenden Antworten aus:'
                       : question.type === 'single'
-                      ? 'Wählen Sie eine Antwort aus:'
-                      : 'Antworten:'
-                    }
+                        ? 'Wählen Sie eine Antwort aus:'
+                        : 'Antworten:'}
                   </p>
                   {question.quiz_answers.map((answer, answerIndex) => (
-                    <div key={answer.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div
+                      key={answer.id}
+                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
                       <input
                         type={getInputType(question.type)}
                         name={`question-${question.id}`}
                         id={`answer-${answer.id}`}
-                        checked={studentAnswers[question.id]?.includes(answer.id) || false}
-                        onChange={(e) => handleAnswerChange(question.id, answer.id, e.target.checked)}
+                        checked={
+                          studentAnswers[question.id]?.includes(answer.id) ||
+                          false
+                        }
+                        onChange={e =>
+                          handleAnswerChange(
+                            question.id,
+                            answer.id,
+                            e.target.checked
+                          )
+                        }
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <label htmlFor={`answer-${answer.id}`} className="flex-1 cursor-pointer text-gray-800">
-                        <span className="font-medium text-gray-600 mr-2">{(answerIndex + 1).toString().padStart(2, '0')}.</span>
+                      <label
+                        htmlFor={`answer-${answer.id}`}
+                        className="flex-1 cursor-pointer text-gray-800"
+                      >
+                        <span className="font-medium text-gray-600 mr-2">
+                          {(answerIndex + 1).toString().padStart(2, '0')}.
+                        </span>
                         {answer.answer_html}
                       </label>
                     </div>
                   ))}
                 </div>
               )}
-
-
 
               {/* Special handling for different question types */}
               {question.type === 'free_text' && (
@@ -452,7 +551,9 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
                     rows={4}
                     placeholder="Ihre Antwort hier..."
                     value={textAnswers[question.id] || ''}
-                    onChange={(e) => handleTextAnswerChange(question.id, e.target.value)}
+                    onChange={e =>
+                      handleTextAnswerChange(question.id, e.target.value)
+                    }
                   />
                 </div>
               )}
@@ -464,7 +565,9 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Lücken füllen..."
                     value={textAnswers[question.id] || ''}
-                    onChange={(e) => handleTextAnswerChange(question.id, e.target.value)}
+                    onChange={e =>
+                      handleTextAnswerChange(question.id, e.target.value)
+                    }
                   />
                 </div>
               )}
@@ -474,13 +577,19 @@ function QuizContent({ quiz, onBack, onQuizCompleted, user }: QuizContentProps) 
           ))}
         </div>
 
-        <div className="mt-8 flex gap-4 justify-center">
+        <div className="mt-8 flex gap-4 justify-center flex-wrap">
           <Button variant="outline" onClick={onBack}>
-            Zurück zur Übersicht
+            Zur Kursübersicht
           </Button>
           <Button
             onClick={handleSubmitQuiz}
-            disabled={submitting || (Object.keys(studentAnswers).length === 0 && Object.keys(textAnswers).filter(id => textAnswers[id].trim() !== '').length === 0)}
+            disabled={
+              submitting ||
+              (Object.keys(studentAnswers).length === 0 &&
+                Object.keys(textAnswers).filter(
+                  id => textAnswers[id].trim() !== ''
+                ).length === 0)
+            }
             className={submitting ? 'opacity-50 cursor-not-allowed' : ''}
           >
             {submitting ? 'Wird eingereicht...' : 'Quiz abschließen'}
@@ -506,14 +615,17 @@ export default function ModuleDetailPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [lastRefetchTime, setLastRefetchTime] = useState(0)
-  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set())
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(
+    new Set()
+  )
   const [passedQuizzes, setPassedQuizzes] = useState<Set<string>>(new Set())
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   // Removing LoginModal in favor of dedicated login route
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
   const hasCheckedModuleCompletion = useRef(false)
-  const [certificateModal, setCertificateModal] = useState<CertificateModalState>({ open: false })
+  const [certificateModal, setCertificateModal] =
+    useState<CertificateModalState>({ open: false })
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 
   // Use AuthContext for authentication state
@@ -522,18 +634,21 @@ export default function ModuleDetailPage() {
   // Add progress tracking hook
   const { markLessonComplete, isMarking } = useProgressTracking()
 
-  const buildCertificateUrl = useCallback((path?: string | null) => {
-    if (!path) {
-      return undefined
-    }
-    if (path.startsWith('http')) {
-      return path
-    }
-    if (!supabaseUrl) {
-      return undefined
-    }
-    return `${supabaseUrl}/storage/v1/object/public/${path}`
-  }, [supabaseUrl])
+  const buildCertificateUrl = useCallback(
+    (path?: string | null) => {
+      if (!path) {
+        return undefined
+      }
+      if (path.startsWith('http')) {
+        return path
+      }
+      if (!supabaseUrl) {
+        return undefined
+      }
+      return `${supabaseUrl}/storage/v1/object/public/${path}`
+    },
+    [supabaseUrl]
+  )
 
   const handleCertificateModalClose = useCallback(() => {
     setCertificateModal(prev => ({ ...prev, open: false }))
@@ -541,7 +656,11 @@ export default function ModuleDetailPage() {
 
   const handleViewCertificate = useCallback(() => {
     if (certificateModal.certificateUrl) {
-      window.open(certificateModal.certificateUrl, '_blank', 'noopener,noreferrer')
+      window.open(
+        certificateModal.certificateUrl,
+        '_blank',
+        'noopener,noreferrer'
+      )
     }
   }, [certificateModal.certificateUrl])
 
@@ -554,31 +673,33 @@ export default function ModuleDetailPage() {
     ? new Date(certificateModal.issuedAt).toLocaleDateString('de-AT')
     : null
 
-  const checkModuleCompletion = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
-    if (!user || !moduleId) return
+  const checkModuleCompletion = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      if (!user || !moduleId) return
 
-    try {
-      const response = await fetch('/api/student/check-module-completion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          moduleId: moduleId,
-        }),
-      })
+      try {
+        const response = await fetch('/api/student/check-module-completion', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            moduleId: moduleId,
+          }),
+        })
 
-      if (response.ok) {
-        const data = await response.json()
+        if (response.ok) {
+          const data = await response.json()
 
-        if (data.success) {
-          const certificateUrl = buildCertificateUrl(data.certificatePath)
-          const moduleTitle = module?.title || 'Modul'
+          if (data.success) {
+            const certificateUrl = buildCertificateUrl(data.certificatePath)
+            const moduleTitle = module?.title || 'Modul'
 
-          if (!silent && data.certificatesGenerated > 0) {
-            const successToast = document.createElement('div')
-            successToast.className = 'fixed top-20 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
-            successToast.innerHTML = `
+            if (!silent && data.certificatesGenerated > 0) {
+              const successToast = document.createElement('div')
+              successToast.className =
+                'fixed top-20 right-4 bg-blue-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+              successToast.innerHTML = `
               <div class="flex items-center gap-3">
                 <div class="text-2xl">🎉</div>
                 <div>
@@ -588,29 +709,40 @@ export default function ModuleDetailPage() {
                 </div>
               </div>
             `
-            document.body.appendChild(successToast)
+              document.body.appendChild(successToast)
 
-            setTimeout(() => {
-              successToast.style.opacity = '0'
-              setTimeout(() => document.body.removeChild(successToast), 300)
-            }, 5000)
-          }
+              setTimeout(() => {
+                successToast.style.opacity = '0'
+                setTimeout(() => document.body.removeChild(successToast), 300)
+              }, 5000)
+            }
 
-          if (certificateUrl && (!silent || data.certificatesGenerated > 0)) {
-            setCertificateModal({
-              open: true,
-              message: data.message || 'Herzlichen Glückwunsch! Dein Zertifikat ist bereit.',
-              certificateUrl,
-              certificateNumber: data.certificateNumber,
-              moduleTitle,
-              issuedAt: data.issuedAt || (data.certificatesGenerated > 0 ? new Date().toISOString() : null),
-              isNew: data.certificatesGenerated > 0,
-            })
-          }
-        } else if (!silent && data.completedCourses > 0 && data.totalCourses) {
-          const progressToast = document.createElement('div')
-          progressToast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
-          progressToast.innerHTML = `
+            if (certificateUrl && (!silent || data.certificatesGenerated > 0)) {
+              setCertificateModal({
+                open: true,
+                message:
+                  data.message ||
+                  'Herzlichen Glückwunsch! Dein Zertifikat ist bereit.',
+                certificateUrl,
+                certificateNumber: data.certificateNumber,
+                moduleTitle,
+                issuedAt:
+                  data.issuedAt ||
+                  (data.certificatesGenerated > 0
+                    ? new Date().toISOString()
+                    : null),
+                isNew: data.certificatesGenerated > 0,
+              })
+            }
+          } else if (
+            !silent &&
+            data.completedCourses > 0 &&
+            data.totalCourses
+          ) {
+            const progressToast = document.createElement('div')
+            progressToast.className =
+              'fixed top-20 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md'
+            progressToast.innerHTML = `
             <div class="flex items-center gap-3">
               <div class="text-2xl">📚</div>
               <div>
@@ -619,56 +751,61 @@ export default function ModuleDetailPage() {
               </div>
             </div>
           `
-          document.body.appendChild(progressToast)
+            document.body.appendChild(progressToast)
 
-          setTimeout(() => {
-            progressToast.style.opacity = '0'
-            setTimeout(() => document.body.removeChild(progressToast), 300)
-          }, 3000)
+            setTimeout(() => {
+              progressToast.style.opacity = '0'
+              setTimeout(() => document.body.removeChild(progressToast), 300)
+            }, 3000)
+          }
         }
+      } catch (error) {
+        console.error('Error checking module completion:', error)
       }
-    } catch (error) {
-      console.error('Error checking module completion:', error)
-    }
-  }, [buildCertificateUrl, module, moduleId, user])
+    },
+    [buildCertificateUrl, module, moduleId, user]
+  )
 
   useEffect(() => {
     hasCheckedModuleCompletion.current = false
   }, [moduleId])
 
-  const updateQueryParams = useCallback((updates: { lessonId?: string | null; quizId?: string | null }) => {
-    const params = new URLSearchParams(searchParams.toString())
+  const updateQueryParams = useCallback(
+    (updates: { lessonId?: string | null; quizId?: string | null }) => {
+      const params = new URLSearchParams(searchParams.toString())
 
-    if (Object.prototype.hasOwnProperty.call(updates, 'lessonId')) {
-      const lessonId = updates.lessonId
-      if (lessonId) {
-        params.set('lessonId', lessonId)
-      } else {
-        params.delete('lessonId')
+      if (Object.prototype.hasOwnProperty.call(updates, 'lessonId')) {
+        const lessonId = updates.lessonId
+        if (lessonId) {
+          params.set('lessonId', lessonId)
+        } else {
+          params.delete('lessonId')
+        }
       }
-    }
 
-    if (Object.prototype.hasOwnProperty.call(updates, 'quizId')) {
-      const quizId = updates.quizId
-      if (quizId) {
-        params.set('quizId', quizId)
-      } else {
-        params.delete('quizId')
+      if (Object.prototype.hasOwnProperty.call(updates, 'quizId')) {
+        const quizId = updates.quizId
+        if (quizId) {
+          params.set('quizId', quizId)
+        } else {
+          params.delete('quizId')
+        }
       }
-    }
 
-    const newQueryString = params.toString()
-    const currentQueryString = searchParams.toString()
+      const newQueryString = params.toString()
+      const currentQueryString = searchParams.toString()
 
-    if (newQueryString === currentQueryString) {
-      return
-    }
+      if (newQueryString === currentQueryString) {
+        return
+      }
 
-    const url = newQueryString ? `${pathname}?${newQueryString}` : pathname
-    router.replace(url, { scroll: false })
-  }, [pathname, router, searchParams])
+      const url = newQueryString ? `${pathname}?${newQueryString}` : pathname
+      router.replace(url, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
 
-    // Handle authentication and data fetching
+  // Handle authentication and data fetching
   useEffect(() => {
     if (authLoading) {
       return
@@ -702,7 +839,11 @@ export default function ModuleDetailPage() {
       setError(null)
 
       const response = await fetch(`/api/modules/${moduleId}`)
-      const data = await response.json() as { success: boolean; module?: Module; error?: string }
+      const data = (await response.json()) as {
+        success: boolean
+        module?: Module
+        error?: string
+      }
 
       if (response.ok && data.success && data.module) {
         setModule(data.module)
@@ -721,7 +862,8 @@ export default function ModuleDetailPage() {
   // Debounced refetch function to prevent too many API calls
   const _debouncedRefetch = useCallback(() => {
     const now = Date.now()
-    if (now - lastRefetchTime > 1000 && !fetchInProgress.current) { // Only refetch if more than 1 second has passed
+    if (now - lastRefetchTime > 1000 && !fetchInProgress.current) {
+      // Only refetch if more than 1 second has passed
       setLastRefetchTime(now)
       void fetchModule()
     }
@@ -746,7 +888,9 @@ export default function ModuleDetailPage() {
           .in('lesson_id', moduleLessonIds)
 
         if (progressData) {
-          const completedIds = new Set<string>(progressData.map((p: { lesson_id: string }) => p.lesson_id))
+          const completedIds = new Set<string>(
+            progressData.map((p: { lesson_id: string }) => p.lesson_id)
+          )
           setCompletedLessons(completedIds)
         }
 
@@ -764,7 +908,9 @@ export default function ModuleDetailPage() {
           .in('quiz_id', moduleQuizIds)
 
         if (quizAttempts) {
-          const passedQuizIds = new Set<string>(quizAttempts.map((a: { quiz_id: string }) => a.quiz_id))
+          const passedQuizIds = new Set<string>(
+            quizAttempts.map((a: { quiz_id: string }) => a.quiz_id)
+          )
           setPassedQuizzes(passedQuizIds)
         }
       } else {
@@ -784,25 +930,31 @@ export default function ModuleDetailPage() {
     }
   }, [moduleId, fetchModule, fetchUserAndProgress])
 
-    // Helper function to get module-specific progress data
+  // Helper function to get module-specific progress data
   const getModuleProgressData = () => {
     if (!module) return { totalLessons: 0, completedLessons: 0, percentage: 0 }
 
-    const totalLessons = module.courses.reduce((total, course) => total + course.lessons.length, 0)
-    if (totalLessons === 0) return { totalLessons: 0, completedLessons: 0, percentage: 0 }
+    const totalLessons = module.courses.reduce(
+      (total, course) => total + course.lessons.length,
+      0
+    )
+    if (totalLessons === 0)
+      return { totalLessons: 0, completedLessons: 0, percentage: 0 }
 
     // Only count completed lessons that belong to this module
     const moduleLessonIds = module.courses.flatMap(course =>
       course.lessons.map(lesson => lesson.id)
     )
-    const completedModuleLessons = Array.from(completedLessons).filter(lessonId =>
-      moduleLessonIds.includes(lessonId)
+    const completedModuleLessons = Array.from(completedLessons).filter(
+      lessonId => moduleLessonIds.includes(lessonId)
     )
 
     return {
       totalLessons,
       completedLessons: completedModuleLessons.length,
-      percentage: Math.round((completedModuleLessons.length / totalLessons) * 100)
+      percentage: Math.round(
+        (completedModuleLessons.length / totalLessons) * 100
+      ),
     }
   }
 
@@ -851,95 +1003,120 @@ export default function ModuleDetailPage() {
     })
   }
 
-  const selectLesson = useCallback((lesson: Lesson, options: { updateParams?: boolean } = {}) => {
-    const { updateParams = true } = options
-    setSelectedLesson(lesson)
-    setSelectedQuiz(null)
+  const selectLesson = useCallback(
+    (lesson: Lesson, options: { updateParams?: boolean } = {}) => {
+      const { updateParams = true } = options
+      setSelectedLesson(lesson)
+      setSelectedQuiz(null)
 
-    const course = module?.courses.find(c => c.id === lesson.course_id) || null
-    setSelectedCourse(course)
+      const course =
+        module?.courses.find(c => c.id === lesson.course_id) || null
+      setSelectedCourse(course)
 
-    if (course) {
-      setExpandedCourses(new Set([course.id]))
-    }
+      if (course) {
+        setExpandedCourses(new Set([course.id]))
+      }
 
-    // Close mobile sidebar when lesson is selected
-    setIsMobileSidebarOpen(false)
+      // Close mobile sidebar when lesson is selected
+      setIsMobileSidebarOpen(false)
 
-    if (updateParams) {
-      updateQueryParams({ lessonId: lesson.id, quizId: null })
-    }
-  }, [module, updateQueryParams])
+      // Scroll to top of the main content area when lesson is selected
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
 
-  const handleLessonComplete = useCallback(async (lesson: Lesson) => {
-    if (!user || !lesson.id || completedLessons.has(lesson.id)) {
-      return
-    }
+      if (updateParams) {
+        updateQueryParams({ lessonId: lesson.id, quizId: null })
+      }
+    },
+    [module, updateQueryParams]
+  )
 
-    try {
-      const success = await markLessonComplete(lesson.id)
-      if (success) {
-        // Update local state to reflect completion
-        setCompletedLessons(prev => new Set([...prev, lesson.id]))
+  const handleLessonComplete = useCallback(
+    async (lesson: Lesson) => {
+      if (!user || !lesson.id || completedLessons.has(lesson.id)) {
+        return
+      }
 
-        // Show success feedback (simple toast)
+      try {
+        const success = await markLessonComplete(lesson.id)
+        if (success) {
+          // Update local state to reflect completion
+          setCompletedLessons(prev => new Set([...prev, lesson.id]))
+
+          // Show success feedback (simple toast)
+          const toast = document.createElement('div')
+          toast.className =
+            'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
+          toast.textContent = `✓ "${lesson.title}" als abgeschlossen markiert`
+          document.body.appendChild(toast)
+
+          // Remove toast after 3 seconds
+          setTimeout(() => {
+            toast.style.opacity = '0'
+            setTimeout(() => document.body.removeChild(toast), 300)
+          }, 3000)
+
+          // Check if module is completed after this lesson
+          await checkModuleCompletion()
+        }
+      } catch (error) {
+        console.error('Failed to mark lesson complete:', error)
+        // Show error feedback
         const toast = document.createElement('div')
-        toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
-        toast.textContent = `✓ "${lesson.title}" als abgeschlossen markiert`
+        toast.className =
+          'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
+        toast.textContent = 'Fehler beim Markieren der Lektion'
         document.body.appendChild(toast)
 
-        // Remove toast after 3 seconds
         setTimeout(() => {
           toast.style.opacity = '0'
           setTimeout(() => document.body.removeChild(toast), 300)
         }, 3000)
-
-        // Check if module is completed after this lesson
-        await checkModuleCompletion()
       }
-    } catch (error) {
-      console.error('Failed to mark lesson complete:', error)
-      // Show error feedback
-      const toast = document.createElement('div')
-      toast.className = 'fixed top-20 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300'
-      toast.textContent = 'Fehler beim Markieren der Lektion'
-      document.body.appendChild(toast)
+    },
+    [user, completedLessons, markLessonComplete, checkModuleCompletion]
+  )
 
+  const selectQuiz = useCallback(
+    (quiz: Quiz, options: { updateParams?: boolean } = {}) => {
+      const { updateParams = true } = options
+      setSelectedQuiz(quiz)
+      setSelectedLesson(null)
+
+      const course = module?.courses.find(c => c.id === quiz.course_id) || null
+      setSelectedCourse(course)
+
+      if (course) {
+        setExpandedCourses(new Set([course.id]))
+      }
+
+      // Close mobile sidebar when quiz is selected
+      setIsMobileSidebarOpen(false)
+
+      // Scroll to top of the main content area when quiz is selected
       setTimeout(() => {
-        toast.style.opacity = '0'
-        setTimeout(() => document.body.removeChild(toast), 300)
-      }, 3000)
-    }
-  }, [user, completedLessons, markLessonComplete, checkModuleCompletion])
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }, 100)
 
-  const selectQuiz = useCallback((quiz: Quiz, options: { updateParams?: boolean } = {}) => {
-    const { updateParams = true } = options
-    setSelectedQuiz(quiz)
-    setSelectedLesson(null)
+      if (updateParams) {
+        updateQueryParams({ quizId: quiz.id, lessonId: null })
+      }
+    },
+    [module, updateQueryParams]
+  )
 
-    const course = module?.courses.find(c => c.id === quiz.course_id) || null
-    setSelectedCourse(course)
+  const clearSelectedQuiz = useCallback(
+    (options: { updateParams?: boolean } = {}) => {
+      const { updateParams = true } = options
+      setSelectedQuiz(null)
 
-    if (course) {
-      setExpandedCourses(new Set([course.id]))
-    }
-
-    // Close mobile sidebar when quiz is selected
-    setIsMobileSidebarOpen(false)
-
-    if (updateParams) {
-      updateQueryParams({ quizId: quiz.id, lessonId: null })
-    }
-  }, [module, updateQueryParams])
-
-  const clearSelectedQuiz = useCallback((options: { updateParams?: boolean } = {}) => {
-    const { updateParams = true } = options
-    setSelectedQuiz(null)
-
-    if (updateParams) {
-      updateQueryParams({ quizId: null })
-    }
-  }, [updateQueryParams])
+      if (updateParams) {
+        updateQueryParams({ quizId: null })
+      }
+    },
+    [updateQueryParams]
+  )
 
   useEffect(() => {
     if (!module) {
@@ -950,8 +1127,12 @@ export default function ModuleDetailPage() {
     const quizIdParam = searchParams.get('quizId')
 
     if (lessonIdParam) {
-      const course = module.courses.find(c => c.lessons.some(lesson => lesson.id === lessonIdParam)) || null
-      const lesson = course?.lessons.find(lesson => lesson.id === lessonIdParam) || null
+      const course =
+        module.courses.find(c =>
+          c.lessons.some(lesson => lesson.id === lessonIdParam)
+        ) || null
+      const lesson =
+        course?.lessons.find(lesson => lesson.id === lessonIdParam) || null
 
       if (lesson && lesson.id !== selectedLesson?.id) {
         selectLesson(lesson, { updateParams: false })
@@ -966,7 +1147,10 @@ export default function ModuleDetailPage() {
     }
 
     if (quizIdParam) {
-      const course = module.courses.find(c => c.quizzes.some(quiz => quiz.id === quizIdParam)) || null
+      const course =
+        module.courses.find(c =>
+          c.quizzes.some(quiz => quiz.id === quizIdParam)
+        ) || null
       const quiz = course?.quizzes.find(quiz => quiz.id === quizIdParam) || null
 
       if (quiz && quiz.id !== selectedQuiz?.id) {
@@ -978,11 +1162,46 @@ export default function ModuleDetailPage() {
         updateQueryParams({ quizId: null })
       }
     }
-  }, [module, searchParams, selectLesson, selectQuiz, clearSelectedQuiz, selectedLesson, selectedQuiz, updateQueryParams])
+  }, [
+    module,
+    searchParams,
+    selectLesson,
+    selectQuiz,
+    clearSelectedQuiz,
+    selectedLesson,
+    selectedQuiz,
+    updateQueryParams,
+  ])
 
   const getTotalLessons = () => {
     if (!module) return 0
-    return module.courses.reduce((total, course) => total + course.lessons.length, 0)
+    return module.courses.reduce(
+      (total, course) => total + course.lessons.length,
+      0
+    )
+  }
+
+  // Get the next lesson in the module
+  const getNextLesson = (currentLesson: Lesson): Lesson | null => {
+    if (!module) return null
+
+    // Get all lessons in order across all courses
+    const allLessons: Lesson[] = []
+    module.courses
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .forEach(course => {
+        const sortedLessons = [...course.lessons].sort(
+          (a, b) => (a.order || 0) - (b.order || 0)
+        )
+        allLessons.push(...sortedLessons)
+      })
+
+    const currentIndex = allLessons.findIndex(l => l.id === currentLesson.id)
+    if (currentIndex === -1 || currentIndex === allLessons.length - 1) {
+      return null // No next lesson
+    }
+
+    return allLessons[currentIndex + 1]
   }
 
   // Show loading while auth or module is loading
@@ -1004,7 +1223,9 @@ export default function ModuleDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 text-xl mb-4">⚠️ Fehler</div>
-          <p className="text-gray-600 mb-4">{error || 'Modul nicht gefunden'}</p>
+          <p className="text-gray-600 mb-4">
+            {error || 'Modul nicht gefunden'}
+          </p>
           <Button onClick={() => router.push('/')}>
             Zurück zur Startseite
           </Button>
@@ -1050,7 +1271,8 @@ export default function ModuleDetailPage() {
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     {(() => {
-                      const { completedLessons, totalLessons } = getModuleProgressData()
+                      const { completedLessons, totalLessons } =
+                        getModuleProgressData()
                       return `${completedLessons} von ${totalLessons} Lektionen`
                     })()}
                   </div>
@@ -1079,7 +1301,10 @@ export default function ModuleDetailPage() {
                 <div className="text-sm">
                   <div className="font-medium text-gray-900">Gast</div>
                   <div className="text-gray-500 text-xs">
-                    <Link href="/auth/login" className="text-blue-600 hover:text-blue-800">
+                    <Link
+                      href="/auth/login"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
                       Anmelden
                     </Link>
                   </div>
@@ -1090,9 +1315,14 @@ export default function ModuleDetailPage() {
         </div>
 
         {/* Back to Modules Link - Above Sidebar */}
-        <div className={`fixed top-16 left-0 ${isMobileSidebarOpen ? 'w-full lg:w-96' : 'w-0 lg:w-96'} bg-white border-b border-gray-200 z-40 transition-all duration-300 overflow-hidden lg:block`}>
+        <div
+          className={`fixed top-16 left-0 ${isMobileSidebarOpen ? 'w-full lg:w-96' : 'w-0 lg:w-96'} bg-white border-b border-gray-200 z-40 transition-all duration-300 overflow-hidden lg:block`}
+        >
           <div className="p-4 w-96 lg:w-full">
-            <Link href="/" className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors"
+            >
               <ChevronLeft className="w-4 h-4" />
               Zurück zu Modulen
             </Link>
@@ -1100,28 +1330,35 @@ export default function ModuleDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <aside className={`fixed lg:sticky top-28 left-0 h-[calc(100vh-7rem)] w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm z-30 transition-transform duration-300 ${
-          isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}>
-
+        <aside
+          className={`fixed lg:sticky top-28 left-0 h-[calc(100vh-7rem)] max-w-full w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm z-30 transition-transform duration-300 overflow-hidden ${
+            isMobileSidebarOpen
+              ? 'translate-x-0'
+              : '-translate-x-full lg:translate-x-0'
+          }`}
+        >
           {/* Module Name */}
           <div className="p-4 border-b border-gray-200 bg-white">
             <h1 className="font-bold text-xl text-gray-800">{module.title}</h1>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-gray-600 text-sm">{getTotalLessons()} Lektionen</span>
+              <span className="text-gray-600 text-sm">
+                {getTotalLessons()} Lektionen
+              </span>
             </div>
           </div>
 
           {/* Course List Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-4">
-
               {module.courses.map((course, index) => (
-                <div key={course.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                <div
+                  key={course.id}
+                  className="border border-gray-200 rounded-lg overflow-hidden"
+                >
                   {/* Course Header */}
                   <button
                     onClick={() => toggleCourseExpansion(course.id)}
-                    className="w-full px-4 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="w-full px-4 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
                       <span className="w-8 h-8 bg-[#de0449] text-white rounded-full flex items-center justify-center text-sm font-bold">
@@ -1154,8 +1391,10 @@ export default function ModuleDetailPage() {
                                 <button
                                   onClick={() => selectLesson(lesson)}
                                   disabled={isMarking}
-                                  className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                    selectedLesson?.id === lesson.id ? 'bg-blue-50 text-blue-700' : ''
+                                  className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
+                                    selectedLesson?.id === lesson.id
+                                      ? 'bg-blue-50 text-blue-700'
+                                      : ''
                                   } ${isCompleted ? 'text-green-700' : ''} ${isMarking ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                   {isCompleted ? (
@@ -1163,9 +1402,13 @@ export default function ModuleDetailPage() {
                                   ) : (
                                     <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                   )}
-                                  <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
-                                    isCompleted ? 'text-green-700' : 'text-[#de0449]'
-                                  }`}>
+                                  <span
+                                    className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                      isCompleted
+                                        ? 'text-green-700'
+                                        : 'text-[#de0449]'
+                                    }`}
+                                  >
                                     {lesson.title}
                                   </span>
                                   {isCompleted && (
@@ -1173,22 +1416,25 @@ export default function ModuleDetailPage() {
                                       ✓ Abgeschlossen
                                     </span>
                                   )}
-                                  {isMarking && selectedLesson?.id === lesson.id && (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#486681]"></div>
-                                  )}
+                                  {isMarking &&
+                                    selectedLesson?.id === lesson.id && (
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#486681]"></div>
+                                    )}
                                 </button>
 
                                 {/* Quizzes for this lesson */}
                                 {course.quizzes
                                   .filter(quiz => quiz.lesson_id === lesson.id)
-                                  .map((quiz) => {
+                                  .map(quiz => {
                                     const isPassed = passedQuizzes.has(quiz.id)
                                     return (
                                       <button
                                         key={quiz.id}
                                         onClick={() => selectQuiz(quiz)}
-                                        className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                          selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                        className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
+                                          selectedQuiz?.id === quiz.id
+                                            ? 'bg-blue-50 text-blue-700'
+                                            : ''
                                         } ${isPassed ? 'text-green-700' : ''}`}
                                       >
                                         {isPassed ? (
@@ -1196,9 +1442,13 @@ export default function ModuleDetailPage() {
                                         ) : (
                                           <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                         )}
-                                        <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
-                                          isPassed ? 'text-green-700' : 'text-[#de0449]'
-                                        }`}>
+                                        <span
+                                          className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                            isPassed
+                                              ? 'text-green-700'
+                                              : 'text-[#de0449]'
+                                          }`}
+                                        >
                                           {quiz.title}
                                         </span>
                                         {isPassed && (
@@ -1216,14 +1466,16 @@ export default function ModuleDetailPage() {
                         {/* Course-level quizzes */}
                         {course.quizzes
                           .filter(quiz => !quiz.lesson_id)
-                          .map((quiz) => {
+                          .map(quiz => {
                             const isPassed = passedQuizzes.has(quiz.id)
                             return (
                               <button
                                 key={quiz.id}
                                 onClick={() => selectQuiz(quiz)}
-                                className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left ${
-                                  selectedQuiz?.id === quiz.id ? 'bg-blue-50 text-blue-700' : ''
+                                className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
+                                  selectedQuiz?.id === quiz.id
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : ''
                                 } ${isPassed ? 'text-green-700' : ''}`}
                               >
                                 {isPassed ? (
@@ -1231,9 +1483,13 @@ export default function ModuleDetailPage() {
                                 ) : (
                                   <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                 )}
-                                <span className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
-                                  isPassed ? 'text-green-700' : 'text-[#de0449]'
-                                }`}>
+                                <span
+                                  className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
+                                    isPassed
+                                      ? 'text-green-700'
+                                      : 'text-[#de0449]'
+                                  }`}
+                                >
                                   {quiz.title}
                                 </span>
                                 {isPassed && (
@@ -1246,18 +1502,17 @@ export default function ModuleDetailPage() {
                           })}
 
                         {/* Empty state for courses with no content */}
-                        {course.lessons.length === 0 && course.quizzes.length === 0 && (
-                          <div className="px-2 py-4 text-center text-gray-500 text-sm">
-                            Noch keine Inhalte verfügbar
-                          </div>
-                        )}
+                        {course.lessons.length === 0 &&
+                          course.quizzes.length === 0 && (
+                            <div className="px-2 py-4 text-center text-gray-500 text-sm">
+                              Noch keine Inhalte verfügbar
+                            </div>
+                          )}
                       </div>
                     </div>
                   )}
                 </div>
               ))}
-
-
             </div>
           </div>
         </aside>
@@ -1311,50 +1566,87 @@ export default function ModuleDetailPage() {
                       <div className="p-8 prose prose-lg max-w-none">
                         <div
                           className="text-gray-800 leading-relaxed [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:mt-4 [&_h1]:text-[#de0647] [&_h1]:leading-tight [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-6 [&_h2]:text-[#de0647] [&_h2]:leading-tight [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-3 [&_h3]:mt-5 [&_h3]:text-[#de0647] [&_h3]:leading-tight [&_p]:mb-4 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-900 [&_em]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_span]:inline [&_a]:text-[#de0647] [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_img]:shadow-sm [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded [&_iframe]:border [&_iframe]:border-gray-200 [&_iframe.yt-small]:max-w-[480px] [&_iframe.yt-medium]:max-w-[720px] [&_iframe.yt-large]:max-w-[960px] [&_iframe]:mx-auto"
-                          dangerouslySetInnerHTML={{ __html: sanitizeLessonHtml(selectedLesson.content) }}
+                          dangerouslySetInnerHTML={{
+                            __html: sanitizeLessonHtml(selectedLesson.content),
+                          }}
                         />
                       </div>
 
                       {/* Lesson Completion Button */}
                       {user ? (
                         <div className="px-8 py-6 bg-gray-50 border-t border-gray-200">
-                          <div className="flex items-center justify-center">
-                            {completedLessons.has(selectedLesson.id) ? (
-                              <div className="flex items-center gap-2 text-green-700">
-                                <CheckCircle className="h-5 w-5" />
-                                <span className="font-medium">Lektion abgeschlossen</span>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleLessonComplete(selectedLesson)}
-                                disabled={isMarking}
-                                className="flex items-center gap-2 px-6 py-3 bg-[#486681] hover:bg-[#3e5570] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                {isMarking ? (
-                                  <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                    <span>Wird markiert...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>Gelesen</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center justify-center sm:justify-start">
+                              {completedLessons.has(selectedLesson.id) ? (
+                                <div className="flex items-center gap-2 text-green-700">
+                                  <CheckCircle className="h-5 w-5" />
+                                  <span className="font-medium">
+                                    Lektion abgeschlossen
+                                  </span>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    handleLessonComplete(selectedLesson)
+                                  }
+                                  disabled={isMarking}
+                                  className="flex items-center gap-2 px-6 py-3 bg-[#486681] hover:bg-[#3e5570] text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {isMarking ? (
+                                    <>
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                      <span>Wird markiert...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>Gelesen</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            {(() => {
+                              const nextLesson = getNextLesson(selectedLesson)
+                              return nextLesson ? (
+                                <button
+                                  onClick={() => selectLesson(nextLesson)}
+                                  className="flex items-center gap-2 px-6 py-3 bg-[#de0647] hover:bg-[#b8043a] text-white font-medium rounded-lg transition-colors w-full sm:w-auto justify-center"
+                                >
+                                  <span>Nächste Lektion</span>
+                                  <ChevronRight className="h-4 w-4" />
+                                </button>
+                              ) : null
+                            })()}
                           </div>
                         </div>
                       ) : (
                         <div className="px-8 py-6 bg-blue-50 border-t border-blue-200">
-                          <div className="text-center">
-                            <p className="text-blue-800 text-sm mb-3">
-                              Melden Sie sich an, um Ihren Fortschritt zu verfolgen und Zertifikate zu erhalten.
-                            </p>
-                            <Link href="/auth/login">
-                              <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-                                Jetzt anmelden
-                              </button>
-                            </Link>
+                          <div className="flex flex-col gap-4">
+                            <div className="text-center">
+                              <p className="text-blue-800 text-sm mb-3">
+                                Melden Sie sich an, um Ihren Fortschritt zu
+                                verfolgen und Zertifikate zu erhalten.
+                              </p>
+                              <Link href="/auth/login">
+                                <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                                  Jetzt anmelden
+                                </button>
+                              </Link>
+                            </div>
+                            {(() => {
+                              const nextLesson = getNextLesson(selectedLesson)
+                              return nextLesson ? (
+                                <div className="text-center border-t border-blue-300 pt-4">
+                                  <button
+                                    onClick={() => selectLesson(nextLesson)}
+                                    className="flex items-center gap-2 px-6 py-3 bg-[#de0647] hover:bg-[#b8043a] text-white font-medium rounded-lg transition-colors mx-auto w-full sm:w-auto justify-center"
+                                  >
+                                    <span>Nächste Lektion</span>
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : null
+                            })()}
                           </div>
                         </div>
                       )}
@@ -1364,8 +1656,12 @@ export default function ModuleDetailPage() {
                   <div className="max-w-4xl mx-auto">
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
                       <div className="text-gray-400 text-6xl mb-4">📚</div>
-                      <h2 className="text-xl font-semibold text-gray-600 mb-2">Kein Inhalt verfügbar</h2>
-                      <p className="text-gray-500">Diese Lektion hat noch keinen Inhalt.</p>
+                      <h2 className="text-xl font-semibold text-gray-600 mb-2">
+                        Kein Inhalt verfügbar
+                      </h2>
+                      <p className="text-gray-500">
+                        Diese Lektion hat noch keinen Inhalt.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1399,9 +1695,7 @@ export default function ModuleDetailPage() {
                     {selectedQuiz.title}
                   </h1>
                   <div className="flex items-center justify-center gap-4 text-gray-600">
-                    <span className="flex items-center gap-2">
-                      Quiz
-                    </span>
+                    <span className="flex items-center gap-2">Quiz</span>
                     {selectedQuiz.description && (
                       <>
                         <span className="text-gray-400">•</span>
@@ -1423,7 +1717,9 @@ export default function ModuleDetailPage() {
                       onBack={() => clearSelectedQuiz()}
                       onQuizCompleted={() => {
                         // Refresh quiz progress when a quiz is completed
-                        setPassedQuizzes(prev => new Set([...prev, selectedQuiz.id]))
+                        setPassedQuizzes(
+                          prev => new Set([...prev, selectedQuiz.id])
+                        )
                         void checkModuleCompletion()
                       }}
                       user={user}
@@ -1436,8 +1732,13 @@ export default function ModuleDetailPage() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-gray-400 text-6xl mb-4">📚</div>
-                <h2 className="text-xl font-semibold text-gray-600 mb-2">Wähle eine Lektion oder ein Quiz aus</h2>
-                <p className="text-gray-500">Klicke auf eine Lektion oder ein Quiz in der Seitenleiste, um den Inhalt anzuzeigen.</p>
+                <h2 className="text-xl font-semibold text-gray-600 mb-2">
+                  Wähle eine Lektion oder ein Quiz aus
+                </h2>
+                <p className="text-gray-500">
+                  Klicke auf eine Lektion oder ein Quiz in der Seitenleiste, um
+                  den Inhalt anzuzeigen.
+                </p>
               </div>
             </div>
           )}
@@ -1448,7 +1749,7 @@ export default function ModuleDetailPage() {
 
       <Dialog
         open={certificateModal.open}
-        onOpenChange={(open) =>
+        onOpenChange={open =>
           setCertificateModal(prev => ({
             ...prev,
             open,
@@ -1458,7 +1759,9 @@ export default function ModuleDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {certificateModal.isNew ? 'Zertifikat erstellt 🎉' : 'Zertifikat verfügbar'}
+              {certificateModal.isNew
+                ? 'Zertifikat erstellt 🎉'
+                : 'Zertifikat verfügbar'}
             </DialogTitle>
             <DialogDescription>
               {certificateModal.message ||
@@ -1478,7 +1781,8 @@ export default function ModuleDetailPage() {
               <p>Ausgestellt am: {formattedCertificateDate}</p>
             )}
             <p className="text-gray-500">
-              Du kannst das Zertifikat direkt ansehen und anschließend herunterladen oder alle Zertifikate im Überblick öffnen.
+              Du kannst das Zertifikat direkt ansehen und anschließend
+              herunterladen oder alle Zertifikate im Überblick öffnen.
             </p>
           </div>
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">

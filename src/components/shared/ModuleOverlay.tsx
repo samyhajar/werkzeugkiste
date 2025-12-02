@@ -1,12 +1,12 @@
 'use client'
 
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Tables } from '@/types/supabase'
+import { Book, ChevronDown, ChevronRight, FileText, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Tables } from '@/types/supabase'
 import { useState } from 'react'
-import { X, ChevronDown, ChevronRight, Book, FileText } from 'lucide-react'
 
 type Module = Tables<'modules'> & {
   courses: (Tables<'courses'> & {
@@ -23,11 +23,18 @@ interface ModuleOverlayProps {
   onStartLogin: () => void
 }
 
-export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onStartLogin }: ModuleOverlayProps) {
+export default function ModuleOverlay({
+  module,
+  isOpen,
+  onClose,
+  isLoggedIn,
+  onStartLogin,
+}: ModuleOverlayProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'presenter'>('content')
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
   const presenterMaterialsContent = module.presenter_materials_content ?? ''
-  const hasPresenterMaterialsContent = presenterMaterialsContent.trim().length > 0
+  const hasPresenterMaterialsContent =
+    presenterMaterialsContent.trim().length > 0
 
   const toggleCourse = (courseId: string) => {
     const newExpanded = new Set(expandedCourses)
@@ -71,7 +78,9 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
           <div className="absolute bottom-0 left-0 p-8">
-            <h1 className="text-4xl font-bold text-white leading-tight">{module.title}</h1>
+            <h1 className="text-4xl font-bold text-white leading-tight">
+              {module.title}
+            </h1>
           </div>
           <button
             onClick={onClose}
@@ -83,6 +92,19 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-8">
+          {/* Mobile: Modul starten button at top */}
+          <div className="lg:hidden mb-6">
+            <Button
+              asChild
+              size="lg"
+              className="w-full bg-[#486681] hover:bg-[#486681]/90 text-white font-bold py-4 text-lg"
+            >
+              <Link href={`/modules/${module.id}`} onClick={handleStartClick}>
+                Modul starten
+              </Link>
+            </Button>
+          </div>
+
           <div className="mb-8">
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8" aria-label="Tabs">
@@ -115,19 +137,27 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
               {/* Left Column */}
               <div className="md:col-span-2 space-y-8">
                 <div>
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Voraussetzungen</h2>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                    Voraussetzungen
+                  </h2>
                   <p className="text-gray-600 leading-relaxed">
-                    {module.description || 'Für dieses Modul sind keine besonderen Vorkenntnisse erforderlich.'}
+                    {module.description ||
+                      'Für dieses Modul sind keine besonderen Vorkenntnisse erforderlich.'}
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">Inhalt</h2>
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                    Inhalt
+                  </h2>
                   <div className="space-y-3">
                     {module.courses.map((course, index) => {
                       const isExpanded = expandedCourses.has(course.id)
                       return (
-                        <div key={course.id} className="bg-gray-50 rounded-lg overflow-hidden">
+                        <div
+                          key={course.id}
+                          className="bg-gray-50 rounded-lg overflow-hidden"
+                        >
                           <button
                             onClick={() => toggleCourse(course.id)}
                             className="w-full p-4 flex items-center justify-between hover:bg-gray-100 transition-colors"
@@ -136,7 +166,9 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
                               <div className="flex-shrink-0 bg-[#486681] text-white rounded-full h-8 w-8 flex items-center justify-center font-bold mr-4">
                                 {index + 1}
                               </div>
-                              <h3 className="font-semibold text-gray-800 text-left">{course.title}</h3>
+                              <h3 className="font-semibold text-gray-800 text-left">
+                                {course.title}
+                              </h3>
                             </div>
                             {isExpanded ? (
                               <ChevronDown className="h-5 w-5 text-gray-600" />
@@ -150,27 +182,43 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
                               <div className="pt-4 space-y-2">
                                 {course.lessons.length > 0 ? (
                                   course.lessons.map((lesson, lessonIndex) => (
-                                    <div key={lesson.id} className="flex items-center py-2 px-3 bg-white rounded-md">
+                                    <div
+                                      key={lesson.id}
+                                      className="flex items-center py-2 px-3 bg-white rounded-md"
+                                    >
                                       <Book className="h-4 w-4 text-[#486681] mr-3 flex-shrink-0" />
-                                      <span className="text-sm text-gray-700 flex-1">{lesson.title}</span>
+                                      <span className="text-sm text-gray-700 flex-1">
+                                        {lesson.title}
+                                      </span>
                                     </div>
                                   ))
                                 ) : (
                                   <div className="flex items-center py-2 px-3 bg-white rounded-md">
                                     <FileText className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
-                                    <span className="text-sm text-gray-500 italic">Keine Lektionen verfügbar</span>
+                                    <span className="text-sm text-gray-500 italic">
+                                      Keine Lektionen verfügbar
+                                    </span>
                                   </div>
                                 )}
 
                                 {course.quizzes.length > 0 && (
                                   <div className="mt-3 pt-2 border-t border-gray-100">
-                                    <div className="text-xs font-semibold text-gray-600 mb-2">Quiz:</div>
-                                    {course.quizzes.map((quiz) => (
-                                      <div key={quiz.id} className="flex items-center py-2 px-3 bg-blue-50 rounded-md">
+                                    <div className="text-xs font-semibold text-gray-600 mb-2">
+                                      Quiz:
+                                    </div>
+                                    {course.quizzes.map(quiz => (
+                                      <div
+                                        key={quiz.id}
+                                        className="flex items-center py-2 px-3 bg-blue-50 rounded-md"
+                                      >
                                         <div className="h-4 w-4 bg-blue-500 rounded-full mr-3 flex-shrink-0 flex items-center justify-center">
-                                          <span className="text-xs text-white font-bold">?</span>
+                                          <span className="text-xs text-white font-bold">
+                                            ?
+                                          </span>
                                         </div>
-                                        <span className="text-sm text-blue-700 flex-1">{quiz.title}</span>
+                                        <span className="text-sm text-blue-700 flex-1">
+                                          {quiz.title}
+                                        </span>
                                       </div>
                                     ))}
                                   </div>
@@ -187,9 +235,17 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
 
               {/* Right Column */}
               <div className="space-y-8">
-                <div className="text-center">
-                  <Button asChild size="lg" className="w-full bg-[#486681] hover:bg-[#486681]/90 text-white font-bold py-4 text-lg">
-                    <Link href={`/modules/${module.id}`} onClick={handleStartClick}>
+                {/* Desktop: Modul starten button (hidden on mobile) */}
+                <div className="text-center hidden lg:block">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="w-full bg-[#486681] hover:bg-[#486681]/90 text-white font-bold py-4 text-lg"
+                  >
+                    <Link
+                      href={`/modules/${module.id}`}
+                      onClick={handleStartClick}
+                    >
                       Modul starten
                     </Link>
                   </Button>
@@ -200,41 +256,51 @@ export default function ModuleOverlay({ module, isOpen, onClose, isLoggedIn, onS
 
           {activeTab === 'presenter' && (
             <div className="space-y-8">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Materialien für Vortragende</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Materialien für Vortragende
+              </h2>
               {hasPresenterMaterialsContent ? (
                 <div
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: presenterMaterialsContent }}
+                  dangerouslySetInnerHTML={{
+                    __html: presenterMaterialsContent,
+                  }}
                 />
               ) : (
                 <div className="prose max-w-none">
-                  Für dieses Modul sind keine besonderen Materialien für Vortragende verfügbar.
+                  Für dieses Modul sind keine besonderen Materialien für
+                  Vortragende verfügbar.
                 </div>
               )}
-              {module.presenter_materials_urls && Array.isArray(module.presenter_materials_urls) && module.presenter_materials_urls.length > 0 && (
-                <div className="mt-8 space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-800">PDF Materialien</h3>
-                  {module.presenter_materials_urls
-                    .filter((item): item is { url: string; title: string } =>
-                      typeof item === 'object' && item !== null &&
-                      typeof (item as any).url === 'string' &&
-                      typeof (item as any).title === 'string' &&
-                      (item as any).url.trim() !== ''
-                    )
-                    .map((pdf, index) => (
-                      <Button
-                        key={index}
-                        asChild
-                        className="w-full bg-[#c53030] hover:bg-[#c53030]/90 text-white font-bold py-3 justify-start"
-                      >
-                        <a href={pdf.url} download>
-                          📄 {pdf.title || `PDF ${index + 1}`}
-                        </a>
-                      </Button>
-                    ))
-                  }
-                </div>
-              )}
+              {module.presenter_materials_urls &&
+                Array.isArray(module.presenter_materials_urls) &&
+                module.presenter_materials_urls.length > 0 && (
+                  <div className="mt-8 space-y-3">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      PDF Materialien
+                    </h3>
+                    {module.presenter_materials_urls
+                      .filter(
+                        (item): item is { url: string; title: string } =>
+                          typeof item === 'object' &&
+                          item !== null &&
+                          typeof (item as any).url === 'string' &&
+                          typeof (item as any).title === 'string' &&
+                          (item as any).url.trim() !== ''
+                      )
+                      .map((pdf, index) => (
+                        <Button
+                          key={index}
+                          asChild
+                          className="w-full bg-[#c53030] hover:bg-[#c53030]/90 text-white font-bold py-3 justify-start"
+                        >
+                          <a href={pdf.url} download>
+                            📄 {pdf.title || `PDF ${index + 1}`}
+                          </a>
+                        </Button>
+                      ))}
+                  </div>
+                )}
             </div>
           )}
         </div>
