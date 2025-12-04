@@ -1021,10 +1021,8 @@ export default function ModuleDetailPage() {
       // Close mobile sidebar when lesson is selected
       setIsMobileSidebarOpen(false)
 
-      // Scroll to top of the main content area when lesson is selected
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
+      // Scroll to top of the page immediately when lesson is selected
+      window.scrollTo({ top: 0, behavior: 'instant' })
 
       if (updateParams) {
         updateQueryParams({ lessonId: lesson.id, quizId: null })
@@ -1095,10 +1093,8 @@ export default function ModuleDetailPage() {
       // Close mobile sidebar when quiz is selected
       setIsMobileSidebarOpen(false)
 
-      // Scroll to top of the main content area when quiz is selected
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-      }, 100)
+      // Scroll to top of the page immediately when quiz is selected
+      window.scrollTo({ top: 0, behavior: 'instant' })
 
       if (updateParams) {
         updateQueryParams({ quizId: quiz.id, lessonId: null })

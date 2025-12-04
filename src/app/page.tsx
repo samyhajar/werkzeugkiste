@@ -291,8 +291,8 @@ export default async function Home({
 
       <PartnerSection />
 
-      {/* Registration Button with Modal */}
-      <RegistrationButton />
+      {/* Registration Button with Modal - only show for non-logged-in users */}
+      {!user && <RegistrationButton />}
 
     </>
   )
