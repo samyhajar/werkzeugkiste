@@ -1,19 +1,24 @@
 import LiveModulesSection from '@/components/shared/LiveModulesSection'
-import RegistrationButton from '@/components/shared/RegistrationButton'
 import LogoutCleanup from '@/components/shared/LogoutCleanup'
-import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server-client'
-import { Tables, Database } from '@/types/supabase'
-import { redirect } from 'next/navigation'
 import PartnerSection from '@/components/shared/PartnerSection'
+import RegistrationButton from '@/components/shared/RegistrationButton'
+import { createClient } from '@/lib/supabase/server-client'
+import { Database, Tables } from '@/types/supabase'
+import Image from 'next/image'
+import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
-// import { cookies } from 'next/headers'
 
+// import { cookies } from 'next/headers'
 
 type Lesson = Tables<'lessons'>
 type Module = Database['public']['Tables']['modules']['Row']
 type Course = Database['public']['Tables']['courses']['Row']
-type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
+type Quiz = {
+  id: string
+  title: string
+  course_id: string | null
+  lesson_id: string | null
+}
 type ModuleWithCourses = Module & {
   courses: (Course & {
     lessons: Lesson[]
@@ -36,9 +41,23 @@ export const revalidate = 60 // ISR every minute
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string; error?: string; error_description?: string; 'forgot-password'?: string; 'password-reset'?: string; login?: string }>
+  searchParams: Promise<{
+    code?: string
+    error?: string
+    error_description?: string
+    'forgot-password'?: string
+    'password-reset'?: string
+    login?: string
+  }>
 }) {
-  const { code, error, error_description, 'forgot-password': forgotPasswordStatus, 'password-reset': passwordResetStatus, login } = await searchParams
+  const {
+    code,
+    error,
+    error_description,
+    'forgot-password': forgotPasswordStatus,
+    'password-reset': passwordResetStatus,
+    login,
+  } = await searchParams
   if (code) {
     redirect(`/auth/callback?code=${code}`)
   }
@@ -47,7 +66,9 @@ export default async function Home({
 
   // Get current user session
   // const cookieStore = await cookies()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Fetch all modules with their courses (status column was removed)
   const { data: fetchedModules } = await supabase
@@ -61,7 +82,10 @@ export default async function Home({
   const { data: courses } = await supabase
     .from('courses')
     .select('*')
-    .in('module_id', modules.map(m => m.id))
+    .in(
+      'module_id',
+      modules.map(m => m.id)
+    )
     .not('module_id', 'is', null) // Only show courses that are assigned to modules
     .order('order', { ascending: true })
 
@@ -71,7 +95,10 @@ export default async function Home({
   const { data: lessons } = await supabase
     .from('lessons')
     .select('*')
-    .in('course_id', coursesData.map(c => c.id))
+    .in(
+      'course_id',
+      coursesData.map(c => c.id)
+    )
     .order('order', { ascending: true })
 
   const lessonsData = (lessons || []) as Lesson[]
@@ -80,7 +107,10 @@ export default async function Home({
   const { data: quizzes } = await supabase
     .from('enhanced_quizzes')
     .select('*')
-    .in('course_id', coursesData.map(c => c.id))
+    .in(
+      'course_id',
+      coursesData.map(c => c.id)
+    )
     .eq('scope', 'course')
     .order('sort_order', { ascending: true })
 
@@ -88,22 +118,28 @@ export default async function Home({
 
   // Build the hierarchical structure
   const modulesWithCourses = modules.map(module => {
-    const moduleCourses = coursesData.filter(course => course.module_id === module.id)
+    const moduleCourses = coursesData.filter(
+      course => course.module_id === module.id
+    )
 
     const coursesWithContent = moduleCourses.map(course => {
-      const courseLessons = lessonsData.filter(lesson => lesson.course_id === course.id)
-      const courseQuizzes = quizzesData.filter(quiz => quiz.course_id === course.id)
+      const courseLessons = lessonsData.filter(
+        lesson => lesson.course_id === course.id
+      )
+      const courseQuizzes = quizzesData.filter(
+        quiz => quiz.course_id === course.id
+      )
 
       return {
         ...course,
         lessons: courseLessons,
-        quizzes: courseQuizzes
+        quizzes: courseQuizzes,
       }
     })
 
     return {
       ...module,
-      courses: coursesWithContent
+      courses: coursesWithContent,
     }
   })
 
@@ -114,13 +150,17 @@ export default async function Home({
     const { data: courses } = await supabase
       .from('courses')
       .select('id, module_id')
-      .in('module_id', modules.map(m => m.id))
+      .in(
+        'module_id',
+        modules.map(m => m.id)
+      )
 
     if (courses && courses.length > 0) {
       // Get user's completed lessons with course info in a single query
       const { data: progressData, error: progressError } = await supabase
         .from('lesson_progress')
-        .select(`
+        .select(
+          `
           lesson_id,
           completed_at,
           lessons!inner(
@@ -128,7 +168,8 @@ export default async function Home({
             course_id,
             title
           )
-        `)
+        `
+        )
         .eq('student_id', user.id)
 
       if (progressData && !progressError) {
@@ -136,14 +177,18 @@ export default async function Home({
         const { data: lessonCounts, error: countError } = await supabase
           .from('lessons')
           .select('course_id')
-          .in('course_id', coursesData.map(c => c.id))
+          .in(
+            'course_id',
+            coursesData.map(c => c.id)
+          )
 
         if (lessonCounts && !countError) {
           // Count lessons per course
           const lessonCountByCourse: Record<string, number> = {}
           lessonCounts.forEach((lesson: Pick<Lesson, 'course_id'>) => {
             if (lesson.course_id) {
-              lessonCountByCourse[lesson.course_id] = (lessonCountByCourse[lesson.course_id] || 0) + 1
+              lessonCountByCourse[lesson.course_id] =
+                (lessonCountByCourse[lesson.course_id] || 0) + 1
             }
           })
 
@@ -152,13 +197,16 @@ export default async function Home({
           progressData.forEach((progress: ProgressData) => {
             const courseId = progress.lessons?.course_id
             if (courseId) {
-              completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1
+              completedByCourse[courseId] =
+                (completedByCourse[courseId] || 0) + 1
             }
           })
 
           // Calculate progress per module
           for (const moduleItem of modules) {
-            const moduleCourses = coursesData.filter(c => c.module_id === moduleItem.id)
+            const moduleCourses = coursesData.filter(
+              c => c.module_id === moduleItem.id
+            )
             let totalLessons = 0
             let completedLessons = 0
 
@@ -167,7 +215,10 @@ export default async function Home({
               completedLessons += completedByCourse[course.id] || 0
             }
 
-            userProgress[moduleItem.id] = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
+            userProgress[moduleItem.id] =
+              totalLessons > 0
+                ? Math.round((completedLessons / totalLessons) * 100)
+                : 0
           }
         }
       }
@@ -193,35 +244,45 @@ export default async function Home({
       </section>
 
       {/* Error Messages */}
-      {error && !error_description?.includes('both auth code and code verifier should be non-empty') && (
-        <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  {error === 'email_link_expired'
-                    ? 'E-Mail-Link abgelaufen'
-                    : 'Authentifizierungsfehler'
-                  }
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>
+      {error &&
+        !error_description?.includes(
+          'both auth code and code verifier should be non-empty'
+        ) && (
+          <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
                     {error === 'email_link_expired'
-                      ? 'Der E-Mail-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an oder melden Sie sich direkt an.'
-                      : error_description || 'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'
-                    }
-                  </p>
+                      ? 'E-Mail-Link abgelaufen'
+                      : 'Authentifizierungsfehler'}
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    <p>
+                      {error === 'email_link_expired'
+                        ? 'Der E-Mail-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an oder melden Sie sich direkt an.'
+                        : error_description ||
+                          'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
       {/* Success Messages */}
       {forgotPasswordStatus === 'sent' && (
@@ -229,8 +290,16 @@ export default async function Home({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -238,7 +307,11 @@ export default async function Home({
                   E-Mail erfolgreich gesendet!
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
-                  <p>Falls ein Konto mit Ihrer E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet. Bitte überprüfen Sie auch Ihren Spam-Ordner.</p>
+                  <p>
+                    Falls ein Konto mit Ihrer E-Mail-Adresse existiert, wurde
+                    eine E-Mail zum Zurücksetzen des Passworts gesendet. Bitte
+                    überprüfen Sie auch Ihren Spam-Ordner.
+                  </p>
                 </div>
               </div>
             </div>
@@ -252,8 +325,16 @@ export default async function Home({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -261,7 +342,10 @@ export default async function Home({
                   Passwort erfolgreich zurückgesetzt!
                 </h3>
                 <div className="mt-2 text-sm text-green-700">
-                  <p>Ihr Passwort wurde erfolgreich aktualisiert. Sie sind jetzt angemeldet und können alle Funktionen nutzen.</p>
+                  <p>
+                    Ihr Passwort wurde erfolgreich aktualisiert. Sie sind jetzt
+                    angemeldet und können alle Funktionen nutzen.
+                  </p>
                 </div>
               </div>
             </div>
@@ -269,17 +353,19 @@ export default async function Home({
         </section>
       )}
 
-            {/* Modules */}
-      <Suspense fallback={
-        <section id="modules" className="w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <div className="text-center py-12 sm:py-16">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#486681] mx-auto mb-4"></div>
-              <p className="text-gray-600">Module werden geladen...</p>
+      {/* Modules */}
+      <Suspense
+        fallback={
+          <section id="modules" className="w-full">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+              <div className="text-center py-12 sm:py-16">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#486681] mx-auto mb-4"></div>
+                <p className="text-gray-600">Module werden geladen...</p>
+              </div>
             </div>
-          </div>
-        </section>
-      }>
+          </section>
+        }
+      >
         <section id="modules" className="w-full pt-16 pb-12">
           <LiveModulesSection
             initialModules={modulesWithCourses as any}
@@ -293,7 +379,6 @@ export default async function Home({
 
       {/* Registration Button with Modal - only show for non-logged-in users */}
       {!user && <RegistrationButton />}
-
     </>
   )
 }

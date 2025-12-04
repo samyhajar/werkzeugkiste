@@ -624,6 +624,7 @@ export default function ModuleDetailPage() {
   // Removing LoginModal in favor of dedicated login route
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
+  const contentRef = useRef<HTMLDivElement>(null)
   const hasCheckedModuleCompletion = useRef(false)
   const [certificateModal, setCertificateModal] =
     useState<CertificateModalState>({ open: false })
@@ -1021,8 +1022,11 @@ export default function ModuleDetailPage() {
       // Close mobile sidebar when lesson is selected
       setIsMobileSidebarOpen(false)
 
-      // Scroll to top of the page immediately when lesson is selected
+      // Scroll to top of both window and content area immediately when lesson is selected
       window.scrollTo({ top: 0, behavior: 'instant' })
+      if (contentRef.current) {
+        contentRef.current.scrollTo({ top: 0, behavior: 'instant' })
+      }
 
       if (updateParams) {
         updateQueryParams({ lessonId: lesson.id, quizId: null })
@@ -1093,8 +1097,11 @@ export default function ModuleDetailPage() {
       // Close mobile sidebar when quiz is selected
       setIsMobileSidebarOpen(false)
 
-      // Scroll to top of the page immediately when quiz is selected
+      // Scroll to top of both window and content area immediately when quiz is selected
       window.scrollTo({ top: 0, behavior: 'instant' })
+      if (contentRef.current) {
+        contentRef.current.scrollTo({ top: 0, behavior: 'instant' })
+      }
 
       if (updateParams) {
         updateQueryParams({ quizId: quiz.id, lessonId: null })
@@ -1526,7 +1533,7 @@ export default function ModuleDetailPage() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden mt-32 lg:ml-0">
           {selectedLesson ? (
-            <div className="flex-1 overflow-y-auto">
+            <div ref={contentRef} className="flex-1 overflow-y-auto">
               {/* Enhanced Lesson Header */}
               <div className="bg-white border-b border-gray-200 px-8 py-8">
                 {/* Centered Breadcrumb */}
@@ -1663,7 +1670,7 @@ export default function ModuleDetailPage() {
               </div>
             </div>
           ) : selectedQuiz ? (
-            <div className="flex-1 overflow-y-auto">
+            <div ref={contentRef} className="flex-1 overflow-y-auto">
               {/* Enhanced Quiz Header */}
               <div className="bg-white border-b border-gray-200 px-8 py-8">
                 {/* Centered Breadcrumb */}
