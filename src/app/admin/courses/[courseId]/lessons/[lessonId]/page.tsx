@@ -1,30 +1,44 @@
 'use client'
-// Force dynamic rendering to prevent static generation issues
-export const dynamic = 'force-dynamic'
-
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
-import { Tables } from '@/types/supabase'
+import CloudinaryHtmlContent from '@/components/shared/CloudinaryHtmlContent'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 // import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import RichTextEditor from '@/components/ui/rich-text-editor'
+import { Textarea } from '@/components/ui/textarea'
 import { sanitizeLessonHtml } from '@/lib/sanitize'
-import Link from 'next/link'
+import { getBrowserClient as createClient } from '@/lib/supabase/browser-client'
+import { Tables } from '@/types/supabase'
 import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
 
 type _Lesson = Tables<'lessons'>
 type _Quiz = Tables<'quizzes'>
 type _Course = Tables<'courses'>
 
 interface LessonWithJoins extends Tables<'lessons'> {
-  course: Tables<'courses'>;
-  quizzes: Tables<'quizzes'>[];
+  course: Tables<'courses'>
+  quizzes: Tables<'quizzes'>[]
 }
 
 export default function LessonDetailsPage() {
@@ -43,7 +57,7 @@ export default function LessonDetailsPage() {
     title: '',
     content: '',
     video_url: '',
-    sort_order: 0
+    sort_order: 0,
   })
   const [saving, setSaving] = useState(false)
 
@@ -57,18 +71,20 @@ export default function LessonDetailsPage() {
         // Fetch lesson with course and quizzes
         const { data: lessonData, error: lessonError } = await supabase
           .from('lessons')
-          .select(`
+          .select(
+            `
             *,
             course:courses(*),
             quizzes(*)
-          `)
+          `
+          )
           .eq('id', lessonId)
           .single()
 
         if (lessonError) throw lessonError
 
         // Type guard for lessonData
-        let typedLesson: LessonWithJoins | null = null;
+        let typedLesson: LessonWithJoins | null = null
         if (
           lessonData &&
           typeof lessonData === 'object' &&
@@ -78,10 +94,21 @@ export default function LessonDetailsPage() {
         ) {
           typedLesson = {
             ...(lessonData as Tables<'lessons'>),
-            course: (lessonData as unknown as { course: Tables<'courses'> }).course,
-            quizzes: Array.isArray((lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes) && !('error' in (lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes)
-              ? (lessonData as unknown as { quizzes: Tables<'quizzes'>[] }).quizzes
-              : [],
+            course: (lessonData as unknown as { course: Tables<'courses'> })
+              .course,
+            quizzes:
+              Array.isArray(
+                (lessonData as unknown as { quizzes: Tables<'quizzes'>[] })
+                  .quizzes
+              ) &&
+              !(
+                'error' in
+                (lessonData as unknown as { quizzes: Tables<'quizzes'>[] })
+                  .quizzes
+              )
+                ? (lessonData as unknown as { quizzes: Tables<'quizzes'>[] })
+                    .quizzes
+                : [],
           }
         }
         if (typedLesson) {
@@ -90,7 +117,7 @@ export default function LessonDetailsPage() {
             title: typedLesson.title || '',
             content: typedLesson.content || typedLesson.markdown || '',
             video_url: typedLesson.video_url || '',
-            sort_order: typedLesson.sort_order || 0
+            sort_order: typedLesson.sort_order || 0,
           })
         } else {
           setError('Failed to fetch lesson: invalid data structure')
@@ -116,7 +143,7 @@ export default function LessonDetailsPage() {
           title: formData.title,
           content: formData.content,
           video_url: formData.video_url || null,
-          sort_order: formData.sort_order
+          sort_order: formData.sort_order,
         })
         .eq('id', lessonId)
 
@@ -132,22 +159,23 @@ export default function LessonDetailsPage() {
   }
 
   const handleDeleteQuiz = async (quizId: string) => {
-    if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this quiz? This action cannot be undone.'
+      )
+    ) {
       return
     }
 
     try {
-      const { error } = await supabase
-        .from('quizzes')
-        .delete()
-        .eq('id', quizId)
+      const { error } = await supabase.from('quizzes').delete().eq('id', quizId)
 
       if (error) throw error
 
       if (lesson) {
         setLesson({
           ...lesson,
-          quizzes: lesson.quizzes.filter(quiz => quiz.id !== quizId)
+          quizzes: lesson.quizzes.filter(quiz => quiz.id !== quizId),
         })
       }
     } catch (err) {
@@ -168,7 +196,10 @@ export default function LessonDetailsPage() {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json() as { success: boolean; error?: string }
+      const data = (await response.json()) as {
+        success: boolean
+        error?: string
+      }
 
       if (data.success) {
         // Redirect back to course
@@ -198,7 +229,9 @@ export default function LessonDetailsPage() {
       <div className="p-8">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-destructive text-lg mb-4">Error loading lesson</p>
+            <p className="text-destructive text-lg mb-4">
+              Error loading lesson
+            </p>
             <p className="text-foreground/60">{error}</p>
             <Button asChild className="mt-4">
               <Link href={`/admin/courses/${courseId}`}>Back to Course</Link>
@@ -232,14 +265,26 @@ export default function LessonDetailsPage() {
           <div className="flex items-center gap-4">
             <Button asChild variant="outline">
               <Link href={`/admin/courses/${courseId}`}>
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg
+                  className="mr-2 h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
                 </svg>
                 Back to Course
               </Link>
             </Button>
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Lesson Details</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                Lesson Details
+              </h2>
               <p className="text-foreground/60">
                 {lesson.course.title} - Lesson {lesson.sort_order}
               </p>
@@ -261,7 +306,9 @@ export default function LessonDetailsPage() {
                   <p>Are you sure you want to delete this lesson?</p>
                   <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                     <p className="text-sm text-yellow-800">
-                      <strong>⚠️ Important:</strong> This will delete the lesson but will NOT delete its quizzes. Those will remain in the system but will no longer be associated with this lesson.
+                      <strong>⚠️ Important:</strong> This will delete the lesson
+                      but will NOT delete its quizzes. Those will remain in the
+                      system but will no longer be associated with this lesson.
                     </p>
                   </div>
                 </DialogDescription>
@@ -295,9 +342,7 @@ export default function LessonDetailsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Lesson Information</CardTitle>
-                <CardDescription>
-                  Lesson content and settings
-                </CardDescription>
+                <CardDescription>Lesson content and settings</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {editing ? (
@@ -309,18 +354,12 @@ export default function LessonDetailsPage() {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      onClick={() => void handleSave()}
-                      disabled={saving}
-                    >
+                    <Button onClick={() => void handleSave()} disabled={saving}>
                       {saving ? 'Saving...' : 'Save'}
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => setEditing(true)}
-                  >
+                  <Button variant="outline" onClick={() => setEditing(true)}>
                     Edit
                   </Button>
                 )}
@@ -335,7 +374,9 @@ export default function LessonDetailsPage() {
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     placeholder="Lesson title"
                   />
                 </div>
@@ -344,7 +385,9 @@ export default function LessonDetailsPage() {
                   <Input
                     id="video_url"
                     value={formData.video_url}
-                    onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, video_url: e.target.value })
+                    }
                     placeholder="https://youtube.com/watch?v=..."
                   />
                 </div>
@@ -354,7 +397,12 @@ export default function LessonDetailsPage() {
                     id="sort_order"
                     type="number"
                     value={formData.sort_order}
-                    onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        sort_order: parseInt(e.target.value) || 0,
+                      })
+                    }
                     placeholder="1"
                   />
                 </div>
@@ -362,7 +410,7 @@ export default function LessonDetailsPage() {
                   <Label htmlFor="content">Content</Label>
                   <RichTextEditor
                     content={formData.content}
-                    onChange={(content) => setFormData({ ...formData, content })}
+                    onChange={content => setFormData({ ...formData, content })}
                     placeholder="Write your lesson content here. You can include text, links, and instructions..."
                     className="min-h-[200px]"
                   />
@@ -371,35 +419,49 @@ export default function LessonDetailsPage() {
             ) : (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium text-foreground/60">Title</Label>
+                  <Label className="text-sm font-medium text-foreground/60">
+                    Title
+                  </Label>
                   <p className="text-foreground">{lesson.title}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-foreground/60">Video URL</Label>
-                  <p className="text-foreground">{lesson.video_url || 'No video'}</p>
+                  <Label className="text-sm font-medium text-foreground/60">
+                    Video URL
+                  </Label>
+                  <p className="text-foreground">
+                    {lesson.video_url || 'No video'}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm font-medium text-foreground/60">Sort Order</Label>
+                    <Label className="text-sm font-medium text-foreground/60">
+                      Sort Order
+                    </Label>
                     <p className="text-foreground">{lesson.sort_order}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-foreground/60">Created</Label>
+                    <Label className="text-sm font-medium text-foreground/60">
+                      Created
+                    </Label>
                     <p className="text-foreground">
                       {lesson.created_at
-                        ? formatDistanceToNow(new Date(lesson.created_at), { addSuffix: true })
+                        ? formatDistanceToNow(new Date(lesson.created_at), {
+                            addSuffix: true,
+                          })
                         : 'Unknown'}
                     </p>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-foreground/60">Content</Label>
-                                    <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
-                    <div
+                  <Label className="text-sm font-medium text-foreground/60">
+                    Content
+                  </Label>
+                  <div className="mt-2 p-4 bg-muted rounded-lg prose prose-sm max-w-none">
+                    <CloudinaryHtmlContent
+                      html={sanitizeLessonHtml(
+                        lesson.content || lesson.markdown || 'No content'
+                      )}
                       className="[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4 [&_h1]:mt-2 [&_h1]:text-[#de0647] [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mb-3 [&_h2]:mt-2 [&_h2]:text-[#de0647] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-2 [&_h3]:text-[#de0647] [&_p]:mb-2 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_em]:italic [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_span]:inline [&_a]:text-[#de0647] [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded [&_iframe]:border [&_iframe]:border-gray-200"
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeLessonHtml(lesson.content || lesson.markdown || 'No content')
-                      }}
                     />
                   </div>
                 </div>
@@ -419,9 +481,21 @@ export default function LessonDetailsPage() {
                 </CardDescription>
               </div>
               <Button asChild>
-                <Link href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/new`}>
-                  <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <Link
+                  href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/new`}
+                >
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
                   </svg>
                   Add Quiz
                 </Link>
@@ -431,31 +505,71 @@ export default function LessonDetailsPage() {
           <CardContent>
             {lesson.quizzes.length === 0 ? (
               <div className="text-center py-8">
-                <svg className="mx-auto h-12 w-12 text-foreground/40 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="mx-auto h-12 w-12 text-foreground/40 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
-                <h3 className="text-lg font-medium text-foreground mb-2">No quizzes yet</h3>
-                <p className="text-foreground/60 mb-4">Add a quiz to test students&apos; understanding</p>
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  No quizzes yet
+                </h3>
+                <p className="text-foreground/60 mb-4">
+                  Add a quiz to test students&apos; understanding
+                </p>
                 <Button asChild>
-                  <Link href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/new`}>Add First Quiz</Link>
+                  <Link
+                    href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/new`}
+                  >
+                    Add First Quiz
+                  </Link>
                 </Button>
               </div>
             ) : (
               <div className="space-y-3">
-                {lesson.quizzes.map((quiz) => (
-                  <div key={quiz.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {lesson.quizzes.map(quiz => (
+                  <div
+                    key={quiz.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div>
-                      <h4 className="font-medium text-foreground">{quiz.title}</h4>
+                      <h4 className="font-medium text-foreground">
+                        {quiz.title}
+                      </h4>
                       <p className="text-sm text-foreground/60">
                         Pass percentage: {quiz.pass_pct}%
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/${quiz.id}`}>
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <Link
+                          href={`/admin/courses/${courseId}/lessons/${lessonId}/quizzes/${quiz.id}`}
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
                           </svg>
                         </Link>
                       </Button>
@@ -464,8 +578,18 @@ export default function LessonDetailsPage() {
                         size="sm"
                         onClick={() => void handleDeleteQuiz(quiz.id)}
                       >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       </Button>
                     </div>

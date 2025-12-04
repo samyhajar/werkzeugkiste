@@ -2,11 +2,13 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import { Tables } from '@/types/supabase'
 import { Book, ChevronDown, ChevronRight, FileText, X } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import CloudinaryHtmlContent from './CloudinaryHtmlContent'
 
 type Module = Tables<'modules'> & {
   courses: (Tables<'courses'> & {
@@ -35,6 +37,9 @@ export default function ModuleOverlay({
   const presenterMaterialsContent = module.presenter_materials_content ?? ''
   const hasPresenterMaterialsContent =
     presenterMaterialsContent.trim().length > 0
+
+  // Fetch ALT text from Cloudinary, fallback to module title
+  const imageAlt = useCloudinaryAlt(module.hero_image, module.title)
 
   const toggleCourse = (courseId: string) => {
     const newExpanded = new Set(expandedCourses)
@@ -72,7 +77,7 @@ export default function ModuleOverlay({
         <div className="relative h-64 w-full">
           <Image
             src={module.hero_image || '/placeholder.png'}
-            alt={module.title}
+            alt={imageAlt}
             fill
             className="object-cover"
           />
@@ -260,11 +265,9 @@ export default function ModuleOverlay({
                 Materialien für Vortragende
               </h2>
               {hasPresenterMaterialsContent ? (
-                <div
+                <CloudinaryHtmlContent
+                  html={presenterMaterialsContent}
                   className="prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: presenterMaterialsContent,
-                  }}
                 />
               ) : (
                 <div className="prose max-w-none">

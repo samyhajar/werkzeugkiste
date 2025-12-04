@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
+import CloudinaryHtmlContent from '@/components/shared/CloudinaryHtmlContent'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
 
 interface FAQItemProps {
   question: string
@@ -33,7 +34,11 @@ function FAQItem({ question, answer, isOpen = false }: FAQItemProps) {
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </button>
@@ -73,7 +78,8 @@ export default function FragenPage() {
   if (html) {
     return (
       <main className="max-w-4xl mx-auto px-4 py-12">
-        <div
+        <CloudinaryHtmlContent
+          html={html}
           className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700
           [&_details]:bg-white [&_details]:border [&_details]:border-gray-200 [&_details]:rounded-xl [&_details]:mb-2 [&_details]:shadow-sm [&_details]:overflow-hidden
           [&_summary]:p-4 [&_summary]:font-medium [&_summary]:text-base [&_summary]:text-gray-800 [&_summary]:cursor-pointer [&_summary]:flex [&_summary]:justify-between [&_summary]:items-center [&_summary]:transition-all [&_summary]:duration-200 [&_summary]:bg-transparent [&_summary]:border-none [&_summary]:outline-none [&_summary]:hover:bg-gray-50 [&_summary]:hover:text-[#de0449]
@@ -82,7 +88,6 @@ export default function FragenPage() {
           [&_details[open]_summary::after]:rotate-180 [&_details[open]_summary::after]:text-[#de0449]
           [&_details[open]_summary]:text-[#de0449]
           [&_details>*:not(summary)]:px-4 [&_details>*:not(summary)]:pb-4 [&_details>*:not(summary)]:bg-gray-50 [&_details>*:not(summary)]:border-l-4 [&_details>*:not(summary)]:border-[#de0449] [&_details>*:not(summary)]:rounded-b-lg [&_details>*:not(summary)]:m-0 [&_details>*:not(summary)]:text-gray-700 [&_details>*:not(summary)]:leading-relaxed [&_details>*:not(summary)]:text-sm"
-          dangerouslySetInnerHTML={{ __html: html }}
         />
       </main>
     )
@@ -91,23 +96,41 @@ export default function FragenPage() {
     <main className="max-w-4xl mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="mb-12">
-        <h1 className="text-4xl font-bold text-[#de0449] mb-6">Ungeklärte Fragen?</h1>
+        <h1 className="text-4xl font-bold text-[#de0449] mb-6">
+          Ungeklärte Fragen?
+        </h1>
         <p className="text-gray-700">
-          Schreib&apos; eine E-Mail an <a href="mailto:digiplus@arbeitplus.at" className="text-[#de0647] underline">digiplus@arbeitplus.at</a>!
+          Schreib&apos; eine E-Mail an{' '}
+          <a
+            href="mailto:digiplus@arbeitplus.at"
+            className="text-[#de0647] underline"
+          >
+            digiplus@arbeitplus.at
+          </a>
+          !
         </p>
       </div>
 
       {/* Neu hier? Einführung! Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[#de0449] mb-8">Neu hier? Einführung!</h2>
+        <h2 className="text-3xl font-bold text-[#de0449] mb-8">
+          Neu hier? Einführung!
+        </h2>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
             question="Muss ich mich registrieren?"
             answer={
               <div>
-                <p className="mb-4">Nein, du kannst die gesamte Werkzeugkiste auch ohne Konto benutzen.</p>
-                <p>Möchtest du am Kursende Zertifikate erhalten? Soll dein Lernfortschritt gespeichert werden? Dann lege hier ein Konto an.</p>
+                <p className="mb-4">
+                  Nein, du kannst die gesamte Werkzeugkiste auch ohne Konto
+                  benutzen.
+                </p>
+                <p>
+                  Möchtest du am Kursende Zertifikate erhalten? Soll dein
+                  Lernfortschritt gespeichert werden? Dann lege hier ein Konto
+                  an.
+                </p>
               </div>
             }
           />
@@ -136,12 +159,16 @@ export default function FragenPage() {
             question="Für welche Computer/Smartphones ist der Kurs geeignet?"
             answer={
               <div>
-                <p className="mb-2">Im Moment sind die Inhalte für folgende Geräte geeignet:</p>
+                <p className="mb-2">
+                  Im Moment sind die Inhalte für folgende Geräte geeignet:
+                </p>
                 <ul className="list-disc ml-6 space-y-1">
                   <li>Computer mit Microsoft Windows</li>
                   <li>Smartphones mit Google Android</li>
                 </ul>
-                <p className="mt-3">Inhalte für Apple iPhone kommen vielleicht später dazu.</p>
+                <p className="mt-3">
+                  Inhalte für Apple iPhone kommen vielleicht später dazu.
+                </p>
               </div>
             }
           />
@@ -152,10 +179,20 @@ export default function FragenPage() {
               <div>
                 <p className="mb-2">Es gibt Module, Kurse und Lektionen:</p>
                 <ul className="list-disc ml-6 space-y-1">
-                  <li>Module (z. B. &quot;Modul 1 – Einstieg in die digitale Welt&quot;)</li>
-                  <li>Kurse (z. B. &quot;Kurs 1 – Digitalisierung Basis&quot;)</li>
-                  <li>Lektion 1 (z. B. &quot;Lektion 1 – Digital | Analog&quot;)</li>
-                  <li>Lektion 2 (z. B. &quot;Lektion 2 – Dein digitaler Nutzen&quot;)</li>
+                  <li>
+                    Module (z. B. &quot;Modul 1 – Einstieg in die digitale
+                    Welt&quot;)
+                  </li>
+                  <li>
+                    Kurse (z. B. &quot;Kurs 1 – Digitalisierung Basis&quot;)
+                  </li>
+                  <li>
+                    Lektion 1 (z. B. &quot;Lektion 1 – Digital | Analog&quot;)
+                  </li>
+                  <li>
+                    Lektion 2 (z. B. &quot;Lektion 2 – Dein digitaler
+                    Nutzen&quot;)
+                  </li>
                   <li>…</li>
                 </ul>
               </div>
@@ -166,8 +203,18 @@ export default function FragenPage() {
             question="Warum sind manche Wörter mit Punkten unterstrichen?"
             answer={
               <div>
-                <p className="mb-3">Das ist das Kennzeichen für einen Fachbegriff. Wenn du den Mauszeiger hinziehst (Computer) bzw. drauf tippst (Smartphone) dann bekommst du sofort eine Erklärung des Wortes angezeigt.</p>
-                <p>Ein Beispiel dafür ist: <span className="border-b border-dotted border-gray-600">Router</span>.</p>
+                <p className="mb-3">
+                  Das ist das Kennzeichen für einen Fachbegriff. Wenn du den
+                  Mauszeiger hinziehst (Computer) bzw. drauf tippst (Smartphone)
+                  dann bekommst du sofort eine Erklärung des Wortes angezeigt.
+                </p>
+                <p>
+                  Ein Beispiel dafür ist:{' '}
+                  <span className="border-b border-dotted border-gray-600">
+                    Router
+                  </span>
+                  .
+                </p>
               </div>
             }
           />
@@ -176,7 +223,9 @@ export default function FragenPage() {
 
       {/* Während des Kurses Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[#de0449] mb-8">Während des Kurses</h2>
+        <h2 className="text-3xl font-bold text-[#de0449] mb-8">
+          Während des Kurses
+        </h2>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
@@ -184,11 +233,29 @@ export default function FragenPage() {
             answer={
               <div className="flex items-center gap-4">
                 <p>Das funktioniert über das Zahnrad rechts oben</p>
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-6 h-6 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
-                <p>Computer: Bewege den Mauszeiger darauf. Smartphone: Tippe darauf.</p>
+                <p>
+                  Computer: Bewege den Mauszeiger darauf. Smartphone: Tippe
+                  darauf.
+                </p>
               </div>
             }
           />
@@ -197,8 +264,18 @@ export default function FragenPage() {
             question="Wie kann ich ein anderes Modul wählen?"
             answer={
               <div>
-                <p className="mb-2">Computer: Bewege den Mauszeiger im oberen Bereich auf <span className="bg-blue-100 px-2 py-1 rounded text-sm">Lernmodule</span> und klicke auf ein Modul.</p>
-                <p>Smartphone: Tippe rechts oben auf die drei Punkte <span className="text-xl">⋮</span> und dann auf &quot;Lernmodule&quot;.</p>
+                <p className="mb-2">
+                  Computer: Bewege den Mauszeiger im oberen Bereich auf{' '}
+                  <span className="bg-blue-100 px-2 py-1 rounded text-sm">
+                    Lernmodule
+                  </span>{' '}
+                  und klicke auf ein Modul.
+                </p>
+                <p>
+                  Smartphone: Tippe rechts oben auf die drei Punkte{' '}
+                  <span className="text-xl">⋮</span> und dann auf
+                  &quot;Lernmodule&quot;.
+                </p>
               </div>
             }
           />
@@ -207,8 +284,15 @@ export default function FragenPage() {
             question="Wie komme ich zur nächsten Lektion oder zu einem anderen Kurs?"
             answer={
               <div>
-                <p className="mb-2">Computer: Auf der linken Seite siehst du alle Kurse/Lektionen. Klick&apos; einfach auf den gewünschten Inhalt.</p>
-                <p>Smartphone: wischst du von links nach rechts. Damit erscheinen alle Kurse/Lektionen. Tipp&apos; einfach auf den gewünschten Inhalt.</p>
+                <p className="mb-2">
+                  Computer: Auf der linken Seite siehst du alle Kurse/Lektionen.
+                  Klick&apos; einfach auf den gewünschten Inhalt.
+                </p>
+                <p>
+                  Smartphone: wischst du von links nach rechts. Damit erscheinen
+                  alle Kurse/Lektionen. Tipp&apos; einfach auf den gewünschten
+                  Inhalt.
+                </p>
               </div>
             }
           />
@@ -217,74 +301,96 @@ export default function FragenPage() {
 
       {/* Für Trainer:innen Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[#de0449] mb-8">Für Trainer:innen</h2>
+        <h2 className="text-3xl font-bold text-[#de0449] mb-8">
+          Für Trainer:innen
+        </h2>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <FAQItem
             question="Wo bekomme ich didaktische Tips?"
             answer={
               <div>
-                <p className="mb-4">Am Beginn jeder Modulseite gibt es einen Reiter &quot;Unterlagen für Vortragende&quot;:</p>
+                <p className="mb-4">
+                  Am Beginn jeder Modulseite gibt es einen Reiter
+                  &quot;Unterlagen für Vortragende&quot;:
+                </p>
 
-                                 <div className="mb-4">
-                   <Image
-                     src="/download (3).png"
-                     alt="Unterlagen für Vortragende Tab"
-                     width={400}
-                     height={100}
-                     className="rounded"
-                   />
-                 </div>
+                <div className="mb-4">
+                  <Image
+                    src="/download (3).png"
+                    alt="Unterlagen für Vortragende Tab"
+                    width={400}
+                    height={100}
+                    className="rounded"
+                  />
+                </div>
 
-                <p>Hier findest du Ressourcen, Tipps, Hintergründe, Übungen und vieles mehr. Dieser Bereich steckt voller Unterstützung. Schau mal rein!</p>
+                <p>
+                  Hier findest du Ressourcen, Tipps, Hintergründe, Übungen und
+                  vieles mehr. Dieser Bereich steckt voller Unterstützung. Schau
+                  mal rein!
+                </p>
               </div>
             }
           />
 
-                     <FAQItem
-             question="Wie kann ich Zertifikate erstellen?"
-             answer={
-               <div>
-                 <p className="mb-4">Dafür müssen die Lernenden angemeldet sein! Nur so kann der Lernfortschritt dokumentiert werden.</p>
-                 <p className="mb-4">Es gibt für jedes Modul ein eigenes Zertifikat, das automatisch nach Abschluss ALLER (!) Kurse des Moduls erstellt wird. Die Lernenden können es dann auf der jeweiligen Modulseite als PDF herunterladen.</p>
-                 <div className="mb-4">
-                   <Image
-                     src="/allinhaltejedeskurs.png"
-                     alt="Alle Inhalte jedes Kurses"
-                     width={300}
-                     height={200}
-                     className="rounded"
-                   />
-                 </div>
-               </div>
-             }
-           />
+          <FAQItem
+            question="Wie kann ich Zertifikate erstellen?"
+            answer={
+              <div>
+                <p className="mb-4">
+                  Dafür müssen die Lernenden angemeldet sein! Nur so kann der
+                  Lernfortschritt dokumentiert werden.
+                </p>
+                <p className="mb-4">
+                  Es gibt für jedes Modul ein eigenes Zertifikat, das
+                  automatisch nach Abschluss ALLER (!) Kurse des Moduls erstellt
+                  wird. Die Lernenden können es dann auf der jeweiligen
+                  Modulseite als PDF herunterladen.
+                </p>
+                <div className="mb-4">
+                  <Image
+                    src="/allinhaltejedeskurs.png"
+                    alt="Alle Inhalte jedes Kurses"
+                    width={300}
+                    height={200}
+                    className="rounded"
+                  />
+                </div>
+              </div>
+            }
+          />
         </div>
       </section>
 
       {/* Nach dem Kurs Section */}
       <section>
-        <h2 className="text-3xl font-bold text-[#de0449] mb-8">Nach dem Kurs</h2>
+        <h2 className="text-3xl font-bold text-[#de0449] mb-8">
+          Nach dem Kurs
+        </h2>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-           <FAQItem
-             question="Wie kann ich weiterlernen?"
-             answer={
-               <div>
-                 <p className="mb-4">Schau dir mal unsere Digi-Sammlung an. Dort sind viele spannende Links zum Ausprobieren.</p>
-                 <div className="mb-4">
-                   <Image
-                     src="/nachedemkurs .png"
-                     alt="Nach dem Kurs"
-                     width={350}
-                     height={200}
-                     className="rounded"
-                   />
-                 </div>
-               </div>
-             }
-           />
-         </div>
+          <FAQItem
+            question="Wie kann ich weiterlernen?"
+            answer={
+              <div>
+                <p className="mb-4">
+                  Schau dir mal unsere Digi-Sammlung an. Dort sind viele
+                  spannende Links zum Ausprobieren.
+                </p>
+                <div className="mb-4">
+                  <Image
+                    src="/nachedemkurs .png"
+                    alt="Nach dem Kurs"
+                    width={350}
+                    height={200}
+                    className="rounded"
+                  />
+                </div>
+              </div>
+            }
+          />
+        </div>
       </section>
     </main>
   )

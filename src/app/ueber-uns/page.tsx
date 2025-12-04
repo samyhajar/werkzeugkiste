@@ -1,5 +1,6 @@
-import Image from 'next/image'
+import StaticPageContent from '@/components/shared/StaticPageContent'
 import { getStaticPageBySlug } from '@/services/staticPages'
+import Image from 'next/image'
 
 export const metadata = { title: 'Über Uns' }
 
@@ -10,9 +11,9 @@ export default async function UeberUnsPage() {
   if (page?.content_html) {
     return (
       <main className="max-w-6xl mx-auto px-4 py-12">
-        <div
+        <StaticPageContent
+          html={page.content_html}
           className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700"
-          dangerouslySetInnerHTML={{ __html: page.content_html }}
         />
       </main>
     )
@@ -25,18 +26,25 @@ export default async function UeberUnsPage() {
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="md:w-2/3">
             <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>arbeit plus – Soziale Unternehmen Niederösterreich</strong> entwickelte gemeinsam
-              mit der <strong>FH St. Pölten</strong> (Ilse Arlt Institut für Soziale Inklusionsforschung) im
-              Rahmen des Projektfonds Arbeit 4.0 der <strong>Arbeiterkammer Niederösterreich</strong> das
-              Projekt <strong>Digi +</strong> für Soziale Unternehmen.
+              <strong>
+                arbeit plus – Soziale Unternehmen Niederösterreich
+              </strong>{' '}
+              entwickelte gemeinsam mit der <strong>FH St. Pölten</strong> (Ilse
+              Arlt Institut für Soziale Inklusionsforschung) im Rahmen des
+              Projektfonds Arbeit 4.0 der{' '}
+              <strong>Arbeiterkammer Niederösterreich</strong> das Projekt{' '}
+              <strong>Digi +</strong> für Soziale Unternehmen.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Die Mitarbeiter:innen, also <strong>Schlüsselarbeitskräfte</strong> (Berater:innen,
-              Arbeitsanleiter:innen) und deren <strong>Klient:innen</strong> (Transitmitarbeiter:innen,
-              Teilnehmer:innen, zu Beratende), treten dabei in einen Lernprozess, der den
-              (Wieder-)Einstieg in den Arbeitsmarkt erleichtert. Im Zuge dessen werden selbst
-              erarbeitete, digitale Kenntnisse erlernt und vertieft und voneinander gelernt.
-              Dadurch leistet Digi + einen wertvollen Beitrag zu <strong>(digitaler) Inklusion</strong> und
+              Die Mitarbeiter:innen, also{' '}
+              <strong>Schlüsselarbeitskräfte</strong> (Berater:innen,
+              Arbeitsanleiter:innen) und deren <strong>Klient:innen</strong>{' '}
+              (Transitmitarbeiter:innen, Teilnehmer:innen, zu Beratende), treten
+              dabei in einen Lernprozess, der den (Wieder-)Einstieg in den
+              Arbeitsmarkt erleichtert. Im Zuge dessen werden selbst
+              erarbeitete, digitale Kenntnisse erlernt und vertieft und
+              voneinander gelernt. Dadurch leistet Digi + einen wertvollen
+              Beitrag zu <strong>(digitaler) Inklusion</strong> und
               <strong>gesellschaftlicher Teilhabe</strong>.
             </p>
           </div>
@@ -55,9 +63,12 @@ export default async function UeberUnsPage() {
       {/* Project Development Section */}
       <div className="mb-16">
         <p className="text-gray-700 leading-relaxed mb-6">
-          Zu Beginn des Projekts wurden vorhandene technischen Ressourcen analysiert. Die Ergebnisse kombinierten wir dann mit den Ergebnissen einer
-          Nutzer:innenbefragung und vorhandenem Wissen aus der Literatur. Auf diesen Faktoren basierend wurden Konzepte zur <strong>Steigerung der digitalen
-          Grundkompetenzen</strong> bei den Schlüsselarbeitskräften und Klient:innen entwickelt.
+          Zu Beginn des Projekts wurden vorhandene technischen Ressourcen
+          analysiert. Die Ergebnisse kombinierten wir dann mit den Ergebnissen
+          einer Nutzer:innenbefragung und vorhandenem Wissen aus der Literatur.
+          Auf diesen Faktoren basierend wurden Konzepte zur{' '}
+          <strong>Steigerung der digitalen Grundkompetenzen</strong> bei den
+          Schlüsselarbeitskräften und Klient:innen entwickelt.
         </p>
 
         <div className="flex flex-col md:flex-row gap-8 items-center">
@@ -72,20 +83,24 @@ export default async function UeberUnsPage() {
           </div>
           <div className="md:w-1/2">
             <p className="text-gray-700 leading-relaxed mb-4">
-              Im Rahmen von Digi + erhielten Klient:innen der Sozialen Unternehmen in
-              regionalen Workshops die Möglichkeit, ihre digitalen Kompetenzen zu steigern
-              und eventuell vorhandene Abwehrhaltungen zu hinterfragen. Darüber hinaus
-              wurden auch <strong>Weiterbildungsseminare (train-the-trainer)</strong> für
+              Im Rahmen von Digi + erhielten Klient:innen der Sozialen
+              Unternehmen in regionalen Workshops die Möglichkeit, ihre
+              digitalen Kompetenzen zu steigern und eventuell vorhandene
+              Abwehrhaltungen zu hinterfragen. Darüber hinaus wurden auch{' '}
+              <strong>Weiterbildungsseminare (train-the-trainer)</strong> für
               Schlüsselarbeitskräfte angeboten.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              Im Sinne der Nachhaltigkeit wurde die <strong>digitale Werkzeugkiste</strong> erarbeitet. Die
-              <strong>online Lernplattform</strong> ist <strong>kostenfrei zugänglich</strong>. Den Kern bilden die
-              Lernmodule, die sowohl im individuellen Selbststudium als auch unter
-              Anleitung von Schlüsselarbeitskräften erarbeitet werden können. Darüber
-              hinaus bietet die Werkzeugkiste eine Sammlung nützlicher Links,
-              Hintergrundinformationen, Hinweise zu Fördermöglichkeiten, zu
-              Weiterbildungsanbietern u.v.m. rund um das Thema Digitalisierung.
+              Im Sinne der Nachhaltigkeit wurde die{' '}
+              <strong>digitale Werkzeugkiste</strong> erarbeitet. Die
+              <strong>online Lernplattform</strong> ist{' '}
+              <strong>kostenfrei zugänglich</strong>. Den Kern bilden die
+              Lernmodule, die sowohl im individuellen Selbststudium als auch
+              unter Anleitung von Schlüsselarbeitskräften erarbeitet werden
+              können. Darüber hinaus bietet die Werkzeugkiste eine Sammlung
+              nützlicher Links, Hintergrundinformationen, Hinweise zu
+              Fördermöglichkeiten, zu Weiterbildungsanbietern u.v.m. rund um das
+              Thema Digitalisierung.
             </p>
           </div>
         </div>
@@ -101,26 +116,28 @@ export default async function UeberUnsPage() {
       <div className="bg-gray-50 rounded-lg p-8 mb-16">
         <h2 className="text-2xl font-bold text-[#de0449] mb-4">Ziel</h2>
         <p className="text-gray-700 leading-relaxed">
-          Alle Arbeitsschritte und Angebote sollen der Steigerung der Wiedereinstiegschancen in den Arbeitsmarkt dienen.
+          Alle Arbeitsschritte und Angebote sollen der Steigerung der
+          Wiedereinstiegschancen in den Arbeitsmarkt dienen.
         </p>
       </div>
 
       {/* Services Section */}
       <div className="mb-16">
         <h2 className="text-2xl font-bold text-[#de0449] mb-6">Services</h2>
-                  <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span>Folder &quot;Werkzeugkiste&quot; </span>
-              <strong>als PDF</strong>
-              <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>Digi + Logo als </span>
-              <strong>JPG</strong>
-              <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
-            </div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span>Folder &quot;Werkzeugkiste&quot; </span>
+            <strong>als PDF</strong>
+            <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Digi + Logo als </span>
+            <strong>JPG</strong>
+            <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
+          </div>
           <p className="text-gray-700">
-            Bei Fragen, Anregungen oder Beschwerden wenden Sie sich bitte an <strong>digiplus@arbeitplus.at</strong>.
+            Bei Fragen, Anregungen oder Beschwerden wenden Sie sich bitte an{' '}
+            <strong>digiplus@arbeitplus.at</strong>.
           </p>
         </div>
       </div>
@@ -135,7 +152,6 @@ export default async function UeberUnsPage() {
 
           {/* Timeline Items */}
           <div className="space-y-16">
-
             {/* March 2020 - Projektstart Digi + */}
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
@@ -147,7 +163,9 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2 text-white">Projektstart Digi +</h3>
+                  <h3 className="text-lg font-bold mb-2 text-white">
+                    Projektstart Digi +
+                  </h3>
                   <p className="text-sm">
                     Das Projekt Digi + erhält eine Förderzusage im Rahmen des
                     Projektfonds 4.0 der AK Niederösterreich.
@@ -160,14 +178,16 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Recherche und vorbereitende Erhebungen</h3>
-                                     <p className="text-sm">
-                     Für die Erstellung der Schulungsmaterialien wird eine
-                     vorbereitende Erhebung per Telefoninterviews, einem
-                     Onlinefragebogen, sowie eine umfangreiche Quellenrecherche
-                     durchgeführt. Die gewonnenen Informationen dienen als
-                     Ausgangsbasis für das zu erstellende Schulungskonzept.
-                   </p>
+                  <h3 className="text-lg font-bold mb-2">
+                    Recherche und vorbereitende Erhebungen
+                  </h3>
+                  <p className="text-sm">
+                    Für die Erstellung der Schulungsmaterialien wird eine
+                    vorbereitende Erhebung per Telefoninterviews, einem
+                    Onlinefragebogen, sowie eine umfangreiche Quellenrecherche
+                    durchgeführt. Die gewonnenen Informationen dienen als
+                    Ausgangsbasis für das zu erstellende Schulungskonzept.
+                  </p>
                 </div>
               </div>
               <div className="relative z-10">
@@ -190,13 +210,15 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2 text-white">Digi + Schulungen Teil 1</h3>
-                                     <p className="text-sm">
-                     Die ersten Digi + Schulungen finden in insgesamt acht
-                     sozialintegrativen Unternehmen in Niederösterreich statt. Dabei
-                     werden 13 Schlüsselarbeitskräfte und 50 Klient:innen bei
-                     insgesamt 35 Terminen erreicht:
-                   </p>
+                  <h3 className="text-lg font-bold mb-2 text-white">
+                    Digi + Schulungen Teil 1
+                  </h3>
+                  <p className="text-sm">
+                    Die ersten Digi + Schulungen finden in insgesamt acht
+                    sozialintegrativen Unternehmen in Niederösterreich statt.
+                    Dabei werden 13 Schlüsselarbeitskräfte und 50 Klient:innen
+                    bei insgesamt 35 Terminen erreicht:
+                  </p>
                 </div>
               </div>
             </div>
@@ -207,10 +229,10 @@ export default async function UeberUnsPage() {
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-bold mb-2">Evaluation</h3>
                   <p className="text-sm">
-                    In Gruppendiskussionen werden die Erkenntnisse aus den Digi +
-                    Schulungen Teil 1 mit Teilnehmer:innen reflektiert. Es zeigt sich,
-                    dass ein digitales Tool, sowie eine digitale Assistenz für Soziale
-                    Unternehmen notwendig sind.
+                    In Gruppendiskussionen werden die Erkenntnisse aus den Digi
+                    + Schulungen Teil 1 mit Teilnehmer:innen reflektiert. Es
+                    zeigt sich, dass ein digitales Tool, sowie eine digitale
+                    Assistenz für Soziale Unternehmen notwendig sind.
                   </p>
                 </div>
               </div>
@@ -227,20 +249,24 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">November 2020</div>
-                <div className="text-gray-500 text-sm">Digi+ Schulungen Teil 2</div>
+                <div className="text-gray-500 text-sm">
+                  Digi+ Schulungen Teil 2
+                </div>
               </div>
               <div className="relative z-10">
                 <div className="w-4 h-4 bg-[#de0449] rounded-full border-4 border-white shadow-lg"></div>
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2 text-white">Digi + Schulungen Teil 2</h3>
-                                     <p className="text-sm">
-                     Mit einem adaptierten Schulungskonzept finden die Digi +
-                     Schulungen Teil 2 in 13 Sozialen Unternehmen statt. Dabei
-                     werden 41 Schlüsselarbeitskräfte und 45 Klient:innen bei
-                     insgesamt 53 Terminen erreicht:
-                   </p>
+                  <h3 className="text-lg font-bold mb-2 text-white">
+                    Digi + Schulungen Teil 2
+                  </h3>
+                  <p className="text-sm">
+                    Mit einem adaptierten Schulungskonzept finden die Digi +
+                    Schulungen Teil 2 in 13 Sozialen Unternehmen statt. Dabei
+                    werden 41 Schlüsselarbeitskräfte und 45 Klient:innen bei
+                    insgesamt 53 Terminen erreicht:
+                  </p>
                 </div>
               </div>
             </div>
@@ -277,11 +303,14 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2">Start der Werkzeugkiste</h3>
-                                     <p className="text-sm">
-                     Das Team einigt sich auf ein Tool zur Erstellung der Werkzeugkiste,
-                     welche unter werkzeugkiste.arbeitplus.at realisiert wird.
-                   </p>
+                  <h3 className="text-lg font-bold mb-2">
+                    Start der Werkzeugkiste
+                  </h3>
+                  <p className="text-sm">
+                    Das Team einigt sich auf ein Tool zur Erstellung der
+                    Werkzeugkiste, welche unter werkzeugkiste.arbeitplus.at
+                    realisiert wird.
+                  </p>
                 </div>
               </div>
             </div>
@@ -290,12 +319,14 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                  <h3 className="text-lg font-bold mb-2 text-white">Abschluss Digi +</h3>
-                                     <p className="text-sm">
-                     Im Rahmen der Abschlussveranstaltung wird auf die Bedeutung
-                     der digitalen Assistenz hingewiesen, sowie die Digi +
-                     Werkzeugkiste vorgestellt.
-                   </p>
+                  <h3 className="text-lg font-bold mb-2 text-white">
+                    Abschluss Digi +
+                  </h3>
+                  <p className="text-sm">
+                    Im Rahmen der Abschlussveranstaltung wird auf die Bedeutung
+                    der digitalen Assistenz hingewiesen, sowie die Digi +
+                    Werkzeugkiste vorgestellt.
+                  </p>
                 </div>
               </div>
               <div className="relative z-10">
@@ -303,7 +334,9 @@ export default async function UeberUnsPage() {
               </div>
               <div className="w-1/2 pl-8 text-left">
                 <div className="text-[#de0449] font-bold">Februar 2022</div>
-                <div className="text-gray-500 text-sm">Digi + Werkzeugkiste & Digitale Assistenz</div>
+                <div className="text-gray-500 text-sm">
+                  Digi + Werkzeugkiste & Digitale Assistenz
+                </div>
               </div>
             </div>
 
@@ -311,30 +344,33 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">August 2022</div>
-                <div className="text-gray-500 text-sm">Digitale Werkzeugkiste</div>
+                <div className="text-gray-500 text-sm">
+                  Digitale Werkzeugkiste
+                </div>
               </div>
               <div className="relative z-10">
                 <div className="w-4 h-4 bg-[#486681] rounded-full border-4 border-white shadow-lg"></div>
               </div>
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
-                                     <h3 className="text-lg font-bold mb-2">Digitale Assistenz & Abschluss Werkzeugkiste</h3>
-                   <p className="text-sm mb-4">
-                     Alle Module der Werkzeugkiste sind befüllt. Die Inhalte werden
-                     weiterhin fortlaufend aktualisiert.
-                   </p>
-                   <p className="text-sm">
-                     Darüber hinaus erfolgen Vor-Ort-Kurse und Online-
-                     Veranstaltungen im Rahmen der <strong>Digitalen Assistenz</strong>.
-                   </p>
+                  <h3 className="text-lg font-bold mb-2">
+                    Digitale Assistenz & Abschluss Werkzeugkiste
+                  </h3>
+                  <p className="text-sm mb-4">
+                    Alle Module der Werkzeugkiste sind befüllt. Die Inhalte
+                    werden weiterhin fortlaufend aktualisiert.
+                  </p>
+                  <p className="text-sm">
+                    Darüber hinaus erfolgen Vor-Ort-Kurse und Online-
+                    Veranstaltungen im Rahmen der{' '}
+                    <strong>Digitalen Assistenz</strong>.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-
     </main>
   )
 }
