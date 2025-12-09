@@ -3,7 +3,10 @@
  * ALT texts are managed by Martina in the Cloudinary console
  */
 
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || 'dqmofjqca'
+const CLOUDINARY_CLOUD_NAME =
+  process.env.CLOUDINARY_CLOUD_NAME ||
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ||
+  'dqmofjqca'
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
@@ -23,6 +26,9 @@ interface CloudinaryAltTextCache {
     fetchedAt: number
   }
 }
+
+const getAltFromResource = (data: CloudinaryResource) =>
+  data.context?.custom?.alt || data.context?.custom?.caption || null
 
 // In-memory cache for ALT texts (lasts until server restart)
 // This reduces API calls to Cloudinary
@@ -65,53 +71,79 @@ export function extractPublicId(cloudinaryUrl: string): string | null {
 export async function getCloudinaryAltText(
   publicId: string
 ): Promise<string | null> {
-  if (!CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    console.warn('Cloudinary API credentials not configured')
-    return null
-  }
-
   // Check cache first
   const cached = altTextCache[publicId]
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
     return cached.alt
   }
 
-  try {
-    // Use Basic Auth header instead of credentials in URL
-    const authString = Buffer.from(
-      `${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}`
-    ).toString('base64')
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/image/upload/${publicId}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Basic ${authString}`,
-        },
-        next: { revalidate: 3600 }, // Cache for 1 hour in Next.js
-      }
-    )
-
-    if (!response.ok) {
-      console.error(`Cloudinary API error for ${publicId}: ${response.status}`)
-      return null
-    }
-
-    const data: CloudinaryResource = await response.json()
-    const altText = data.context?.custom?.alt || null
-
-    // Cache the result
+  const cacheResult = (altText: string | null) => {
     if (altText) {
       altTextCache[publicId] = {
         alt: altText,
         fetchedAt: Date.now(),
       }
     }
-
     return altText
+  }
+
+  // Attempt via Admin API when credentials exist
+  if (CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+    try {
+      const authString = Buffer.from(
+        `${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}`
+      ).toString('base64')
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/image/upload/${publicId}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Basic ${authString}`,
+          },
+          next: { revalidate: 3600 }, // Cache for 1 hour in Next.js
+        }
+      )
+
+      if (response.ok) {
+        const data: CloudinaryResource = await response.json()
+        const altText = getAltFromResource(data)
+        if (altText) {
+          return cacheResult(altText)
+        }
+      } else {
+        console.error(
+          `Cloudinary API error for ${publicId}: ${response.status}`
+        )
+      }
+    } catch (error) {
+      console.error(
+        `Error fetching Cloudinary ALT text via Admin API for ${publicId}:`,
+        error
+      )
+    }
+  }
+
+  // Fallback: public info endpoint (does not require API credentials)
+  try {
+    const infoUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/fl_getinfo/${publicId}.json`
+    const response = await fetch(infoUrl, { next: { revalidate: 3600 } })
+
+    if (!response.ok) {
+      console.error(
+        `Cloudinary fl_getinfo error for ${publicId}: ${response.status}`
+      )
+      return null
+    }
+
+    const data: CloudinaryResource = await response.json()
+    const altText = getAltFromResource(data)
+    return cacheResult(altText)
   } catch (error) {
-    console.error(`Error fetching Cloudinary ALT text for ${publicId}:`, error)
+    console.error(
+      `Error fetching Cloudinary ALT text via fl_getinfo for ${publicId}:`,
+      error
+    )
     return null
   }
 }
