@@ -87,7 +87,10 @@ export default async function Home({
       modules.map(m => m.id)
     )
     .not('module_id', 'is', null) // Only show courses that are assigned to modules
-    .order('order', { ascending: true })
+    // Ensure stable ordering inside each module (null orders last).
+    .order('module_id', { ascending: true })
+    .order('order', { ascending: true, nullsFirst: false })
+    .order('id', { ascending: true })
 
   const coursesData = (courses || []) as Course[]
 
@@ -122,7 +125,18 @@ export default async function Home({
       course => course.module_id === module.id
     )
 
-    const coursesWithContent = moduleCourses.map(course => {
+    const getCourseSortKey = (course: Course) => {
+      const raw = course.order
+      return typeof raw === 'number' ? raw : Number.MAX_SAFE_INTEGER
+    }
+
+    const sortedModuleCourses = [...moduleCourses].sort((a, b) => {
+      const diff = getCourseSortKey(a) - getCourseSortKey(b)
+      if (diff !== 0) return diff
+      return a.id.localeCompare(b.id)
+    })
+
+    const coursesWithContent = sortedModuleCourses.map(course => {
       const courseLessons = lessonsData.filter(
         lesson => lesson.course_id === course.id
       )
