@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 import type { Database } from '@/types/supabase'
+import { NextRequest, NextResponse } from 'next/server'
 
 type Module = Database['public']['Tables']['modules']['Row']
 type Course = Database['public']['Tables']['courses']['Row']
@@ -34,7 +34,7 @@ export async function GET(_request: NextRequest) {
         },
         {
           headers: {
-            'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+            'Cache-Control': 'no-store',
             Vary: 'Accept-Encoding',
           },
         }
@@ -50,7 +50,12 @@ export async function GET(_request: NextRequest) {
         modulesData.map(m => m.id)
       )
       .not('module_id', 'is', null) // Only show courses that are assigned to modules
-      .order('order', { ascending: true })
+      // Ensure stable ordering inside each module.
+      .order('module_id', { ascending: true })
+      .order('order', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true })
+
+    const coursesData = (courses || []) as Course[]
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
@@ -64,8 +69,13 @@ export async function GET(_request: NextRequest) {
     const { data: lessons, error: lessonsError } = await supabase
       .from('lessons')
       .select('*')
-      .in('course_id', (courses || [] as Course[]).map((c: Course) => c.id))
+      .in(
+        'course_id',
+        coursesData.map(c => c.id)
+      )
       .order('order', { ascending: true })
+
+    const lessonsData = (lessons || []) as Lesson[]
 
     if (lessonsError) {
       console.error('Error fetching lessons:', lessonsError)
@@ -79,9 +89,14 @@ export async function GET(_request: NextRequest) {
     const { data: quizzes, error: quizzesError } = await supabase
       .from('enhanced_quizzes')
       .select('*')
-      .in('course_id', (courses || [] as Course[]).map((c: Course) => c.id))
+      .in(
+        'course_id',
+        coursesData.map(c => c.id)
+      )
       .eq('scope', 'course')
       .order('sort_order', { ascending: true })
+
+    const quizzesData = (quizzes || []) as any[]
 
     if (quizzesError) {
       console.error('Error fetching quizzes:', quizzesError)
@@ -93,14 +108,29 @@ export async function GET(_request: NextRequest) {
 
     // Build the hierarchical structure
     const modulesWithCourses = modulesData.map((module: Module) => {
-      const moduleCourses =
-        (courses || [] as Course[]).filter((course: Course) => course.module_id === module.id)
+      const moduleCourses = coursesData.filter(
+        course => course.module_id === module.id
+      )
 
-      const coursesWithContent = moduleCourses.map((course: Course) => {
-        const courseLessons =
-          (lessons || [] as Lesson[]).filter((lesson: Lesson) => lesson.course_id === course.id)
-        const courseQuizzes =
-          (quizzes || [] as any[]).filter((quiz: any) => quiz.course_id === course.id)
+      const getCourseSortKey = (course: Course) => {
+        const raw = course.order
+        // Put null/undefined orders at the end.
+        return typeof raw === 'number' ? raw : Number.MAX_SAFE_INTEGER
+      }
+
+      const sortedModuleCourses = [...moduleCourses].sort((a, b) => {
+        const diff = getCourseSortKey(a) - getCourseSortKey(b)
+        if (diff !== 0) return diff
+        return a.id.localeCompare(b.id)
+      })
+
+      const coursesWithContent = sortedModuleCourses.map((course: Course) => {
+        const courseLessons = lessonsData.filter(
+          lesson => lesson.course_id === course.id
+        )
+        const courseQuizzes = quizzesData.filter(
+          (quiz: any) => quiz.course_id === course.id
+        )
 
         return {
           ...course,
@@ -122,7 +152,7 @@ export async function GET(_request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          'Cache-Control': 'no-store',
           Vary: 'Accept-Encoding',
         },
       }

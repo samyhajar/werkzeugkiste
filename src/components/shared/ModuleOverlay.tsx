@@ -34,6 +34,15 @@ export default function ModuleOverlay({
 }: ModuleOverlayProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'presenter'>('content')
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
+  const sortedCourses = [...module.courses].sort((a, b) => {
+    const aOrder =
+      typeof a.order === 'number' ? a.order : Number.MAX_SAFE_INTEGER
+    const bOrder =
+      typeof b.order === 'number' ? b.order : Number.MAX_SAFE_INTEGER
+    const diff = aOrder - bOrder
+    if (diff !== 0) return diff
+    return a.id.localeCompare(b.id)
+  })
   const presenterMaterialsContent = module.presenter_materials_content ?? ''
   const hasPresenterMaterialsContent =
     presenterMaterialsContent.trim().length > 0
@@ -156,7 +165,7 @@ export default function ModuleOverlay({
                     Inhalt
                   </h2>
                   <div className="space-y-3">
-                    {module.courses.map((course, index) => {
+                    {sortedCourses.map((course, index) => {
                       const isExpanded = expandedCourses.has(course.id)
                       return (
                         <div

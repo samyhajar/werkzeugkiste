@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
 import type { Database } from '@/types/supabase'
+import { NextRequest, NextResponse } from 'next/server'
 
 type Course = Database['public']['Tables']['courses']['Row']
 type Module = Database['public']['Tables']['modules']['Row']
@@ -40,7 +40,8 @@ export async function GET(
       .from('courses')
       .select('*')
       .eq('module_id', id)
-      .order('order', { ascending: true })
+      .order('order', { ascending: true, nullsFirst: false })
+      .order('id', { ascending: true })
 
     const coursesData = (courses || []) as Course[]
 
@@ -72,7 +73,7 @@ export async function GET(
             .order('sort_order', { ascending: true })
 
         // Fetch lesson-specific quizzes from enhanced_quizzes table
-        const lessonIds = (lessons || [] as Lesson[]).map((l: Lesson) => l.id)
+        const lessonIds = (lessons || ([] as Lesson[])).map((l: Lesson) => l.id)
         let lessonQuizzes: any[] = []
         if (lessonIds.length > 0) {
           const { data: lessonQuizzesData, error: lessonQuizzesError } =
