@@ -626,6 +626,7 @@ export default function ModuleDetailPage() {
   const lastFetchTime = useRef<number>(0)
   const contentRef = useRef<HTMLDivElement>(null)
   const hasCheckedModuleCompletion = useRef(false)
+  const isClearingSelectionRef = useRef<'quiz' | 'lesson' | null>(null)
   const [certificateModal, setCertificateModal] =
     useState<CertificateModalState>({ open: false })
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -1113,11 +1114,14 @@ export default function ModuleDetailPage() {
   const clearSelectedQuiz = useCallback(
     (options: { updateParams?: boolean } = {}) => {
       const { updateParams = true } = options
-      setSelectedQuiz(null)
-
       if (updateParams) {
+        // Avoid a race where the URL still has quizId and the sync effect
+        // immediately re-selects the quiz after we clear local state.
+        isClearingSelectionRef.current = 'quiz'
         updateQueryParams({ quizId: null })
       }
+
+      setSelectedQuiz(null)
     },
     [updateQueryParams]
   )
@@ -1129,6 +1133,10 @@ export default function ModuleDetailPage() {
 
     const lessonIdParam = searchParams.get('lessonId')
     const quizIdParam = searchParams.get('quizId')
+
+    if (!quizIdParam && isClearingSelectionRef.current === 'quiz') {
+      isClearingSelectionRef.current = null
+    }
 
     if (lessonIdParam) {
       const course =
@@ -1151,6 +1159,10 @@ export default function ModuleDetailPage() {
     }
 
     if (quizIdParam) {
+      if (isClearingSelectionRef.current === 'quiz' && !selectedQuiz) {
+        return
+      }
+
       const course =
         module.courses.find(c =>
           c.quizzes.some(quiz => quiz.id === quizIdParam)
