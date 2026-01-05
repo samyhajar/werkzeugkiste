@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server-client'
 import { CERTIFICATE_TEMPLATE_VERSION } from '@/lib/certificates/template'
+import { createClient } from '@/lib/supabase/server-client'
+import { NextRequest, NextResponse } from 'next/server'
 
-type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
+type Quiz = {
+  id: string
+  title: string
+  course_id: string | null
+  lesson_id: string | null
+}
 
 type QuizAttempt = {
   quiz_id: string
@@ -33,7 +38,7 @@ const pickBestAttempt = (attempts: QuizAttempt[]) => {
   const candidates = passedAttempts.length ? passedAttempts : attempts
 
   return candidates.reduce((best, current) =>
-    toAttemptTime(current) > toAttemptTime(best) ? current : best,
+    toAttemptTime(current) > toAttemptTime(best) ? current : best
   )
 }
 
@@ -49,7 +54,7 @@ export async function POST(_request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
-        { status: 401 },
+        { status: 401 }
       )
     }
 
@@ -62,11 +67,14 @@ export async function POST(_request: NextRequest) {
       console.error('certificates/sync: modules fetch failed', modulesError)
       return NextResponse.json(
         { success: false, error: 'Failed to fetch modules' },
-        { status: 500 },
+        { status: 500 }
       )
     }
 
-    const moduleRows = (modules || []) as Array<{ id: string; title: string | null }>
+    const moduleRows = (modules || []) as Array<{
+      id: string
+      title: string | null
+    }>
 
     const supabaseUrl =
       process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? null
@@ -135,7 +143,9 @@ export async function POST(_request: NextRequest) {
           continue
         }
 
-        const progressRows = (lessonProgress || []) as Array<{ lesson_id: string }>
+        const progressRows = (lessonProgress || []) as Array<{
+          lesson_id: string
+        }>
         const completedLessonIds = new Set(progressRows.map(p => p.lesson_id))
         allLessonsCompleted = lessonIds.every(id => completedLessonIds.has(id))
       }
@@ -242,7 +252,8 @@ export async function POST(_request: NextRequest) {
         continue
       }
 
-      const existingCertificateData = existingCertificate as ExistingCertificate | null
+      const existingCertificateData =
+        existingCertificate as ExistingCertificate | null
 
       let shouldGenerate = true
       if (existingCertificateData?.pdf_url) {
@@ -257,7 +268,7 @@ export async function POST(_request: NextRequest) {
               .join('/')
             const headResponse = await fetch(
               `${supabaseUrl}/storage/v1/object/public/${encodedPath}`,
-              { method: 'HEAD' },
+              { method: 'HEAD' }
             )
             objectExists = headResponse.ok
           } catch {
@@ -267,14 +278,20 @@ export async function POST(_request: NextRequest) {
 
         if (objectExists) {
           const metaObj =
-            typeof existingCertificateData.meta === 'object' && existingCertificateData.meta !== null
+            typeof existingCertificateData.meta === 'object' &&
+            existingCertificateData.meta !== null
               ? (existingCertificateData.meta as Record<string, unknown>)
               : null
 
-          const templateVersion = (metaObj?.templateVersion as string | null) ?? null
-          const templateLoaded = (metaObj?.templateLoaded as boolean | undefined) ?? false
+          const templateVersion =
+            (metaObj?.templateVersion as string | null) ?? null
+          const templateLoaded =
+            (metaObj?.templateLoaded as boolean | undefined) ?? false
 
-          if (templateVersion === CERTIFICATE_TEMPLATE_VERSION && templateLoaded) {
+          if (
+            templateVersion === CERTIFICATE_TEMPLATE_VERSION &&
+            templateLoaded
+          ) {
             shouldGenerate = false
           }
         }
@@ -285,15 +302,13 @@ export async function POST(_request: NextRequest) {
         continue
       }
 
-      const { data: functionData, error: functionError } = await supabase.functions.invoke(
-        'generate-certificate',
-        {
+      const { data: functionData, error: functionError } =
+        await supabase.functions.invoke('generate-certificate', {
           body: {
             userId: user.id,
             moduleId: moduleRow.id,
           },
-        },
-      )
+        })
 
       if (functionError || !functionData || !functionData.success) {
         console.warn('certificates/sync: generation failed', {
@@ -319,7 +334,7 @@ export async function POST(_request: NextRequest) {
     console.error('certificates/sync: unexpected error', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

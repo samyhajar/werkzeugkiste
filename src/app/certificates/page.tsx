@@ -147,8 +147,8 @@ export default function CertificatesPage() {
             storedPath,
             fallbackPath,
             `certificates/${fallbackPath}`,
-          ].filter(Boolean),
-        ),
+          ].filter(Boolean)
+        )
       )
 
       console.debug('Downloading certificate', {
