@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { Award, Download } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Removed: import { toast } from 'sonner'
 
@@ -29,18 +29,26 @@ export default function CertificatesPage() {
   const router = useRouter()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const hasSyncedRef = useRef(false)
 
   useEffect(() => {
     if (user) {
-      fetchCertificates()
+      fetchCertificates({ silent: false })
+
+      if (!hasSyncedRef.current) {
+        hasSyncedRef.current = true
+        void syncCertificates()
+      }
     } else if (!authLoading) {
       setLoading(false)
     }
   }, [user, authLoading])
 
-  const fetchCertificates = async () => {
+  const fetchCertificates = async ({ silent }: { silent: boolean }) => {
     try {
-      setLoading(true)
+      if (!silent) {
+        setLoading(true)
+      }
       const supabase = getBrowserClient()
       // Fetch certificates only
       const { data: certs, error } = await supabase
@@ -98,7 +106,29 @@ export default function CertificatesPage() {
         }
       }
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
+    }
+  }
+
+  const syncCertificates = async () => {
+    try {
+      const response = await fetch('/api/student/certificates/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      // Refresh the list quietly after sync.
+      await fetchCertificates({ silent: true })
+    } catch (error) {
+      console.error('Error syncing certificates:', error)
     }
   }
 

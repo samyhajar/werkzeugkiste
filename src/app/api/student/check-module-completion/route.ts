@@ -8,7 +8,13 @@ type Course = Pick<Database['public']['Tables']['courses']['Row'], 'id' | 'title
 type Lesson = Pick<Database['public']['Tables']['lessons']['Row'], 'id' | 'title'>
 type LessonProgress = Pick<Database['public']['Tables']['lesson_progress']['Row'], 'lesson_id'>
 type Quiz = { id: string; title: string; course_id: string | null; lesson_id: string | null }
-type QuizAttempt = { quiz_id: string; passed: boolean | null; score_percent: number | null }
+type QuizAttempt = {
+  quiz_id: string
+  passed: boolean | null
+  score_percent: number | null
+  finished_at: string | null
+  started_at: string | null
+}
 type ExistingCertificate = Pick<Database['public']['Tables']['certificates']['Row'], 'id' | 'pdf_url' | 'issued_at' | 'meta'>
 
 export async function POST(request: NextRequest) {
@@ -154,7 +160,7 @@ export async function POST(request: NextRequest) {
     if (allQuizzesData && allQuizzesData.length > 0) {
       const { data: quizAttempts, error: attemptsError } = await supabase
         .from('enhanced_quiz_attempts')
-        .select('quiz_id, passed, score_percent')
+        .select('quiz_id, passed, score_percent, finished_at, started_at')
         .eq('user_id', user.id)
         .in(
           'quiz_id',
@@ -171,14 +177,40 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      for (const quiz of allQuizzesData) {
-        const attempt = quizAttemptsData.find(entry => entry.quiz_id === quiz.id)
+      const attemptsByQuizId = new Map<string, QuizAttempt[]>()
+      for (const attempt of quizAttemptsData) {
+        const list = attemptsByQuizId.get(attempt.quiz_id) ?? []
+        list.push(attempt)
+        attemptsByQuizId.set(attempt.quiz_id, list)
+      }
 
-        if (attempt && attempt.passed) {
+      const toAttemptTime = (attempt: QuizAttempt) => {
+        const raw = attempt.finished_at ?? attempt.started_at
+        if (!raw) return 0
+        const t = Date.parse(raw)
+        return Number.isFinite(t) ? t : 0
+      }
+
+      const pickBestAttempt = (attempts: QuizAttempt[]) => {
+        if (!attempts.length) return null
+
+        const passedAttempts = attempts.filter(a => a.passed)
+        const candidates = passedAttempts.length ? passedAttempts : attempts
+
+        return candidates.reduce((best, current) =>
+          toAttemptTime(current) > toAttemptTime(best) ? current : best,
+        )
+      }
+
+      for (const quiz of allQuizzesData) {
+        const attempts = attemptsByQuizId.get(quiz.id) ?? []
+        const bestAttempt = pickBestAttempt(attempts)
+
+        if (bestAttempt?.passed) {
           passedQuizzes.push({
             id: quiz.id,
             title: quiz.title,
-            score: attempt.score_percent,
+            score: bestAttempt.score_percent,
           })
         } else {
           failedQuizzes.push({ id: quiz.id, title: quiz.title })
