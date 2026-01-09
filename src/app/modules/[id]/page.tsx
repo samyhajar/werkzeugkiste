@@ -34,7 +34,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // Removed inline LoginModal usage; we redirect to dedicated login page instead
 
@@ -1197,20 +1197,40 @@ export default function ModuleDetailPage() {
     )
   }
 
+  const sortedCourses = useMemo(() => {
+    if (!module) return [] as Course[]
+
+    const getCourseOrderKey = (course: Course) => {
+      const raw = (course as any).order
+      return Number.isFinite(raw) ? (raw as number) : Number.MAX_SAFE_INTEGER
+    }
+
+    return [...module.courses].sort((a, b) => {
+      const diff = getCourseOrderKey(a) - getCourseOrderKey(b)
+      if (diff !== 0) return diff
+      return a.id.localeCompare(b.id)
+    })
+  }, [module])
+
   // Get the next lesson in the module
   const getNextLesson = (currentLesson: Lesson): Lesson | null => {
     if (!module) return null
 
     // Get all lessons in order across all courses
     const allLessons: Lesson[] = []
-    module.courses
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .forEach(course => {
-        const sortedLessons = [...course.lessons].sort(
-          (a, b) => (a.order || 0) - (b.order || 0)
-        )
-        allLessons.push(...sortedLessons)
+    const getLessonOrderKey = (lesson: Lesson) => {
+      const raw = (lesson as any).order
+      return Number.isFinite(raw) ? (raw as number) : Number.MAX_SAFE_INTEGER
+    }
+
+    sortedCourses.forEach(course => {
+      const sortedLessons = [...course.lessons].sort((a, b) => {
+        const diff = getLessonOrderKey(a) - getLessonOrderKey(b)
+        if (diff !== 0) return diff
+        return a.id.localeCompare(b.id)
       })
+      allLessons.push(...sortedLessons)
+    })
 
     const currentIndex = allLessons.findIndex(l => l.id === currentLesson.id)
     if (currentIndex === -1 || currentIndex === allLessons.length - 1) {
@@ -1366,7 +1386,7 @@ export default function ModuleDetailPage() {
           {/* Course List Navigation */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 space-y-4">
-              {module.courses.map((course, index) => (
+              {sortedCourses.map((course, index) => (
                 <div
                   key={course.id}
                   className="border border-gray-200 rounded-lg overflow-hidden"
@@ -1398,8 +1418,18 @@ export default function ModuleDetailPage() {
                     <div className="bg-white">
                       <div className="px-4 py-2 space-y-1">
                         {/* Lessons */}
-                        {course.lessons
-                          .sort((a, b) => (a.order || 0) - (b.order || 0))
+                        {[...course.lessons]
+                          .sort((a, b) => {
+                            const aOrder = Number.isFinite((a as any).order)
+                              ? ((a as any).order as number)
+                              : Number.MAX_SAFE_INTEGER
+                            const bOrder = Number.isFinite((b as any).order)
+                              ? ((b as any).order as number)
+                              : Number.MAX_SAFE_INTEGER
+                            const diff = aOrder - bOrder
+                            if (diff !== 0) return diff
+                            return a.id.localeCompare(b.id)
+                          })
                           .map((lesson, _lessonIndex) => {
                             const isCompleted = completedLessons.has(lesson.id)
                             return (

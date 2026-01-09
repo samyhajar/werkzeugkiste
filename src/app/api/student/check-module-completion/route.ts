@@ -281,11 +281,11 @@ export async function POST(request: NextRequest) {
 
     const existingCertificateNumber =
       existingCertificateData &&
-      typeof existingCertificateData === 'object' &&
-      'meta' in existingCertificateData
+        typeof existingCertificateData === 'object' &&
+        'meta' in existingCertificateData
         ? ((
-            existingCertificateData as { meta?: { certificateNumber?: string } }
-          ).meta?.certificateNumber ?? null)
+          existingCertificateData as { meta?: { certificateNumber?: string } }
+        ).meta?.certificateNumber ?? null)
         : null
 
     if (existingCertificateData) {
@@ -317,8 +317,8 @@ export async function POST(request: NextRequest) {
         // Check template version; regenerate if outdated or missing
         const metaObj =
           typeof existingCertificateData === 'object' &&
-          existingCertificateData?.meta &&
-          typeof existingCertificateData.meta === 'object'
+            existingCertificateData?.meta &&
+            typeof existingCertificateData.meta === 'object'
             ? (existingCertificateData.meta as Record<string, unknown>)
             : null
         const templateVersion = metaObj?.templateVersion as string | null
@@ -366,38 +366,59 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { data: functionData, error: functionError } =
-      await supabase.functions.invoke('generate-certificate', {
-        body: {
+    // Resolve user name for the certificate
+    const userMeta = user.user_metadata as { full_name?: string }
+    let userName = userMeta?.full_name?.trim() || ''
+    const looksLikeEmail = (val?: string | null) => !!val && /@/.test(val)
+
+    // If we don't have a good name in metadata, try to fetch profile
+    if (!userName || looksLikeEmail(userName)) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, first_name, email')
+        .eq('id', user.id)
+        .single()
+
+      const profile = profileData as { full_name?: string | null; first_name?: string | null; email?: string | null } | null
+
+      if (profile) {
+        userName = profile.full_name?.trim() || ''
+        if (!userName || looksLikeEmail(userName)) {
+          // Fallback to first name if available, or just use email/placeholder
+          userName = profile.first_name || user.email || 'Student'
+        }
+      }
+    }
+
+    if (!userName) userName = user.email || 'Student'
+
+    // Generate the certificate locally
+    const { certificatePath, certificateNumber, issuedAt } =
+      await import('@/lib/certificates/generate-module-certificate').then(m =>
+        m.generateAndStoreModuleCertificate({
+          supabase: supabase as any,
           userId: user.id,
           moduleId,
-        },
-      })
-
-    if (functionError || !functionData || !functionData.success) {
-      console.error(
-        'Error generating certificate via edge function:',
-        functionError || functionData
+          userName,
+          userEmail: user.email,
+          moduleTitle: moduleData.title,
+          showName: true,
+          displayDate: true,
+        })
       )
-      return NextResponse.json(
-        { success: false, error: 'Failed to generate certificate' },
-        { status: 500 }
-      )
-    }
 
     return NextResponse.json({
       success: true,
-      message:
-        functionData.message || 'Module completed! Certificate generated.',
+      message: 'Module completed! Certificate generated.',
       certificatesGenerated: 1,
       lessonsCompleted: true,
       quizzesPassed: true,
       passedQuizzes,
       failedQuizzes,
       totalQuizzes,
-      certificatePath: functionData.certificatePath,
-      certificateNumber: functionData.certificateNumber,
-      issuedAt: functionData.issuedAt ?? new Date().toISOString(),
+      certificatePath,
+      certificateNumber,
+      issuedAt,
     })
   } catch (error) {
     console.error('Module completion check error:', error)
