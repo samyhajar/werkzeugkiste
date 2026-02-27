@@ -51,7 +51,7 @@ interface Course {
   updated_at: string
 }
 
-const QUIZ_TITLE_PREFIX_REGEX = /^(?:quiz\s*[:\-]\s*)+/i
+const QUIZ_TITLE_PREFIX_REGEX = /^(?:quiz\s*[:-]\s*)+/i
 
 function getQuizDisplayTitle(title: string): string {
   const normalizedTitle = title.trim()

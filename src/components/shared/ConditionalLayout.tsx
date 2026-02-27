@@ -54,7 +54,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
       <div className="min-h-screen">
         {/* Always render Navbar (it handles its own hydration) to ensure LoginModal has AuthProvider context */}
         {!isModulePage && <Navbar />}
-        <main className={`flex-1 ${!isModulePage ? 'pt-24' : ''}`}>
+        <main className={`flex-1 ${!isModulePage ? 'pt-16 md:pt-24' : ''}`}>
           {children}
         </main>
         {!isModulePage && <Footer />}

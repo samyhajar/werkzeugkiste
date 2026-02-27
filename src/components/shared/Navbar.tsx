@@ -196,8 +196,8 @@ export default function Navbar() {
             outline: 'none'
           }}
         >
-        <div className="w-full px-8">
-          <div className="flex justify-between items-center h-24">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 md:h-24">
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
@@ -205,7 +205,7 @@ export default function Navbar() {
                 alt="arbeit plus Logo"
                 width={80}
                 height={80}
-                className="rounded-full"
+                className="rounded-full w-10 h-10 md:w-20 md:h-20"
               />
             </Link>
 
@@ -371,7 +371,7 @@ export default function Navbar() {
                 onClick={() => setIsOpen(!isOpen)}
                 className="text-white hover:text-blue-100 focus:outline-none focus:text-blue-100 transition-colors duration-200"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"

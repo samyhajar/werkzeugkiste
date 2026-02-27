@@ -262,13 +262,13 @@ export default async function Home({
       {/* Hero Banner */}
       <section className="w-full relative">
         <Image
-          src="/header-full-computer-final.jpg"
-          alt="Banner"
-          width={1920}
-          height={354}
+          src="/Header_1900x350_Gesamt.png"
+          alt="Die digitale Werkzeugkiste plus"
+          width={3958}
+          height={729}
           priority
           sizes="100vw"
-          className="w-full h-auto object-cover max-h-[50vh] sm:max-h-[60vh] -mt-8"
+          className="w-full h-auto object-cover max-h-[22vh] sm:max-h-[40vh] md:max-h-[60vh]"
         />
       </section>
 

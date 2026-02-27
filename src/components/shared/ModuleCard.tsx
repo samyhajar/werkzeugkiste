@@ -56,13 +56,21 @@ export default function ModuleCard({
     <>
       <div className="cursor-pointer h-full" onClick={handleCardClick}>
         <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg hover:shadow-xl transition-shadow duration-300 module-card-hover h-full">
-          <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+          <div className="relative w-full h-48 overflow-hidden rounded-t-lg bg-white">
             <Image
               src={module.hero_image || '/placeholder.png'}
               alt={imageAlt}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover"
+              className="object-cover object-center scale-110"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-3 bg-white"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-3 bg-white"
             />
           </div>
 
