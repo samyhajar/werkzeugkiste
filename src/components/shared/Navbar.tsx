@@ -37,6 +37,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const loginModalRef = useRef<LoginModalRef>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
@@ -135,6 +136,14 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Ignore clicks on the mobile menu toggle button itself.
+      if (
+        menuButtonRef.current &&
+        menuButtonRef.current.contains(event.target as Node)
+      ) {
+        return
+      }
+
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
@@ -368,7 +377,8 @@ export default function Navbar() {
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button
-                onClick={() => setIsOpen(!isOpen)}
+                ref={menuButtonRef}
+                onClick={() => setIsOpen(prev => !prev)}
                 className="text-white hover:text-blue-100 focus:outline-none focus:text-blue-100 transition-colors duration-200"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
