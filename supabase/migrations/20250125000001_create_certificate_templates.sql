@@ -34,6 +34,6 @@ CREATE POLICY "Allow authenticated users to delete templates" ON certificate_tem
 
 -- Insert some default templates
 INSERT INTO certificate_templates (name, title, subtitle, main_text, footer_text, show_date, show_certificate_number) VALUES
-('Standard Certificate', 'ZERTIFIKAT', 'Digi+ Werkzeugkiste', 'Hiermit wird bestätigt, dass', 'Ausgestellt am:', true, true),
-('Simple Certificate', 'BESTÄTIGUNG', 'Digi+ Werkzeugkiste', 'Es wird bestätigt, dass', 'Datum:', true, false),
-('Professional Certificate', 'ZERTIFIKAT', 'Digi+ Werkzeugkiste - Digitale Kompetenzen', 'Hiermit wird offiziell bestätigt, dass', 'Ausstellungsdatum:', true, true);
+('Standard Certificate', 'ZERTIFIKAT', 'arbeit plus Werkzeugkiste', 'Hiermit wird bestätigt, dass', 'Ausgestellt am:', true, true),
+('Simple Certificate', 'BESTÄTIGUNG', 'arbeit plus Werkzeugkiste', 'Es wird bestätigt, dass', 'Datum:', true, false),
+('Professional Certificate', 'ZERTIFIKAT', 'arbeit plus Werkzeugkiste - Digitale Kompetenzen', 'Hiermit wird offiziell bestätigt, dass', 'Ausstellungsdatum:', true, true);

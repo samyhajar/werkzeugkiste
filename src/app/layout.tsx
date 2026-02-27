@@ -12,8 +12,16 @@ const assistant = Assistant({
 });
 
 export const metadata: Metadata = {
-  title: "Werkzeugkiste",
-  description: "Learning Platform",
+  title: {
+    default: "arbeit plus - Werkzeugkiste",
+    template: "%s | arbeit plus - Werkzeugkiste",
+  },
+  description: "Lernplattform",
+  icons: {
+    icon: "/151201-AP-Kreis-magenta.png",
+    shortcut: "/151201-AP-Kreis-magenta.png",
+    apple: "/151201-AP-Kreis-magenta.png",
+  },
 };
 
 export const viewport = {

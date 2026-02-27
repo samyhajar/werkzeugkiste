@@ -109,6 +109,19 @@ interface CertificateModalState {
   isNew?: boolean
 }
 
+const QUIZ_TITLE_PREFIX_REGEX = /^(?:quiz\s*[:\-]\s*)+/i
+
+function getQuizDisplayTitle(title: string): string {
+  const normalizedTitle = title.trim()
+  if (!normalizedTitle) return 'Quiz'
+
+  const titleWithoutPrefix = normalizedTitle
+    .replace(QUIZ_TITLE_PREFIX_REGEX, '')
+    .trim()
+
+  return titleWithoutPrefix || normalizedTitle
+}
+
 function QuizContent({
   quiz,
   onBack,
@@ -326,7 +339,9 @@ function QuizContent({
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
               Quiz Ergebnisse
             </h3>
-            <p className="text-gray-600">Quiz: {quiz.title}</p>
+            <p className="text-gray-600">
+              Quiz: {getQuizDisplayTitle(quiz.title)}
+            </p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
@@ -451,7 +466,7 @@ function QuizContent({
       <div className="p-8">
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Quiz: {quiz.title}
+            Quiz: {getQuizDisplayTitle(quiz.title)}
           </h3>
           {quiz.description && (
             <p className="text-gray-600">{quiz.description}</p>
@@ -1495,7 +1510,7 @@ export default function ModuleDetailPage() {
                                               : 'text-[#de0449]'
                                           }`}
                                         >
-                                          {quiz.title}
+                                          Quiz: {getQuizDisplayTitle(quiz.title)}
                                         </span>
                                         {isPassed && (
                                           <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
@@ -1536,7 +1551,7 @@ export default function ModuleDetailPage() {
                                       : 'text-[#de0449]'
                                   }`}
                                 >
-                                  {quiz.title}
+                                  Quiz: {getQuizDisplayTitle(quiz.title)}
                                 </span>
                                 {isPassed && (
                                   <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
@@ -1672,7 +1687,7 @@ export default function ModuleDetailPage() {
                                 verfolgen und Zertifikate zu erhalten.
                               </p>
                               <Link href="/auth/login">
-                                <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                                <button className="px-6 py-2 bg-[#486582] hover:bg-[#3f5970] text-white font-medium rounded-lg transition-colors">
                                   Jetzt anmelden
                                 </button>
                               </Link>
@@ -1729,14 +1744,14 @@ export default function ModuleDetailPage() {
                   </span>
                   <span className="text-gray-400">›</span>
                   <span className="text-gray-800 font-semibold">
-                    {selectedQuiz.title}
+                    {getQuizDisplayTitle(selectedQuiz.title)}
                   </span>
                 </div>
 
                 {/* Centered Quiz Title */}
                 <div className="text-center mb-6">
                   <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                    {selectedQuiz.title}
+                    {getQuizDisplayTitle(selectedQuiz.title)}
                   </h1>
                   <div className="flex items-center justify-center gap-4 text-gray-600">
                     <span className="flex items-center gap-2">Quiz</span>

@@ -177,7 +177,11 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
           credentials: 'include',
         })
 
-        const data = await response.json()
+        const data: {
+          success: boolean
+          error?: string
+          error_code?: string | null
+        } = await response.json()
 
         if (data.success) {
           console.log(
@@ -194,6 +198,20 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
 
           console.log('[LoginModal] Email confirmation toast shown')
         } else {
+          const errorCode = data.error_code || ''
+          const errorText = (data.error || '').toLowerCase()
+          const isExistingAccountError =
+            ['user_already_exists', 'email_exists', 'email_address_exists'].includes(
+              errorCode
+            ) ||
+            (errorText.includes('already') && errorText.includes('registered'))
+
+          if (isExistingAccountError) {
+            setActiveTab('login')
+            setError('Diese E-Mail ist bereits registriert. Bitte melden Sie sich an.')
+            return
+          }
+
           setError(data.error || 'Registrierung fehlgeschlagen')
         }
       } catch (error) {
@@ -237,7 +255,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
               <div className="relative text-center">
                 <div className="mx-auto mb-4 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center p-1">
                   <Image
-                    src="/Logo-digi-CMYK.png"
+                    src="/151201-AP-Kreis-magenta.png"
                     alt="Logo"
                     width={72}
                     height={72}

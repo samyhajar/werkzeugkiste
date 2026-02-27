@@ -201,8 +201,8 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
-                src="/Logo-digi-CMYK.png"
-                alt="Digi+ Logo"
+                src="/151201-AP-Kreis-magenta.png"
+                alt="arbeit plus Logo"
                 width={80}
                 height={80}
                 className="rounded-full"

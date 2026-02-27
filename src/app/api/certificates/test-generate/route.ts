@@ -116,7 +116,7 @@ export async function POST(_req: NextRequest) {
         })
 
         // Certificate subtitle
-        page.drawText('Digi+ Werkzeugkiste', {
+        page.drawText('arbeit plus Werkzeugkiste', {
           x: 150,
           y: 670,
           size: 16,

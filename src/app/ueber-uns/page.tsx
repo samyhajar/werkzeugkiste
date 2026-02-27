@@ -22,7 +22,7 @@ export default async function UeberUnsPage() {
     <main className="max-w-6xl mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="text-center mb-16">
-        <h1 className="text-4xl font-bold text-[#de0449] mb-8">Digi +</h1>
+        <h1 className="text-4xl font-bold text-[#de0449] mb-8">arbeit plus</h1>
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="md:w-2/3">
             <p className="text-gray-700 leading-relaxed mb-4">
@@ -33,7 +33,7 @@ export default async function UeberUnsPage() {
               Arlt Institut für Soziale Inklusionsforschung) im Rahmen des
               Projektfonds Arbeit 4.0 der{' '}
               <strong>Arbeiterkammer Niederösterreich</strong> das Projekt{' '}
-              <strong>Digi +</strong> für Soziale Unternehmen.
+              <strong>arbeit plus</strong> für Soziale Unternehmen.
             </p>
             <p className="text-gray-700 leading-relaxed mb-4">
               Die Mitarbeiter:innen, also{' '}
@@ -43,7 +43,7 @@ export default async function UeberUnsPage() {
               dabei in einen Lernprozess, der den (Wieder-)Einstieg in den
               Arbeitsmarkt erleichtert. Im Zuge dessen werden selbst
               erarbeitete, digitale Kenntnisse erlernt und vertieft und
-              voneinander gelernt. Dadurch leistet Digi + einen wertvollen
+              voneinander gelernt. Dadurch leistet arbeit plus einen wertvollen
               Beitrag zu <strong>(digitaler) Inklusion</strong> und
               <strong>gesellschaftlicher Teilhabe</strong>.
             </p>
@@ -83,7 +83,7 @@ export default async function UeberUnsPage() {
           </div>
           <div className="md:w-1/2">
             <p className="text-gray-700 leading-relaxed mb-4">
-              Im Rahmen von Digi + erhielten Klient:innen der Sozialen
+              Im Rahmen von arbeit plus erhielten Klient:innen der Sozialen
               Unternehmen in regionalen Workshops die Möglichkeit, ihre
               digitalen Kompetenzen zu steigern und eventuell vorhandene
               Abwehrhaltungen zu hinterfragen. Darüber hinaus wurden auch{' '}
@@ -131,7 +131,7 @@ export default async function UeberUnsPage() {
             <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
           </div>
           <div className="flex items-center gap-2">
-            <span>Digi + Logo als </span>
+            <span>arbeit plus Logo als </span>
             <strong>JPG</strong>
             <span className="text-gray-500 ml-2">(in Vorbereitung)</span>
           </div>
@@ -152,7 +152,7 @@ export default async function UeberUnsPage() {
 
           {/* Timeline Items */}
           <div className="space-y-16">
-            {/* March 2020 - Projektstart Digi + */}
+            {/* March 2020 - Projektstart arbeit plus */}
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">März 2020</div>
@@ -164,10 +164,10 @@ export default async function UeberUnsPage() {
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-bold mb-2 text-white">
-                    Projektstart Digi +
+                    Projektstart arbeit plus
                   </h3>
                   <p className="text-sm">
-                    Das Projekt Digi + erhält eine Förderzusage im Rahmen des
+                    Das Projekt arbeit plus erhält eine Förderzusage im Rahmen des
                     Projektfonds 4.0 der AK Niederösterreich.
                   </p>
                 </div>
@@ -203,7 +203,7 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">Juli 2020</div>
-                <div className="text-gray-500 text-sm">Digi+ Schulungen</div>
+                <div className="text-gray-500 text-sm">arbeit plus Schulungen</div>
               </div>
               <div className="relative z-10">
                 <div className="w-4 h-4 bg-[#de0449] rounded-full border-4 border-white shadow-lg"></div>
@@ -211,10 +211,10 @@ export default async function UeberUnsPage() {
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-bold mb-2 text-white">
-                    Digi + Schulungen Teil 1
+                    arbeit plus Schulungen Teil 1
                   </h3>
                   <p className="text-sm">
-                    Die ersten Digi + Schulungen finden in insgesamt acht
+                    Die ersten arbeit plus Schulungen finden in insgesamt acht
                     sozialintegrativen Unternehmen in Niederösterreich statt.
                     Dabei werden 13 Schlüsselarbeitskräfte und 50 Klient:innen
                     bei insgesamt 35 Terminen erreicht:
@@ -250,7 +250,7 @@ export default async function UeberUnsPage() {
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">November 2020</div>
                 <div className="text-gray-500 text-sm">
-                  Digi+ Schulungen Teil 2
+                  arbeit plus Schulungen Teil 2
                 </div>
               </div>
               <div className="relative z-10">
@@ -259,10 +259,10 @@ export default async function UeberUnsPage() {
               <div className="w-1/2 pl-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-bold mb-2 text-white">
-                    Digi + Schulungen Teil 2
+                    arbeit plus Schulungen Teil 2
                   </h3>
                   <p className="text-sm">
-                    Mit einem adaptierten Schulungskonzept finden die Digi +
+                    Mit einem adaptierten Schulungskonzept finden die arbeit plus
                     Schulungen Teil 2 in 13 Sozialen Unternehmen statt. Dabei
                     werden 41 Schlüsselarbeitskräfte und 45 Klient:innen bei
                     insgesamt 53 Terminen erreicht:
@@ -296,7 +296,7 @@ export default async function UeberUnsPage() {
             <div className="flex items-center">
               <div className="w-1/2 pr-8 text-right">
                 <div className="text-[#de0449] font-bold">März 2021</div>
-                <div className="text-gray-500 text-sm">Digi+ Werkzeugkiste</div>
+                <div className="text-gray-500 text-sm">arbeit plus Werkzeugkiste</div>
               </div>
               <div className="relative z-10">
                 <div className="w-4 h-4 bg-[#de0449] rounded-full border-4 border-white shadow-lg"></div>
@@ -315,16 +315,16 @@ export default async function UeberUnsPage() {
               </div>
             </div>
 
-            {/* February 2022 - Abschluss Digi + */}
+            {/* February 2022 - Abschluss arbeit plus */}
             <div className="flex items-center">
               <div className="w-1/2 pr-8">
                 <div className="bg-[#486681] text-white p-6 rounded-lg shadow-md">
                   <h3 className="text-lg font-bold mb-2 text-white">
-                    Abschluss Digi +
+                    Abschluss arbeit plus
                   </h3>
                   <p className="text-sm">
                     Im Rahmen der Abschlussveranstaltung wird auf die Bedeutung
-                    der digitalen Assistenz hingewiesen, sowie die Digi +
+                    der digitalen Assistenz hingewiesen, sowie die arbeit plus
                     Werkzeugkiste vorgestellt.
                   </p>
                 </div>
@@ -335,7 +335,7 @@ export default async function UeberUnsPage() {
               <div className="w-1/2 pl-8 text-left">
                 <div className="text-[#de0449] font-bold">Februar 2022</div>
                 <div className="text-gray-500 text-sm">
-                  Digi + Werkzeugkiste & Digitale Assistenz
+                  arbeit plus Werkzeugkiste & Digitale Assistenz
                 </div>
               </div>
             </div>

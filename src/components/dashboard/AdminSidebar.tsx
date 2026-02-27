@@ -165,7 +165,7 @@ export default function AdminSidebar({ profile, role, userEmail, onLogout }: Adm
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0">
               <Image
-                src="/Logo-digi-CMYK.png"
+                src="/151201-AP-Kreis-magenta.png"
                 alt="Werkzeugkiste Logo"
                 width={48}
                 height={48}

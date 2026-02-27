@@ -218,6 +218,7 @@ export default function CertificatesPage() {
             Bitte melden Sie sich an, um Ihre Zertifikate zu sehen.
           </p>
           <Button
+            className="bg-[#486582] hover:bg-[#3f5970]"
             onClick={() =>
               router.push(
                 `/auth/login?redirect=${encodeURIComponent(window.location.href)}`

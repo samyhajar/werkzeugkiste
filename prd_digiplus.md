@@ -1,4 +1,4 @@
-# Digi+ v2 – Full PRD  
+# arbeit plus v2 – Full PRD  
 **Stack** Next.js 15 (App Router) • Supabase (DB + Auth + Storage) • Tailwind CSS v4 • shadcn/ui  
 **Deploy** Vercel (front‑end) • Supabase (managed back‑end)  
 **Auth** Google OAuth only • No magic links • Global **AuthContext** for session sharing  

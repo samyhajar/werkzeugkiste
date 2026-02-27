@@ -20,7 +20,7 @@ export default function StudentHeader({ profile, role, userEmail, onLogout }: St
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-brand-primary">
-              Digi+ Learning Platform
+              arbeit plus Lernplattform
             </h1>
             <p className="text-foreground/60 text-sm">Student Dashboard</p>
           </div>

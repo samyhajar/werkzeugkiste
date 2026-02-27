@@ -58,6 +58,21 @@ export default async function Home({
     'password-reset': passwordResetStatus,
     login,
   } = await searchParams
+
+  const normalizedErrorDescription = (error_description || '').toLowerCase()
+  const isAuthLinkError =
+    error === 'email_link_expired' ||
+    ((error === 'session_error' || error === 'server_error') &&
+      (normalizedErrorDescription.includes('code verifier') ||
+        normalizedErrorDescription.includes('flow state') ||
+        normalizedErrorDescription.includes('invalid grant') ||
+        normalizedErrorDescription.includes('otp') ||
+        normalizedErrorDescription.includes('expired')))
+
+  const shouldHideAuthErrorBanner = normalizedErrorDescription.includes(
+    'both auth code and code verifier should be non-empty'
+  )
+
   if (code) {
     redirect(`/auth/callback?code=${code}`)
   }
@@ -258,10 +273,7 @@ export default async function Home({
       </section>
 
       {/* Error Messages */}
-      {error &&
-        !error_description?.includes(
-          'both auth code and code verifier should be non-empty'
-        ) && (
+      {error && !shouldHideAuthErrorBanner && (
           <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex">
@@ -280,13 +292,13 @@ export default async function Home({
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-red-800">
-                    {error === 'email_link_expired'
+                    {isAuthLinkError
                       ? 'E-Mail-Link abgelaufen'
                       : 'Authentifizierungsfehler'}
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>
-                      {error === 'email_link_expired'
+                      {isAuthLinkError
                         ? 'Der E-Mail-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an oder melden Sie sich direkt an.'
                         : error_description ||
                           'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'}

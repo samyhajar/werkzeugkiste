@@ -1,4 +1,4 @@
--- Create base schema for Digi+ Learning Platform
+-- Create base schema for arbeit plus Learning Platform
 
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

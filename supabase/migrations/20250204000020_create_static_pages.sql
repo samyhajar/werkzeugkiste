@@ -55,11 +55,11 @@ VALUES (
   $$
   <main>
     <div class="text-center mb-16">
-      <h1 class="text-4xl font-bold text-[#de0449] mb-8">Digi +</h1>
+      <h1 class="text-4xl font-bold text-[#de0449] mb-8">arbeit plus</h1>
       <div class="flex flex-col md:flex-row gap-8 items-start">
         <div class="md:w-2/3">
-          <p><strong>arbeit plus – Soziale Unternehmen Niederösterreich</strong> entwickelte gemeinsam mit der <strong>FH St. Pölten</strong> (Ilse Arlt Institut für Soziale Inklusionsforschung) im Rahmen des Projektfonds Arbeit 4.0 der <strong>Arbeiterkammer Niederösterreich</strong> das Projekt <strong>Digi +</strong> für Soziale Unternehmen.</p>
-          <p>Die Mitarbeiter:innen, also <strong>Schlüsselarbeitskräfte</strong> (Berater:innen, Arbeitsanleiter:innen) und deren <strong>Klient:innen</strong> (Transitmitarbeiter:innen, Teilnehmer:innen, zu Beratende), treten dabei in einen Lernprozess, der den (Wieder-)Einstieg in den Arbeitsmarkt erleichtert. Im Zuge dessen werden selbst erarbeitete, digitale Kenntnisse erlernt und vertieft und voneinander gelernt. Dadurch leistet Digi + einen wertvollen Beitrag zu <strong>(digitaler) Inklusion</strong> und <strong>gesellschaftlicher Teilhabe</strong>.</p>
+          <p><strong>arbeit plus – Soziale Unternehmen Niederösterreich</strong> entwickelte gemeinsam mit der <strong>FH St. Pölten</strong> (Ilse Arlt Institut für Soziale Inklusionsforschung) im Rahmen des Projektfonds Arbeit 4.0 der <strong>Arbeiterkammer Niederösterreich</strong> das Projekt <strong>arbeit plus</strong> für Soziale Unternehmen.</p>
+          <p>Die Mitarbeiter:innen, also <strong>Schlüsselarbeitskräfte</strong> (Berater:innen, Arbeitsanleiter:innen) und deren <strong>Klient:innen</strong> (Transitmitarbeiter:innen, Teilnehmer:innen, zu Beratende), treten dabei in einen Lernprozess, der den (Wieder-)Einstieg in den Arbeitsmarkt erleichtert. Im Zuge dessen werden selbst erarbeitete, digitale Kenntnisse erlernt und vertieft und voneinander gelernt. Dadurch leistet arbeit plus einen wertvollen Beitrag zu <strong>(digitaler) Inklusion</strong> und <strong>gesellschaftlicher Teilhabe</strong>.</p>
         </div>
         <div class="md:w-1/3">
           <img src="/Modul-1-Digitalisierung-e1655816152674.png" alt="Digitale Werkzeugkiste" width="400" height="250" />
@@ -74,7 +74,7 @@ VALUES (
           <img src="/Modul-1-Digitalisierung-e1655816152674.png" alt="Digitalisierung Module" width="400" height="200" />
         </div>
         <div class="md:w-1/2">
-          <p>Im Rahmen von Digi + erhielten Klient:innen der Sozialen Unternehmen in regionalen Workshops die Möglichkeit, ihre digitalen Kompetenzen zu steigern und eventuell vorhandene Abwehrhaltungen zu hinterfragen. Darüber hinaus wurden auch <strong>Weiterbildungsseminare (train-the-trainer)</strong> für Schlüsselarbeitskräfte angeboten.</p>
+          <p>Im Rahmen von arbeit plus erhielten Klient:innen der Sozialen Unternehmen in regionalen Workshops die Möglichkeit, ihre digitalen Kompetenzen zu steigern und eventuell vorhandene Abwehrhaltungen zu hinterfragen. Darüber hinaus wurden auch <strong>Weiterbildungsseminare (train-the-trainer)</strong> für Schlüsselarbeitskräfte angeboten.</p>
           <p>Im Sinne der Nachhaltigkeit wurde die <strong>digitale Werkzeugkiste</strong> erarbeitet. Die <strong>online Lernplattform</strong> ist <strong>kostenfrei zugänglich</strong>. Den Kern bilden die Lernmodule, die sowohl im individuellen Selbststudium als auch unter Anleitung von Schlüsselarbeitskräften erarbeitet werden können. Darüber hinaus bietet die Werkzeugkiste eine Sammlung nützlicher Links, Hintergrundinformationen, Hinweise zu Fördermöglichkeiten, zu Weiterbildungsanbietern u.v.m. rund um das Thema Digitalisierung.</p>
         </div>
       </div>
@@ -92,7 +92,7 @@ VALUES (
       <h2 class="text-2xl font-bold text-[#de0449] mb-6">Services</h2>
       <div class="space-y-4">
         <div class="flex items-center gap-2"><span>Folder &quot;Werkzeugkiste&quot; </span><strong>als PDF</strong><span class="text-gray-500 ml-2">(in Vorbereitung)</span></div>
-        <div class="flex items-center gap-2"><span>Digi + Logo als </span><strong>JPG</strong><span class="text-gray-500 ml-2">(in Vorbereitung)</span></div>
+        <div class="flex items-center gap-2"><span>arbeit plus Logo als </span><strong>JPG</strong><span class="text-gray-500 ml-2">(in Vorbereitung)</span></div>
         <p>Bei Fragen, Anregungen oder Beschwerden wenden Sie sich bitte an <strong>digiplus@arbeitplus.at</strong>.</p>
       </div>
     </div>

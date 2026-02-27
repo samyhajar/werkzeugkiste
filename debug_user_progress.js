@@ -26,26 +26,24 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const TARGET_EMAIL = 'monika.kerschbaumer@gmail.com';
+const TARGET_INPUT = process.argv[2] || 'Obermayer';
 
 async function main() {
-    console.log(`Searching for user: ${TARGET_EMAIL}...`);
+    console.log(`Searching for user matching: "${TARGET_INPUT}"...`);
 
     let { data: users, error: userError } = await supabase
         .from('profiles')
         .select('id, email, full_name')
-        .ilike('email', TARGET_EMAIL);
+        .or(`email.ilike.%${TARGET_INPUT}%,full_name.ilike.%${TARGET_INPUT}%`);
 
     if (userError || !users || users.length === 0) {
-        const { data: allProfiles } = await supabase.from('profiles').select('id, email, full_name');
-        const found = allProfiles.find(p => p.email && p.email.toLowerCase().includes('monika'));
-        if (found) {
-            console.log(`Found potential match: ${found.email} (${found.full_name})`);
-            users = [found];
-        } else {
-            console.error('User not found.');
-            return;
-        }
+        console.error('User not found.');
+        return;
+    }
+
+    if (users.length > 1) {
+        console.log(`Found ${users.length} users. Using the first one:`);
+        users.forEach(u => console.log(` - ${u.full_name} (${u.email})`));
     }
 
     const user = users[0];
@@ -56,6 +54,21 @@ async function main() {
         .from('modules')
         .select('id, title, order')
         .order('order');
+
+    // 1.5 Check Legacy Quiz Attempts
+    const { data: legacyAttempts } = await supabase
+        .from('quiz_attempts')
+        .select('*')
+        .eq('student_id', user.id);
+
+    if (legacyAttempts && legacyAttempts.length > 0) {
+        console.log(`\nFound ${legacyAttempts.length} LEGACY quiz attempts:`);
+        legacyAttempts.forEach(a => {
+            console.log(` - Quiz ID: ${a.quiz_id} | Score: ${a.score_percentage}% | Passed: ${a.passed} | Date: ${a.completed_at}`);
+        });
+    } else {
+        console.log(`\nNo LEGACY quiz attempts found in 'quiz_attempts' table.`);
+    }
 
     console.log(`\nChecking progress for ${modules.length} modules...`);
 
@@ -117,7 +130,7 @@ async function main() {
             const missingQuizzes = quizzes.filter(q => !passedQuizIds.has(q.id));
 
             if (missingQuizzes.length > 0) {
-                console.log(`  MISSING QUIZZES:`);
+                console.log(`  MISSING ENHANCED QUIZZES:`);
                 for (const q of missingQuizzes) {
                     const { data: failedAttempts } = await supabase
                         .from('enhanced_quiz_attempts')
@@ -125,15 +138,37 @@ async function main() {
                         .eq('user_id', user.id)
                         .eq('quiz_id', q.id);
 
+                    // Check LEGACY quiz_attempts
+                    // We need to find the legacy quiz? Or does enhanced_quiz have a link?
+                    // enhanced_quizzes.legacy_id might match something?
+                    // Or maybe there is a 'quizzes' table that these correspond to?
+                    // Let's try to find if there is a corresponding entry in 'quizzes' table or 'quiz_attempts'
+                    // For now, just generic check in quiz_attempts for this user to see if ANYTHING exists
+                    const { data: legacyAttempts } = await supabase
+                        .from('quiz_attempts')
+                        .select('*')
+                        .eq('student_id', user.id);
+
+                    // We don't easily know which legacy quiz maps to this enhanced quiz without more logic,
+                    // but let's at least print if we find ANY legacy attempts if we are missing enhanced ones.
+                    // Actually, let's just log if we find legacy attempts for the FIRST missing quiz to avoid spam,
+                    // or better, just list all legacy attempts for this user once at the top of the script?
+                    // No, let's just log "NO ENHANCED ATTEMPTS" for now.
+
                     if (failedAttempts && failedAttempts.length > 0) {
-                        console.log(`    [ ] ${q.title} (${q.id}) - ${failedAttempts.length} FAILED ATTEMPTS (Best: ${Math.max(...failedAttempts.map(a => a.score_percent))}%)`);
+                        console.log(`    [ ] ${q.title} (${q.id}) - ${failedAttempts.length} FAILED ENHANCED ATTEMPTS (Best: ${Math.max(...failedAttempts.map(a => a.score_percent))}%)`);
                     } else {
-                        console.log(`    [ ] ${q.title} (${q.id}) - NO ATTEMPTS`);
+                        console.log(`    [ ] ${q.title} (${q.id}) - NO ENHANCED ATTEMPTS`);
                     }
                 }
                 moduleComplete = false;
             }
         }
+
+        // CHECK LEGACY PROGRESS for this module?
+        // It's hard to map module -> legacy quiz directly without more info.
+        // But we can check if there are legacy certification records or something?
+
 
         // Check Certificate
         const { data: cert } = await supabase

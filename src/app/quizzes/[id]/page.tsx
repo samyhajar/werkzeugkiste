@@ -51,6 +51,19 @@ interface Course {
   updated_at: string
 }
 
+const QUIZ_TITLE_PREFIX_REGEX = /^(?:quiz\s*[:\-]\s*)+/i
+
+function getQuizDisplayTitle(title: string): string {
+  const normalizedTitle = title.trim()
+  if (!normalizedTitle) return 'Quiz'
+
+  const titleWithoutPrefix = normalizedTitle
+    .replace(QUIZ_TITLE_PREFIX_REGEX, '')
+    .trim()
+
+  return titleWithoutPrefix || normalizedTitle
+}
+
 export default function QuizDetailPage() {
   const params = useParams()
   const quizId = params.id as string
@@ -246,7 +259,9 @@ export default function QuizDetailPage() {
                 </div>
               )}
             </div>
-            <h1 className="text-2xl font-bold">{quiz.title}</h1>
+            <h1 className="text-2xl font-bold">
+              {getQuizDisplayTitle(quiz.title)}
+            </h1>
             <p className="text-blue-100">{course.title}</p>
           </div>
         </header>
@@ -257,7 +272,7 @@ export default function QuizDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <HelpCircle className="h-6 w-6 text-blue-600" />
-                Quiz: {quiz.title}
+                Quiz: {getQuizDisplayTitle(quiz.title)}
               </CardTitle>
               <CardDescription>
                 {quiz.description ||

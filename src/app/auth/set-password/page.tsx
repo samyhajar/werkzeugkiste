@@ -155,7 +155,7 @@ export default function SetPasswordPage() {
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <Image
-                src="/Logo-digi-CMYK.png"
+                src="/151201-AP-Kreis-magenta.png"
                 alt="Werkzeugkiste Logo"
                 width={80}
                 height={80}
@@ -179,7 +179,7 @@ export default function SetPasswordPage() {
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <Image
-                src="/Logo-digi-CMYK.png"
+                src="/151201-AP-Kreis-magenta.png"
                 alt="Werkzeugkiste Logo"
                 width={80}
                 height={80}
@@ -207,7 +207,7 @@ export default function SetPasswordPage() {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <Image
-              src="/Logo-digi-CMYK.png"
+              src="/151201-AP-Kreis-magenta.png"
               alt="Werkzeugkiste Logo"
               width={80}
               height={80}

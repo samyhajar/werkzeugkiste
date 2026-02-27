@@ -4,6 +4,28 @@ import { createClient } from '@/lib/supabase/server-client'
 // Add metadata export for Next.js 15
 export const dynamic = 'force-dynamic'
 
+function mapSignupErrorMessage(code?: string, fallbackMessage?: string): string {
+  switch (code) {
+    case 'email_address_invalid':
+      return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.'
+    case 'over_email_send_rate_limit':
+      return 'Bitte warten Sie kurz, bevor Sie es erneut versuchen.'
+    case 'user_already_exists':
+    case 'email_exists':
+    case 'email_address_exists':
+      return 'Diese E-Mail ist bereits registriert. Bitte melden Sie sich an.'
+    case 'weak_password':
+      return 'Das Passwort ist zu schwach. Bitte verwenden Sie ein stärkeres Passwort.'
+    default: {
+      const raw = (fallbackMessage || '').toLowerCase()
+      if (raw.includes('already') && raw.includes('registered')) {
+        return 'Diese E-Mail ist bereits registriert. Bitte melden Sie sich an.'
+      }
+      return fallbackMessage || 'Registrierung fehlgeschlagen.'
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[Signup API] Starting signup process')
@@ -31,8 +53,14 @@ export async function POST(request: NextRequest) {
 
     if (signUpError) {
       console.error('[Signup API] Signup error:', signUpError)
+      const errorCode =
+        typeof (signUpError as { code?: unknown }).code === 'string'
+          ? ((signUpError as { code?: string }).code as string)
+          : undefined
+      const errorMessage = mapSignupErrorMessage(errorCode, signUpError.message)
+
       return NextResponse.json(
-        { success: false, error: signUpError.message },
+        { success: false, error: errorMessage, error_code: errorCode || null },
         { status: 400 }
       )
     }
@@ -45,26 +73,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ensure a corresponding profile row exists and has correct fields
-    // Use upsert to avoid PK conflicts with DB trigger (handle_new_user)
-    const { error: profileError } = await (supabase as any)
-      .from('profiles')
-      .upsert(
-        {
-          id: authData.user.id,
-          email: authData.user.email,
-          role: body.role || 'student',
-          full_name: fullName || '',
-          // Store first_name when available (column exists in schema)
-          first_name: firstName || null,
-        } as any,
-        { onConflict: 'id' },
-      )
-
-    if (profileError) {
-      console.error('[Signup API] Profile creation error:', profileError)
-      // Continue even if profile creation fails
-    }
+    // Profile rows are created by the DB trigger on auth.users.
+    // Avoid manual writes here to prevent RLS issues and ambiguous signup states.
 
     // Get the session after successful signup
     const {

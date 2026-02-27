@@ -4,6 +4,18 @@ import { Database } from '@/types/supabase'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
 
+function isAuthLinkStateError(message?: string | null): boolean {
+  const m = (message || '').toLowerCase()
+  return (
+    m.includes('code verifier') ||
+    m.includes('flow state') ||
+    m.includes('invalid flow') ||
+    m.includes('invalid grant') ||
+    m.includes('otp') ||
+    m.includes('expired')
+  )
+}
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
@@ -29,7 +41,11 @@ export async function GET(request: NextRequest) {
     })
     let redirectPath = '/'
 
-    if (errorCode === 'otp_expired' || error === 'access_denied') {
+    if (
+      errorCode === 'otp_expired' ||
+      error === 'access_denied' ||
+      isAuthLinkStateError(errorDescription)
+    ) {
       // For expired or invalid email links, redirect to login with a specific error
       redirectPath = '/?error=email_link_expired'
     } else {
@@ -74,6 +90,11 @@ export async function GET(request: NextRequest) {
 
   if (sessionError) {
     console.error('[Auth Callback] Session exchange error:', sessionError)
+
+    if (isAuthLinkStateError(sessionError.message)) {
+      return NextResponse.redirect(new URL('/?error=email_link_expired', request.url))
+    }
+
     return NextResponse.redirect(
       new URL(
         `/?error=session_error&error_description=${encodeURIComponent(sessionError.message)}`,

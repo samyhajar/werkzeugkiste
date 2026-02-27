@@ -16,7 +16,12 @@ const partnerLogos = [
     width: 200,
     height: 80,
   },
-  { src: '/small_fhstp.jpg', alt: 'FH St. Pölten', width: 200, height: 80 },
+  {
+    src: '/USTP_logo.png',
+    alt: 'University of Applied Sciences St. Poelten',
+    width: 260,
+    height: 73,
+  },
   {
     src: '/small_AK_EXTRA_LOGO_JPG.jpg',
     alt: 'AK Extra',
@@ -66,7 +71,7 @@ export default function PartnerSection() {
       {/* Funding text */}
       <div className="space-y-6 max-w-4xl leading-relaxed text-center text-foreground/70 px-4">
         <p>
-          Das Projekt Digi+ wurde 03/2020 bis 02/2022 von der Arbeiterkammer NÖ
+          Das Projekt arbeit plus wurde 03/2020 bis 02/2022 von der Arbeiterkammer NÖ
           im Rahmen des Projektfonds&nbsp;4.0 gefördert.
         </p>
         <p>
