@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ChevronDown, User, LogOut, Award } from 'lucide-react'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -207,16 +206,8 @@ export default function Navbar() {
         >
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-24">
-            {/* Logo */}
-            <Link href="/" className="flex items-center">
-              <Image
-                src="/151201-AP-Kreis-magenta.png"
-                alt="arbeit plus Logo"
-                width={80}
-                height={80}
-                className="rounded-full w-10 h-10 md:w-20 md:h-20"
-              />
-            </Link>
+            {/* Spacer keeps navbar alignment after logo removal */}
+            <div className="w-10 h-10 md:w-20 md:h-20 shrink-0" aria-hidden="true" />
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
