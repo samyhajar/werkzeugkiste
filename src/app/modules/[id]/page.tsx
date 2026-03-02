@@ -109,6 +109,10 @@ interface CertificateModalState {
   isNew?: boolean
 }
 
+type NextLearningAction =
+  | { type: 'lesson'; lesson: Lesson }
+  | { type: 'quiz'; quiz: Quiz }
+
 const QUIZ_TITLE_PREFIX_REGEX = /^(?:quiz\s*[:-]\s*)+/i
 
 function getQuizDisplayTitle(title: string): string {
@@ -642,6 +646,8 @@ export default function ModuleDetailPage() {
   const contentRef = useRef<HTMLDivElement>(null)
   const hasCheckedModuleCompletion = useRef(false)
   const isClearingSelectionRef = useRef<'quiz' | 'lesson' | null>(null)
+  const selectedLessonRef = useRef<Lesson | null>(null)
+  const selectedQuizRef = useRef<Quiz | null>(null)
   const [certificateModal, setCertificateModal] =
     useState<CertificateModalState>({ open: false })
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -1142,6 +1148,14 @@ export default function ModuleDetailPage() {
   )
 
   useEffect(() => {
+    selectedLessonRef.current = selectedLesson
+  }, [selectedLesson])
+
+  useEffect(() => {
+    selectedQuizRef.current = selectedQuiz
+  }, [selectedQuiz])
+
+  useEffect(() => {
     if (!module) {
       return
     }
@@ -1161,9 +1175,11 @@ export default function ModuleDetailPage() {
       const lesson =
         course?.lessons.find(lesson => lesson.id === lessonIdParam) || null
 
-      if (lesson && lesson.id !== selectedLesson?.id) {
+      const currentSelectedLesson = selectedLessonRef.current
+
+      if (lesson && lesson.id !== currentSelectedLesson?.id) {
         selectLesson(lesson, { updateParams: false })
-      } else if (!lesson && selectedLesson) {
+      } else if (!lesson && currentSelectedLesson) {
         setSelectedLesson(null)
         setSelectedCourse(null)
         setExpandedCourses(new Set<string>())
@@ -1184,9 +1200,11 @@ export default function ModuleDetailPage() {
         ) || null
       const quiz = course?.quizzes.find(quiz => quiz.id === quizIdParam) || null
 
-      if (quiz && quiz.id !== selectedQuiz?.id) {
+      const currentSelectedQuiz = selectedQuizRef.current
+
+      if (quiz && quiz.id !== currentSelectedQuiz?.id) {
         selectQuiz(quiz, { updateParams: false })
-      } else if (!quiz && selectedQuiz) {
+      } else if (!quiz && currentSelectedQuiz) {
         clearSelectedQuiz({ updateParams: false })
         setSelectedCourse(null)
         setExpandedCourses(new Set<string>())
@@ -1199,8 +1217,6 @@ export default function ModuleDetailPage() {
     selectLesson,
     selectQuiz,
     clearSelectedQuiz,
-    selectedLesson,
-    selectedQuiz,
     updateQueryParams,
   ])
 
@@ -1227,32 +1243,74 @@ export default function ModuleDetailPage() {
     })
   }, [module])
 
-  // Get the next lesson in the module
-  const getNextLesson = (currentLesson: Lesson): Lesson | null => {
+  const getCourseLevelQuizzes = (course: Course): Quiz[] => {
+    const getQuizOrderKey = (quiz: Quiz) => {
+      const raw = (quiz as any).sort_order
+      return Number.isFinite(raw) ? (raw as number) : Number.MAX_SAFE_INTEGER
+    }
+
+    return [...course.quizzes]
+      .filter(quiz => !quiz.lesson_id)
+      .sort((a, b) => {
+        const diff = getQuizOrderKey(a) - getQuizOrderKey(b)
+        if (diff !== 0) return diff
+        return a.id.localeCompare(b.id)
+      })
+  }
+
+  // Get the next learning action from a lesson:
+  // next lesson in same course -> course quiz -> first lesson of next course
+  const getNextLearningAction = (
+    currentLesson: Lesson
+  ): NextLearningAction | null => {
     if (!module) return null
 
-    // Get all lessons in order across all courses
-    const allLessons: Lesson[] = []
     const getLessonOrderKey = (lesson: Lesson) => {
       const raw = (lesson as any).order
       return Number.isFinite(raw) ? (raw as number) : Number.MAX_SAFE_INTEGER
     }
 
-    sortedCourses.forEach(course => {
-      const sortedLessons = [...course.lessons].sort((a, b) => {
+    const currentCourseIndex = sortedCourses.findIndex(
+      course => course.id === currentLesson.course_id
+    )
+    if (currentCourseIndex === -1) return null
+
+    const currentCourse = sortedCourses[currentCourseIndex]
+    const sortedLessonsInCourse = [...currentCourse.lessons].sort((a, b) => {
+      const diff = getLessonOrderKey(a) - getLessonOrderKey(b)
+      if (diff !== 0) return diff
+      return a.id.localeCompare(b.id)
+    })
+
+    const currentLessonIndex = sortedLessonsInCourse.findIndex(
+      lesson => lesson.id === currentLesson.id
+    )
+
+    if (currentLessonIndex === -1) return null
+
+    const nextLessonInCourse = sortedLessonsInCourse[currentLessonIndex + 1]
+    if (nextLessonInCourse) {
+      return { type: 'lesson', lesson: nextLessonInCourse }
+    }
+
+    const courseLevelQuizzes = getCourseLevelQuizzes(currentCourse)
+    if (courseLevelQuizzes.length > 0) {
+      return { type: 'quiz', quiz: courseLevelQuizzes[0] }
+    }
+
+    for (let i = currentCourseIndex + 1; i < sortedCourses.length; i += 1) {
+      const nextCourse = sortedCourses[i]
+      const sortedNextCourseLessons = [...nextCourse.lessons].sort((a, b) => {
         const diff = getLessonOrderKey(a) - getLessonOrderKey(b)
         if (diff !== 0) return diff
         return a.id.localeCompare(b.id)
       })
-      allLessons.push(...sortedLessons)
-    })
-
-    const currentIndex = allLessons.findIndex(l => l.id === currentLesson.id)
-    if (currentIndex === -1 || currentIndex === allLessons.length - 1) {
-      return null // No next lesson
+      if (sortedNextCourseLessons.length > 0) {
+        return { type: 'lesson', lesson: sortedNextCourseLessons[0] }
+      }
     }
 
-    return allLessons[currentIndex + 1]
+    return null
   }
 
   // Show loading while auth or module is loading
@@ -1626,6 +1684,7 @@ export default function ModuleDetailPage() {
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                       <div className="p-8 prose prose-lg max-w-none">
                         <CloudinaryHtmlContent
+                          key={selectedLesson.id}
                           html={sanitizeLessonHtml(selectedLesson.content)}
                           className="text-gray-800 leading-relaxed [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:mt-4 [&_h1]:text-[#de0647] [&_h1]:leading-tight [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:mb-4 [&_h2]:mt-6 [&_h2]:text-[#de0647] [&_h2]:leading-tight [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:mb-3 [&_h3]:mt-5 [&_h3]:text-[#de0647] [&_h3]:leading-tight [&_p]:mb-4 [&_p]:text-gray-700 [&_p]:leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-900 [&_em]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:mb-4 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:mb-4 [&_li]:mb-2 [&_span]:inline [&_a]:text-[#de0647] [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:my-4 [&_img]:rounded [&_img]:border [&_img]:border-gray-200 [&_img]:mx-auto [&_img]:block [&_img]:shadow-sm [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded [&_iframe]:border [&_iframe]:border-gray-200 [&_iframe.yt-small]:max-w-[480px] [&_iframe.yt-medium]:max-w-[720px] [&_iframe.yt-large]:max-w-[960px] [&_iframe]:mx-auto"
                         />
@@ -1665,13 +1724,22 @@ export default function ModuleDetailPage() {
                               )}
                             </div>
                             {(() => {
-                              const nextLesson = getNextLesson(selectedLesson)
-                              return nextLesson ? (
+                              const nextAction =
+                                getNextLearningAction(selectedLesson)
+                              return nextAction ? (
                                 <button
-                                  onClick={() => selectLesson(nextLesson)}
+                                  onClick={() =>
+                                    nextAction.type === 'quiz'
+                                      ? selectQuiz(nextAction.quiz)
+                                      : selectLesson(nextAction.lesson)
+                                  }
                                   className="flex items-center gap-2 px-6 py-3 bg-[#de0647] hover:bg-[#b8043a] text-white font-medium rounded-lg transition-colors w-full sm:w-auto justify-center"
                                 >
-                                  <span>Nächste Lektion</span>
+                                  <span>
+                                    {nextAction.type === 'quiz'
+                                      ? 'Zum Quiz'
+                                      : 'Nächste Lektion'}
+                                  </span>
                                   <ChevronRight className="h-4 w-4" />
                                 </button>
                               ) : null
@@ -1683,7 +1751,7 @@ export default function ModuleDetailPage() {
                           <div className="flex flex-col gap-4">
                             <div className="text-center">
                               <p className="text-blue-800 text-sm mb-3">
-                                Melden Sie sich an, um Ihren Fortschritt zu
+                                Melde dich an, um deinen Fortschritt zu
                                 verfolgen und Zertifikate zu erhalten.
                               </p>
                               <Link href="/auth/login">
@@ -1693,14 +1761,23 @@ export default function ModuleDetailPage() {
                               </Link>
                             </div>
                             {(() => {
-                              const nextLesson = getNextLesson(selectedLesson)
-                              return nextLesson ? (
+                              const nextAction =
+                                getNextLearningAction(selectedLesson)
+                              return nextAction ? (
                                 <div className="text-center border-t border-blue-300 pt-4">
                                   <button
-                                    onClick={() => selectLesson(nextLesson)}
+                                    onClick={() =>
+                                      nextAction.type === 'quiz'
+                                        ? selectQuiz(nextAction.quiz)
+                                        : selectLesson(nextAction.lesson)
+                                    }
                                     className="flex items-center gap-2 px-6 py-3 bg-[#de0647] hover:bg-[#b8043a] text-white font-medium rounded-lg transition-colors mx-auto w-full sm:w-auto justify-center"
                                   >
-                                    <span>Nächste Lektion</span>
+                                    <span>
+                                      {nextAction.type === 'quiz'
+                                        ? 'Zum Quiz'
+                                        : 'Nächste Lektion'}
+                                    </span>
                                     <ChevronRight className="h-4 w-4" />
                                   </button>
                                 </div>

@@ -1,8 +1,7 @@
 'use client'
 
-import { extractPublicId, isCloudinaryUrl } from '@/lib/cloudinary'
-import DOMPurify from 'dompurify'
-import { useEffect, useState } from 'react'
+import { isCloudinaryUrl } from '@/lib/cloudinary'
+import { useEffect, useRef, useState } from 'react'
 
 interface CloudinaryHtmlContentProps {
   html: string | null | undefined
@@ -22,16 +21,30 @@ export default function CloudinaryHtmlContent({
 }: CloudinaryHtmlContentProps) {
   const [processedHtml, setProcessedHtml] = useState<string>('')
   const [isProcessing, setIsProcessing] = useState(true)
+  const requestIdRef = useRef(0)
 
   useEffect(() => {
+    const requestId = ++requestIdRef.current
+    const controller = new AbortController()
+    let isActive = true
+
+    const isStale = () => !isActive || requestIdRef.current !== requestId
+
     if (!html) {
-      setProcessedHtml('')
-      setIsProcessing(false)
-      return
+      if (!isStale()) {
+        setProcessedHtml('')
+        setIsProcessing(false)
+      }
+      return () => {
+        isActive = false
+        controller.abort()
+      }
     }
 
     const processHtml = async () => {
-      setIsProcessing(true)
+      if (!isStale()) {
+        setIsProcessing(true)
+      }
 
       try {
         // Parse HTML to find Cloudinary images
@@ -57,10 +70,18 @@ export default function CloudinaryHtmlContent({
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ urls }),
+              signal: controller.signal,
             })
+
+            if (isStale()) {
+              return
+            }
 
             if (response.ok) {
               const data = await response.json()
+              if (isStale()) {
+                return
+              }
 
               // Update image ALT texts
               cloudinaryImages.forEach(({ img, url }) => {
@@ -71,22 +92,41 @@ export default function CloudinaryHtmlContent({
               })
             }
           } catch (error) {
-            console.error('Failed to fetch ALT texts for HTML content:', error)
+            // Request aborts are expected during fast lesson switches.
+            if (
+              !(error instanceof DOMException && error.name === 'AbortError')
+            ) {
+              console.error(
+                'Failed to fetch ALT texts for HTML content:',
+                error
+              )
+            }
           }
         }
 
         // Get the processed HTML
         const bodyHtml = doc.body.innerHTML
-        setProcessedHtml(bodyHtml)
+        if (!isStale()) {
+          setProcessedHtml(bodyHtml)
+        }
       } catch (error) {
-        console.error('Error processing HTML:', error)
-        setProcessedHtml(html)
+        if (!isStale()) {
+          console.error('Error processing HTML:', error)
+          setProcessedHtml(html)
+        }
       } finally {
-        setIsProcessing(false)
+        if (!isStale()) {
+          setIsProcessing(false)
+        }
       }
     }
 
-    processHtml()
+    void processHtml()
+
+    return () => {
+      isActive = false
+      controller.abort()
+    }
   }, [html])
 
   // Show original HTML while processing (to avoid flash)
