@@ -163,7 +163,7 @@ export async function generateAndStoreModuleCertificate({
   // Move the module title slightly lower while keeping clear space above the fixed line below.
   const yModule = pageHeight - 400 // ~442
   const yName = pageHeight - 290   // higher (~552)
-  const yDate = 190               // higher from bottom
+  const yDate = 194               // slightly higher to align with the template text
 
   // Prefer the user's full name; fall back to email only if necessary
   const displayName = (userName && userName.trim().length > 0)
