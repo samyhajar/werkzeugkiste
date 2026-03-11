@@ -160,8 +160,8 @@ export async function generateAndStoreModuleCertificate({
   const pageHeight = page.getHeight()
 
   // Conservative initial positions for A4 (595x842). Tuned per feedback.
-  // Keep module fixed where it was (~467 on A4), raise email, and move date up/right.
-  const yModule = pageHeight - 375 // ~467 (unchanged)
+  // Move the module title slightly lower while keeping clear space above the fixed line below.
+  const yModule = pageHeight - 400 // ~442
   const yName = pageHeight - 290   // higher (~552)
   const yDate = 190               // higher from bottom
 
