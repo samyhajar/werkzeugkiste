@@ -100,6 +100,20 @@ export default function PartnerSection() {
         </p>
       </div>
 
+      {/* Federal logos under the funding text - uses Cloudinary with automatic ALT text */}
+      <div className="flex flex-wrap md:flex-nowrap justify-center items-center gap-10 md:gap-16 lg:gap-24 max-w-6xl w-full px-4">
+        {topRowLogos.map(logo => (
+          <CloudinaryImage
+            key={logo.src}
+            src={logo.src}
+            fallbackAlt={logo.fallbackAlt}
+            width={logo.width}
+            height={logo.height}
+            className="object-contain h-28 md:h-32 max-w-[220px] md:max-w-[280px]"
+          />
+        ))}
+      </div>
+
       {/* QLP cooperation on its own row */}
       <div className="flex flex-col justify-center items-center gap-4 w-full px-4">
         <p className="max-w-4xl leading-relaxed text-center text-foreground/70">
@@ -113,20 +127,6 @@ export default function PartnerSection() {
           height={qlpLogo.height}
           className={`object-contain ${qlpLogo.className}`}
         />
-      </div>
-
-      {/* Federal logos under the funding text - uses Cloudinary with automatic ALT text */}
-      <div className="flex flex-wrap md:flex-nowrap justify-center items-center gap-10 md:gap-16 lg:gap-24 max-w-6xl w-full px-4">
-        {topRowLogos.map(logo => (
-          <CloudinaryImage
-            key={logo.src}
-            src={logo.src}
-            fallbackAlt={logo.fallbackAlt}
-            width={logo.width}
-            height={logo.height}
-            className="object-contain h-28 md:h-32 max-w-[220px] md:max-w-[280px]"
-          />
-        ))}
       </div>
     </section>
   )
