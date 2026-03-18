@@ -3,7 +3,15 @@
 import Image from 'next/image'
 import CloudinaryImage from './CloudinaryImage'
 
-const partnerLogos = [
+type PartnerLogo = {
+  src: string
+  alt: string
+  width: number
+  height: number
+  className?: string
+}
+
+const partnerLogos: PartnerLogo[] = [
   {
     src: '/small_arbeitplus_NOe.jpg',
     alt: 'Arbeit Plus Niederösterreich',
@@ -27,6 +35,13 @@ const partnerLogos = [
     alt: 'AK Extra',
     width: 200,
     height: 80,
+  },
+  {
+    src: '/qlp.svg',
+    alt: 'QLP',
+    width: 160,
+    height: 160,
+    className: 'h-20 md:h-24 max-w-[120px] md:max-w-[140px]',
   },
 ]
 
@@ -63,7 +78,9 @@ export default function PartnerSection() {
             alt={logo.alt}
             width={logo.width}
             height={logo.height}
-            className="object-contain h-16 md:h-20 max-w-[200px]"
+            className={`object-contain ${
+              logo.className ?? 'h-16 md:h-20 max-w-[200px]'
+            }`}
           />
         ))}
       </div>
