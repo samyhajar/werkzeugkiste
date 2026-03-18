@@ -36,14 +36,15 @@ const partnerLogos: PartnerLogo[] = [
     width: 200,
     height: 80,
   },
-  {
-    src: '/qlp.svg',
-    alt: 'QLP',
-    width: 160,
-    height: 160,
-    className: 'h-20 md:h-24 max-w-[120px] md:max-w-[140px]',
-  },
 ]
+
+const qlpLogo: PartnerLogo = {
+  src: '/qlp.svg',
+  alt: 'qlp - digital branding',
+  width: 160,
+  height: 160,
+  className: 'h-20 md:h-24 w-auto',
+}
 
 const topRowLogos = [
   {
@@ -97,6 +98,21 @@ export default function PartnerSection() {
           Bundeskanzleramt, die Koordination übernimmt der OeAD (Geschäftsstelle
           Digitale Kompetenzen).
         </p>
+      </div>
+
+      {/* QLP cooperation on its own row */}
+      <div className="flex flex-col justify-center items-center gap-4 w-full px-4">
+        <p className="max-w-4xl leading-relaxed text-center text-foreground/70">
+          Die &quot;digitale Werkzeugkiste plus&quot; wurde in Kooperation mit
+          qlp – digital branding umgesetzt.
+        </p>
+        <Image
+          src={qlpLogo.src}
+          alt={qlpLogo.alt}
+          width={qlpLogo.width}
+          height={qlpLogo.height}
+          className={`object-contain ${qlpLogo.className}`}
+        />
       </div>
 
       {/* Federal logos under the funding text - uses Cloudinary with automatic ALT text */}
