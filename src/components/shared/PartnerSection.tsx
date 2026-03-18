@@ -43,7 +43,7 @@ const qlpLogo: PartnerLogo = {
   alt: 'qlp - digital branding',
   width: 160,
   height: 160,
-  className: 'h-20 md:h-24 w-auto',
+  className: 'h-14 md:h-16 w-auto',
 }
 
 const topRowLogos = [
