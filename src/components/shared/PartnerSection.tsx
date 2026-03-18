@@ -71,8 +71,9 @@ export default function PartnerSection() {
       {/* Funding text */}
       <div className="space-y-6 max-w-4xl leading-relaxed text-center text-foreground/70 px-4">
         <p>
-          Das Projekt arbeit plus wurde 03/2020 bis 02/2022 von der Arbeiterkammer NÖ
-          im Rahmen des Projektfonds&nbsp;4.0 gefördert.
+          Das Projekt „die digitale Werkzeugkiste“ wurde von arbeit plus NÖ in
+          Kooperation mit der USTP (vormals FH St. Pölten) umgesetzt und von der
+          Arbeiterkammer NÖ im Rahmen des Projektfonds Arbeit&nbsp;4.0 gefördert.
         </p>
         <p>
           Die Finanzierung der „digitalen Werkzeugkiste plus" erfolgt durch das
