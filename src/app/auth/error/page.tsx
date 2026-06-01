@@ -44,6 +44,7 @@ export default function AuthErrorPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#486682' }}>
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl text-center">
+        <h1 className="sr-only">Anmeldung wird verarbeitet</h1>
         <div className="flex justify-center mb-4">
           <Image
             src="/151201-AP-Kreis-magenta.png"
@@ -53,7 +54,7 @@ export default function AuthErrorPage() {
             className="rounded-full"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2" role="status" aria-live="polite">
           <div className="inline-flex items-center px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg">
             <div className="w-4 h-4 border-2 border-gray-300 border-t-[#3b5169] rounded-full animate-spin mr-2"></div>
             Verarbeitung...

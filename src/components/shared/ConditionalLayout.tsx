@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { AuthProvider } from '@/contexts/AuthContext'
 import Navbar from './Navbar'
@@ -13,12 +12,7 @@ interface ConditionalLayoutProps {
 }
 
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
-  const [isClient, setIsClient] = useState(false)
   const pathname = usePathname()
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
 
   // Check if we're on a module page, admin page, or auth page
   const isModulePage = pathname?.startsWith('/modules/')
@@ -30,7 +24,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     return (
       <AuthProvider>
         <div className="min-h-screen">
-          <main className="flex-1">{children}</main>
+          <div className="flex-1">{children}</div>
         </div>
       </AuthProvider>
     )
@@ -41,7 +35,12 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     return (
       <AuthProvider>
         <div className="min-h-screen">
-          <main className="flex-1">{children}</main>
+          <a className="skip-link" href="#main-content">
+            Zum Inhalt springen
+          </a>
+          <main id="main-content" tabIndex={-1} className="flex-1">
+            {children}
+          </main>
         </div>
       </AuthProvider>
     )
@@ -52,9 +51,16 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   return (
     <AuthProvider>
       <div className="min-h-screen">
+        <a className="skip-link" href="#main-content">
+          Zum Inhalt springen
+        </a>
         {/* Always render Navbar (it handles its own hydration) to ensure LoginModal has AuthProvider context */}
         {!isModulePage && <Navbar />}
-        <main className={`flex-1 ${!isModulePage ? 'pt-16 md:pt-24' : ''}`}>
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className={`flex-1 ${!isModulePage ? 'pt-16 md:pt-24' : ''}`}
+        >
           {children}
         </main>
         {!isModulePage && <Footer />}

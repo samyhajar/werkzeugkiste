@@ -3,7 +3,7 @@
 import CloudinaryHtmlContent from '@/components/shared/CloudinaryHtmlContent'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 interface FAQItemProps {
   question: string
@@ -13,19 +13,23 @@ interface FAQItemProps {
 
 function FAQItem({ question, answer, isOpen = false }: FAQItemProps) {
   const [open, setOpen] = useState(isOpen)
+  const contentId = useId()
 
   return (
     <div className="border-b border-gray-200 last:border-b-0">
       <button
+        type="button"
         className="flex w-full items-center justify-between text-left focus:outline-none focus:ring-2 focus:ring-[#de0449] focus:ring-opacity-50 rounded-lg p-4 hover:bg-gray-50 transition-all duration-200 group"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        aria-controls={contentId}
       >
         <span className="text-gray-800 font-medium text-base group-hover:text-[#de0449] transition-colors duration-200 pr-4">
           {question}
         </span>
         <div className="flex-shrink-0">
           <svg
+            aria-hidden="true"
             className={`h-5 w-5 text-gray-600 group-hover:text-[#de0449] transition-all duration-300 ${
               open ? 'rotate-180' : ''
             }`}
@@ -43,6 +47,8 @@ function FAQItem({ question, answer, isOpen = false }: FAQItemProps) {
         </div>
       </button>
       <div
+        id={contentId}
+        hidden={!open}
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
           open ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
@@ -77,7 +83,7 @@ export default function FragenPage() {
 
   if (html) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-12">
         <CloudinaryHtmlContent
           html={html}
           className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700
@@ -89,11 +95,11 @@ export default function FragenPage() {
           [&_details[open]_summary]:text-[#de0449]
           [&_details>*:not(summary)]:px-4 [&_details>*:not(summary)]:pb-4 [&_details>*:not(summary)]:bg-gray-50 [&_details>*:not(summary)]:border-l-4 [&_details>*:not(summary)]:border-[#de0449] [&_details>*:not(summary)]:rounded-b-lg [&_details>*:not(summary)]:m-0 [&_details>*:not(summary)]:text-gray-700 [&_details>*:not(summary)]:leading-relaxed [&_details>*:not(summary)]:text-sm"
         />
-      </main>
+      </div>
     )
   }
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-4xl mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="mb-12">
         <h1 className="text-4xl font-bold text-[#de0449] mb-6">
@@ -392,6 +398,6 @@ export default function FragenPage() {
           />
         </div>
       </section>
-    </main>
+    </div>
   )
 }

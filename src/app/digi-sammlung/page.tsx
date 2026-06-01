@@ -107,9 +107,12 @@ export default async function DigiSammlungPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-16 space-y-32">
+      <h1 className="text-4xl font-bold text-center text-[#de0647]">
+        Digi-Sammlung
+      </h1>
       {categories.map(({ title, icon: Icon, items, color }) => (
         <section key={title} className="flex flex-col items-center gap-10">
-          <Icon className="h-8 w-8 text-foreground" />
+          <Icon aria-hidden="true" className="h-8 w-8 text-foreground" />
           <h2
             className="text-3xl font-bold text-center"
             style={{ color: '#de0647' }}

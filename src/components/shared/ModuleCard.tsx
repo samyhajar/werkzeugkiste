@@ -5,7 +5,6 @@ import { Progress } from '@/components/ui/progress'
 import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import { Tables } from '@/types/supabase'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useRef, useState } from 'react'
 import LoginModal, { LoginModalRef } from './LoginModal'
 import ModuleOverlay from './ModuleOverlay'
@@ -30,6 +29,7 @@ export default function ModuleCard({
 }: ModuleCardProps) {
   const [showOverlay, setShowOverlay] = useState(false)
   const loginModalRef = useRef<LoginModalRef>(null)
+  const detailsButtonRef = useRef<HTMLButtonElement>(null)
 
   // Fetch ALT text from Cloudinary, fallback to module title
   const imageAlt = useCloudinaryAlt(module.hero_image, module.title)
@@ -38,23 +38,18 @@ export default function ModuleCard({
     loginModalRef.current?.show('login', `/modules/${module.id}`)
   }
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // If the click is on the link, let the link's handler take over
-    if ((e.target as HTMLElement).closest('a')) {
-      return
-    }
-    e.preventDefault()
+  const handleStartModuleClick = () => {
     setShowOverlay(true)
   }
 
-  const handleStartModuleClick = (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent navigation, show overlay instead
-    setShowOverlay(true)
+  const handleCloseOverlay = () => {
+    setShowOverlay(false)
+    requestAnimationFrame(() => detailsButtonRef.current?.focus())
   }
 
   return (
     <>
-      <div className="cursor-pointer h-full" onClick={handleCardClick}>
+      <div className="h-full">
         <Card className="w-full flex flex-col overflow-hidden shadow-lg border-0 rounded-lg hover:shadow-xl transition-shadow duration-300 module-card-hover h-full">
           <div className="relative w-full h-48 overflow-hidden rounded-t-lg bg-white">
             <Image
@@ -110,6 +105,7 @@ export default function ModuleCard({
                   </div>
                   <Progress
                     value={progress}
+                    aria-label={`Fortschritt im Modul ${module.title}`}
                     variant="custom"
                     size="lg"
                     className="h-3"
@@ -123,13 +119,14 @@ export default function ModuleCard({
               <p className="text-lg font-semibold text-gray-600 mb-4 text-right">
                 Kostenlos
               </p>
-              <Link
-                href={`/modules/${module.id}`}
+              <button
+                ref={detailsButtonRef}
+                type="button"
                 onClick={handleStartModuleClick}
                 className="block w-full border-2 border-gray-300 hover:border-gray-400 bg-white text-gray-700 hover:text-gray-800 text-center py-3 rounded-lg font-medium transition-all duration-200 hover:bg-gray-50"
               >
                 {isLoggedIn && progress > 0 ? 'Weiter lernen' : 'Modul Details'}
-              </Link>
+              </button>
             </div>
           </CardContent>
         </Card>
@@ -140,7 +137,7 @@ export default function ModuleCard({
       <ModuleOverlay
         module={module}
         isOpen={showOverlay}
-        onClose={() => setShowOverlay(false)}
+        onClose={handleCloseOverlay}
         isLoggedIn={isLoggedIn}
         onStartLogin={handleShowLogin}
       />

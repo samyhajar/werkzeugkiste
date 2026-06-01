@@ -242,11 +242,13 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
           >
             {/* Close Button */}
             <button
+              type="button"
               onClick={handleClose}
+              aria-label="Anmeldedialog schließen"
               className="absolute top-6 right-6 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 shadow-lg border border-gray-100"
               disabled={isLoading}
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X aria-hidden="true" className="w-5 h-5 text-gray-500" />
             </button>
 
             {/* Header with Gradient */}
@@ -327,6 +329,10 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
 
                 <TabsContent value="login" className="space-y-6 mt-0">
                   <form onSubmit={handleSignIn} className="space-y-6">
+                    <p className="text-sm text-gray-600">
+                      Mit <span aria-hidden="true">*</span> markierte Felder sind
+                      Pflichtfelder.
+                    </p>
                     <div className="space-y-2">
                       <Label
                         htmlFor="login-email"
@@ -345,7 +351,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                             d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                           />
                         </svg>
-                        E-Mail-Adresse
+                        E-Mail-Adresse <span aria-hidden="true">*</span>
                       </Label>
                       <CustomInput
                         id="login-email"
@@ -356,6 +362,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                         required
                         disabled={isLoading}
                         autoComplete="email"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? 'login-modal-error' : undefined}
                       />
                     </div>
 
@@ -377,7 +385,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                           />
                         </svg>
-                        Passwort
+                        Passwort <span aria-hidden="true">*</span>
                       </Label>
                       <div className="relative">
                         <CustomInput
@@ -389,12 +397,14 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           required
                           disabled={isLoading}
                           autoComplete="current-password"
+                          aria-invalid={!!error}
+                          aria-describedby={error ? 'login-modal-error' : undefined}
                           className="pr-14"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
                           disabled={isLoading}
                           aria-label={
                             showPassword
@@ -470,7 +480,11 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                     </div>
 
                     {error && (
-                      <div className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium">
+                      <div
+                        id="login-modal-error"
+                        role="alert"
+                        className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium"
+                      >
                         {error}
                       </div>
                     )}
@@ -510,7 +524,11 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                 <TabsContent value="signup" className="space-y-6 mt-0">
                   {/* Email Confirmation Toast */}
                   {showEmailToast && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4"
+                    >
                       <div className="flex items-start">
                         <div className="flex-shrink-0">
                           <CheckCircle className="w-5 h-5 text-green-600" />
@@ -542,6 +560,10 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                   )}
 
                   <form onSubmit={handleSignUp} className="space-y-6">
+                    <p className="text-sm text-gray-600">
+                      Mit <span aria-hidden="true">*</span> markierte Felder sind
+                      Pflichtfelder.
+                    </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label
@@ -561,7 +583,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             />
                           </svg>
-                          Vorname
+                          Vorname <span aria-hidden="true">*</span>
                         </Label>
                         <CustomInput
                           id="signup-first-name"
@@ -572,6 +594,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           required
                           disabled={isLoading}
                           autoComplete="given-name"
+                          aria-invalid={!!error}
+                          aria-describedby={error ? 'signup-modal-error' : undefined}
                         />
                       </div>
                       <div className="space-y-2">
@@ -592,7 +616,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             />
                           </svg>
-                          Nachname
+                          Nachname <span aria-hidden="true">*</span>
                         </Label>
                         <CustomInput
                           id="signup-last-name"
@@ -603,6 +627,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           required
                           disabled={isLoading}
                           autoComplete="family-name"
+                          aria-invalid={!!error}
+                          aria-describedby={error ? 'signup-modal-error' : undefined}
                         />
                       </div>
                     </div>
@@ -625,7 +651,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                             d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
                           />
                         </svg>
-                        E-Mail-Adresse
+                        E-Mail-Adresse <span aria-hidden="true">*</span>
                       </Label>
                       <CustomInput
                         id="signup-email"
@@ -636,6 +662,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                         required
                         disabled={isLoading}
                         autoComplete="email"
+                        aria-invalid={!!error}
+                        aria-describedby={error ? 'signup-modal-error' : undefined}
                       />
                     </div>
 
@@ -657,7 +685,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                           />
                         </svg>
-                        Passwort
+                        Passwort <span aria-hidden="true">*</span>
                       </Label>
                       <div className="relative">
                         <CustomInput
@@ -669,13 +697,20 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           required
                           disabled={isLoading}
                           autoComplete="new-password"
+                          aria-invalid={!!error}
+                          aria-describedby={error ? 'signup-modal-error' : undefined}
                           className="pr-14"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
                           disabled={isLoading}
+                          aria-label={
+                            showPassword
+                              ? 'Passwort verstecken'
+                              : 'Passwort anzeigen'
+                          }
                         >
                           {showPassword ? (
                             <svg
@@ -734,7 +769,7 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        Passwort bestätigen
+                        Passwort bestätigen <span aria-hidden="true">*</span>
                       </Label>
                       <div className="relative">
                         <CustomInput
@@ -746,6 +781,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           required
                           disabled={isLoading}
                           autoComplete="new-password"
+                          aria-invalid={!!error}
+                          aria-describedby={error ? 'signup-modal-error' : undefined}
                           className="pr-14"
                         />
                         <button
@@ -753,8 +790,13 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#486681] transition-colors p-1 rounded-lg hover:bg-gray-100"
                           disabled={isLoading}
+                          aria-label={
+                            showConfirmPassword
+                              ? 'Bestätigungspasswort verstecken'
+                              : 'Bestätigungspasswort anzeigen'
+                          }
                         >
                           {showConfirmPassword ? (
                             <svg
@@ -798,7 +840,11 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                     {/* Role is automatically set to 'student' - Admin accounts can only be created by admin invitation */}
 
                     {error && (
-                      <div className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium">
+                      <div
+                        id="signup-modal-error"
+                        role="alert"
+                        className="text-red-700 text-sm text-center bg-red-50 border border-red-200 p-4 rounded-2xl font-medium"
+                      >
                         {error}
                       </div>
                     )}

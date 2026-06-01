@@ -77,6 +77,7 @@ export default function LiveModulesSection({
         <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg
+              aria-hidden="true"
               className="w-12 h-12 text-gray-400"
               fill="none"
               stroke="currentColor"

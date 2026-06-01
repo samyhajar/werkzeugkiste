@@ -261,6 +261,7 @@ export default async function Home({
 
       {/* Hero Banner */}
       <section className="w-full relative">
+        <h1 className="sr-only">Die digitale Werkzeugkiste plus</h1>
         <Image
           src="/Header_1900x350_Gesamt.png"
           alt="Die digitale Werkzeugkiste plus"
@@ -274,7 +275,10 @@ export default async function Home({
 
       {/* Error Messages */}
       {error && !shouldHideAuthErrorBanner && (
-          <section className="w-full bg-red-50 border-l-4 border-red-400 p-4">
+          <section
+            role="alert"
+            className="w-full bg-red-50 border-l-4 border-red-400 p-4"
+          >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -291,11 +295,11 @@ export default async function Home({
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+                  <h2 className="text-sm font-medium text-red-800">
                     {isAuthLinkError
                       ? 'E-Mail-Link abgelaufen'
                       : 'Authentifizierungsfehler'}
-                  </h3>
+                  </h2>
                   <div className="mt-2 text-sm text-red-700">
                     <p>
                       {isAuthLinkError
@@ -312,7 +316,11 @@ export default async function Home({
 
       {/* Success Messages */}
       {forgotPasswordStatus === 'sent' && (
-        <section className="w-full bg-green-50 border-l-4 border-green-400 p-4">
+        <section
+          role="status"
+          aria-live="polite"
+          className="w-full bg-green-50 border-l-4 border-green-400 p-4"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -329,9 +337,9 @@ export default async function Home({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
+                <h2 className="text-sm font-medium text-green-800">
                   E-Mail erfolgreich gesendet!
-                </h3>
+                </h2>
                 <div className="mt-2 text-sm text-green-700">
                   <p>
                     Falls ein Konto mit Ihrer E-Mail-Adresse existiert, wurde
@@ -347,7 +355,11 @@ export default async function Home({
 
       {/* Password Reset Success Message */}
       {passwordResetStatus === 'success' && (
-        <section className="w-full bg-green-50 border-l-4 border-green-400 p-4">
+        <section
+          role="status"
+          aria-live="polite"
+          className="w-full bg-green-50 border-l-4 border-green-400 p-4"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex">
               <div className="flex-shrink-0">
@@ -364,9 +376,9 @@ export default async function Home({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
+                <h2 className="text-sm font-medium text-green-800">
                   Passwort erfolgreich zurückgesetzt!
-                </h3>
+                </h2>
                 <div className="mt-2 text-sm text-green-700">
                   <p>
                     Ihr Passwort wurde erfolgreich aktualisiert. Sie sind jetzt

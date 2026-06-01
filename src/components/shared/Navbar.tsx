@@ -38,7 +38,9 @@ export default function Navbar() {
   const menuRef = useRef<HTMLDivElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const modulesRef = useRef<HTMLDivElement>(null)
+  const modulesButtonRef = useRef<HTMLButtonElement>(null)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null)
   const [supabase, setSupabase] = useState<ReturnType<typeof getBrowserClient> | null>(null)
   const fetchInProgress = useRef(false)
   const lastFetchTime = useRef<number>(0)
@@ -163,6 +165,32 @@ export default function Navbar() {
     }
   }, [isOpen, isModulesOpen, isUserMenuOpen])
 
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+
+      if (isUserMenuOpen) {
+        setIsUserMenuOpen(false)
+        userMenuButtonRef.current?.focus()
+        return
+      }
+
+      if (isModulesOpen) {
+        setIsModulesOpen(false)
+        modulesButtonRef.current?.focus()
+        return
+      }
+
+      if (isOpen) {
+        setIsOpen(false)
+        menuButtonRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isOpen, isModulesOpen, isUserMenuOpen])
+
   const handleModuleClick = (e: React.MouseEvent, moduleId: string) => {
     // Allow both authenticated and guest users to access modules
     // No need to prevent default or show login modal
@@ -173,7 +201,10 @@ export default function Navbar() {
   // Don't render during SSR/build time - now using conditional rendering instead of early return
   if (!mounted) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <nav
+        aria-label="Hauptnavigation"
+        className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0">
@@ -191,6 +222,7 @@ export default function Navbar() {
     <>
       <div className="fixed top-0 left-0 right-0 z-50">
         <nav
+          aria-label="Hauptnavigation"
           className={`bg-brand-primary transition-all duration-300 ease-in-out ${
             isScrolled
               ? 'shadow-xl border-b-2 border-gray-400'
@@ -224,16 +256,21 @@ export default function Navbar() {
               {/* Lernmodule Dropdown */}
               <div className="relative" ref={modulesRef}>
                 <button
+                  ref={modulesButtonRef}
                   onClick={() => setIsModulesOpen(!isModulesOpen)}
                   onMouseEnter={() => setIsModulesOpen(true)}
+                  aria-expanded={isModulesOpen}
+                  aria-controls="desktop-modules-menu"
+                  aria-haspopup="true"
                   className="flex items-center text-white hover:text-blue-100 transition-colors duration-200 text-xl font-semibold"
                 >
                   Lernmodule
-                  <ChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${isModulesOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown aria-hidden="true" className={`ml-1 h-4 w-4 transition-transform duration-200 ${isModulesOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isModulesOpen && (
                   <div
+                    id="desktop-modules-menu"
                     className="absolute top-full left-0 mt-2 w-96 bg-brand-primary rounded-lg shadow-xl border border-brand-primary-hover z-50"
                     onMouseEnter={() => setIsModulesOpen(true)}
                     onMouseLeave={() => setIsModulesOpen(false)}
@@ -280,23 +317,27 @@ export default function Navbar() {
               ) : user ? (
                 <div className="relative" ref={userMenuRef}>
                   <button
+                    ref={userMenuButtonRef}
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    aria-expanded={isUserMenuOpen}
+                    aria-controls="desktop-user-menu"
+                    aria-haspopup="true"
                     className="flex items-center space-x-2 bg-white text-brand-primary hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors duration-200 border border-gray-200"
                   >
-                    <User className="h-4 w-4" />
+                    <User aria-hidden="true" className="h-4 w-4" />
                     <span>{getDisplayName()}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isUserMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div id="desktop-user-menu" className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                       <div className="py-2">
                         <div className="px-4 py-2 border-b border-gray-100">
                           <div className="font-medium text-gray-900">
                             {getDisplayName()}
                           </div>
                           <div className="text-sm text-gray-500">{user.email}</div>
-                          <div className="text-xs text-gray-400 capitalize">
+                          <div className="text-xs text-gray-500 capitalize">
                             {getUserRole()}
                           </div>
                         </div>
@@ -307,7 +348,7 @@ export default function Navbar() {
                             className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            <User className="h-4 w-4 mr-2" />
+                            <User aria-hidden="true" className="h-4 w-4 mr-2" />
                             Admin Panel
                           </Link>
                         ) : (
@@ -316,7 +357,7 @@ export default function Navbar() {
                             className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            <User className="h-4 w-4 mr-2" />
+                            <User aria-hidden="true" className="h-4 w-4 mr-2" />
                             Dashboard
                           </Link>
                         )}
@@ -326,7 +367,7 @@ export default function Navbar() {
                           className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-brand-primary transition-colors"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
-                          <Award className="h-4 w-4 mr-2" />
+                          <Award aria-hidden="true" className="h-4 w-4 mr-2" />
                           Zertifikate
                         </Link>
 
@@ -334,7 +375,7 @@ export default function Navbar() {
                           onClick={handleLogout}
                           className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-red-600 transition-colors"
                         >
-                          <LogOut className="h-4 w-4 mr-2" />
+                          <LogOut aria-hidden="true" className="h-4 w-4 mr-2" />
                           Abmelden
                         </button>
                       </div>
@@ -370,9 +411,12 @@ export default function Navbar() {
               <button
                 ref={menuButtonRef}
                 onClick={() => setIsOpen(prev => !prev)}
+                aria-label={isOpen ? 'Menü schließen' : 'Menü öffnen'}
+                aria-expanded={isOpen}
+                aria-controls="mobile-navigation"
                 className="text-white hover:text-blue-100 focus:outline-none focus:text-blue-100 transition-colors duration-200"
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -386,7 +430,7 @@ export default function Navbar() {
 
           {/* Mobile Navigation */}
           {isOpen && (
-            <div ref={menuRef} className="md:hidden">
+            <div id="mobile-navigation" ref={menuRef} className="md:hidden">
               <div className="px-2 pt-2 pb-3 space-y-1 bg-brand-primary border-t border-brand-primary-hover">
                 {links.slice(0, 1).map((link) => (
                   <Link

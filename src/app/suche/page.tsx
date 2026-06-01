@@ -13,16 +13,16 @@ export default function SuchePage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="text-center py-16">
           <div className="text-gray-600 mb-4">
             Die Suchfunktion wird bald verfügbar sein
           </div>
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-600 text-sm">
             Schauen Sie später wieder vorbei oder besuchen Sie unsere Lernmodule.
           </p>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export default function DatenschutzerklaerungClient() {
   }, [])
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12">
+    <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-[#de0449] mb-6">Datenschutzerklärung</h1>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -33,6 +33,6 @@ export default function DatenschutzerklaerungClient() {
           ></iframe>
         </noscript>
       </div>
-    </main>
+    </div>
   )
 }

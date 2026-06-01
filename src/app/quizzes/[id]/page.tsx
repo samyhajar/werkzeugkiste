@@ -199,7 +199,7 @@ export default function QuizDetailPage() {
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center" role="status" aria-live="polite">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#486681] mx-auto mb-4"></div>
           <p className="text-gray-600">Überprüfe Anmeldung...</p>
         </div>
@@ -212,7 +212,7 @@ export default function QuizDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center" role="status" aria-live="polite">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Quiz wird geladen...</p>
         </div>
@@ -226,7 +226,7 @@ export default function QuizDetailPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
-              <HelpCircle className="h-6 w-6" />
+              <HelpCircle aria-hidden="true" className="h-6 w-6" />
               Quiz nicht gefunden
             </CardTitle>
           </CardHeader>
@@ -234,9 +234,9 @@ export default function QuizDetailPage() {
             <p className="text-gray-600">
               {error || 'Das angeforderte Quiz konnte nicht geladen werden.'}
             </p>
-            <Link href="/">
-              <Button>Zur Startseite</Button>
-            </Link>
+            <Button asChild>
+              <Link href="/">Zur Startseite</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -267,11 +267,11 @@ export default function QuizDetailPage() {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-4xl mx-auto px-4 py-8 pb-24">
+        <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-6 w-6 text-blue-600" />
+                <HelpCircle aria-hidden="true" className="h-6 w-6 text-blue-600" />
                 Quiz: {getQuizDisplayTitle(quiz.title)}
               </CardTitle>
               <CardDescription>
@@ -284,9 +284,9 @@ export default function QuizDetailPage() {
                 <>
                   {/* Quiz Instructions */}
                   <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                    <h3 className="font-semibold text-blue-800 mb-2">
+                    <h2 className="font-semibold text-blue-800 mb-2">
                       Quiz Anweisungen
-                    </h3>
+                    </h2>
                     <p className="text-blue-700 text-sm">
                       Beantworten Sie alle Fragen. Sie können Ihre Antworten
                       ändern, bevor Sie das Quiz einreichen.
@@ -297,13 +297,13 @@ export default function QuizDetailPage() {
                   {quiz.questions && quiz.questions.length > 0 ? (
                     <div className="space-y-6">
                       {quiz.questions.map((question, index) => (
-                        <div
+                        <fieldset
                           key={question.id}
                           className="border rounded-lg p-4"
                         >
-                          <h3 className="font-semibold text-lg mb-3">
+                          <legend className="font-semibold text-lg mb-3 px-1">
                             Frage {index + 1}: {question.question_html}
-                          </h3>
+                          </legend>
 
                           <div className="space-y-2">
                             {question.quiz_answers.map(answer => (
@@ -339,7 +339,7 @@ export default function QuizDetailPage() {
                               </label>
                             ))}
                           </div>
-                        </div>
+                        </fieldset>
                       ))}
                     </div>
                   ) : (
@@ -348,28 +348,22 @@ export default function QuizDetailPage() {
                     </div>
                   )}
 
-                  {/* Debug Info */}
-                  <div className="text-xs text-gray-500 mt-4 p-2 bg-gray-100 rounded">
-                    <p>Debug: {quiz.questions?.length || 0} Fragen geladen</p>
-                    <p>
-                      Debug: {Object.keys(selectedAnswers).length} Fragen
-                      beantwortet
-                    </p>
-                  </div>
                 </>
               ) : (
                 /* Results */
                 <div className="space-y-6">
                   <div
+                    role="status"
+                    aria-live="polite"
                     className={`p-6 rounded-lg text-center ${
                       results?.passed
                         ? 'bg-green-50 text-green-800'
                         : 'bg-red-50 text-red-800'
                     }`}
                   >
-                    <h3 className="font-semibold text-xl mb-2">
+                    <h2 className="font-semibold text-xl mb-2">
                       {results?.passed ? '🎉 Bestanden!' : '❌ Nicht bestanden'}
-                    </h3>
+                    </h2>
                     <p className="text-lg">
                       Punktzahl: {results?.score_percentage?.toFixed(1)}% (
                       {results?.earned_points}/{results?.total_points} Punkte)
@@ -390,20 +384,24 @@ export default function QuizDetailPage() {
                   </div>
 
                   <div className="flex gap-4 justify-center flex-wrap">
-                    <Link href="/">
-                      <Button variant="outline">Zur Startseite</Button>
-                    </Link>
-                    <Link
-                      href={quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/'}
-                    >
-                      <Button>Zur Lektion</Button>
-                    </Link>
+                    <Button asChild variant="outline">
+                      <Link href="/">Zur Startseite</Link>
+                    </Button>
+                    <Button asChild>
+                      <Link
+                        href={
+                          quiz.lesson_id ? `/lessons/${quiz.lesson_id}` : '/'
+                        }
+                      >
+                        Zur Lektion
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        </main>
+        </div>
 
         {/* Sticky Submit Button */}
         {!submitted && quiz?.questions && quiz.questions.length > 0 && (

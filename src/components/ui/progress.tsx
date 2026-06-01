@@ -19,9 +19,12 @@ function Progress({
   progressColor,
   ...props
 }: ProgressProps) {
+  const normalizedValue = Math.min(100, Math.max(0, value || 0))
+
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      value={normalizedValue}
       className={cn(
         "relative w-full overflow-hidden rounded-full",
         variant === "default" && "bg-primary/20",
@@ -43,7 +46,7 @@ function Progress({
           variant === "custom" && progressColor ? "" : "bg-[#486681]"
         )}
         style={{
-          transform: `translateX(-${100 - (value || 0)}%)`,
+          transform: `translateX(-${100 - normalizedValue}%)`,
           backgroundColor: variant === "custom" && progressColor ? progressColor : undefined
         }}
       />

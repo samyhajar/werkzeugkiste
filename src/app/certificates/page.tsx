@@ -241,10 +241,10 @@ export default function CertificatesPage() {
           </h1>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {certificates.length === 0 ? (
           <div className="text-center py-12">
-            <Award className="mx-auto h-12 w-12 text-gray-400" />
+            <Award aria-hidden="true" className="mx-auto h-12 w-12 text-gray-500" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               Keine Zertifikate gefunden
             </h3>
@@ -297,7 +297,7 @@ export default function CertificatesPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }

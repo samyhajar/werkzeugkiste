@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import ScrollToTopButton from './ScrollToTopButton'
 
 export default function Footer() {
   return (
@@ -36,8 +35,6 @@ export default function Footer() {
           </a>
         </div>
       </div>
-
-      <ScrollToTopButton />
     </footer>
   )
 }

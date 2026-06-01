@@ -75,31 +75,35 @@ export default function ForgotPasswordPage() {
               className="rounded-full"
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Passwort vergessen?</h2>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Passwort vergessen?</h1>
           <p className="text-sm text-gray-600">
             Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts
           </p>
         </div>
 
         {error && (
-          <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200" role="alert">
+          <div id="forgot-password-error" className="p-4 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200" role="alert">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200" role="alert">
+          <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200" role="status" aria-live="polite">
             {success}
           </div>
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <p className="text-sm text-gray-600">
+            Mit <span aria-hidden="true">*</span> markierte Felder sind
+            Pflichtfelder.
+          </p>
           <div>
             <label
               htmlFor="email"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              E-Mail-Adresse
+              E-Mail-Adresse <span aria-hidden="true">*</span>
             </label>
             <input
               id="email"
@@ -108,10 +112,12 @@ export default function ForgotPasswordPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
+              className="block w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
               placeholder="ihre@email.com"
               disabled={loading}
               autoFocus
+              aria-invalid={!!error}
+              aria-describedby={error ? 'forgot-password-error' : undefined}
             />
           </div>
 

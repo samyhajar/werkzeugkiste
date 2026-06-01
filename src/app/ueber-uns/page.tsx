@@ -10,16 +10,16 @@ export default async function UeberUnsPage() {
   const page = await getStaticPageBySlug('ueber-uns')
   if (page?.content_html) {
     return (
-      <main className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto px-4 py-12">
         <StaticPageContent
           html={page.content_html}
           className="prose prose-lg max-w-none prose-headings:text-[#de0449] prose-headings:font-bold prose-p:text-gray-700 prose-p:leading-relaxed prose-strong:text-gray-900 prose-strong:font-semibold prose-a:text-[#de0449] prose-a:no-underline hover:prose-a:underline prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700"
         />
-      </main>
+      </div>
     )
   }
   return (
-    <main className="max-w-6xl mx-auto px-4 py-12">
+    <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Header Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl font-bold text-[#de0449] mb-8">arbeit plus</h1>
@@ -371,6 +371,6 @@ export default async function UeberUnsPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

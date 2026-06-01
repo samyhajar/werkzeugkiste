@@ -139,7 +139,7 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-semibold text-gray-600 mb-2">Anmeldung erforderlich</h2>
           <p className="text-gray-500 mb-6">Bitte melden Sie sich an, um auf Ihr Dashboard zuzugreifen.</p>
           <Button
-            className="bg-[#486582] hover:bg-[#3f5970]"
+            className="bg-[#486582] text-white hover:bg-[#3f5970]"
             onClick={() =>
               router.push(`/auth/login?redirect=${encodeURIComponent(window.location.href)}`)
             }
@@ -161,7 +161,7 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -317,14 +317,14 @@ export default function StudentDashboard() {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">Noch keine Aktivitäten vorhanden.</p>
-                <p className="text-sm text-gray-400 mt-2">
+                <p className="text-sm text-gray-600 mt-2">
                   Beginnen Sie mit dem Lernen, um Aktivitäten zu sehen.
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       {/* Removed LoginModal component as it's now handled by useAuth */}
     </div>

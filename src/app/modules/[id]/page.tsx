@@ -312,7 +312,11 @@ function QuizContent({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+      <div
+        role="status"
+        aria-live="polite"
+        className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center"
+      >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <p className="text-gray-600">Quiz wird geladen...</p>
       </div>
@@ -321,7 +325,10 @@ function QuizContent({
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+      <div
+        role="alert"
+        className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center"
+      >
         <div className="text-red-600 text-6xl mb-4">⚠️</div>
         <h2 className="text-xl font-semibold text-gray-600 mb-2">
           Fehler beim Laden
@@ -337,7 +344,11 @@ function QuizContent({
   // Show results if quiz was submitted
   if (submitted && results) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <div
+        role="status"
+        aria-live="polite"
+        className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+      >
         <div className="p-8">
           <div className="text-center mb-6">
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
@@ -479,10 +490,13 @@ function QuizContent({
 
         <div className="space-y-6">
           {questions.map((question, index) => (
-            <div
+            <fieldset
               key={question.id}
               className="border border-gray-200 rounded-lg p-6"
             >
+              <legend className="sr-only">
+                Frage {index + 1}: {question.question_html}
+              </legend>
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-800 text-lg">
@@ -566,7 +580,14 @@ function QuizContent({
               {/* Special handling for different question types */}
               {question.type === 'free_text' && (
                 <div className="mt-4">
+                  <label
+                    htmlFor={`free-text-${question.id}`}
+                    className="sr-only"
+                  >
+                    Antwort auf Frage {index + 1}
+                  </label>
                   <textarea
+                    id={`free-text-${question.id}`}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={4}
                     placeholder="Ihre Antwort hier..."
@@ -580,7 +601,14 @@ function QuizContent({
 
               {question.type === 'fill_blank' && (
                 <div className="mt-4">
+                  <label
+                    htmlFor={`fill-blank-${question.id}`}
+                    className="sr-only"
+                  >
+                    Lückentext-Antwort auf Frage {index + 1}
+                  </label>
                   <input
+                    id={`fill-blank-${question.id}`}
                     type="text"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Lücken füllen..."
@@ -593,7 +621,7 @@ function QuizContent({
               )}
 
               {/* True/False questions are handled by the regular answer display above */}
-            </div>
+            </fieldset>
           ))}
         </div>
 
@@ -1352,14 +1380,21 @@ export default function ModuleDetailPage() {
         <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center px-4 sm:px-6">
           {/* Mobile: Sidebar Toggle Button */}
           <button
+            type="button"
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
             className="lg:hidden mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Toggle sidebar"
+            aria-label={
+              isMobileSidebarOpen
+                ? 'Modulnavigation schließen'
+                : 'Modulnavigation öffnen'
+            }
+            aria-expanded={isMobileSidebarOpen}
+            aria-controls="module-sidebar"
           >
             {isMobileSidebarOpen ? (
-              <X className="w-6 h-6" />
+              <X aria-hidden="true" className="w-6 h-6" />
             ) : (
-              <Menu className="w-6 h-6" />
+              <Menu aria-hidden="true" className="w-6 h-6" />
             )}
           </button>
 
@@ -1369,10 +1404,17 @@ export default function ModuleDetailPage() {
             {user && (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-[#486681]" />
+                  <BarChart3 aria-hidden="true" className="w-4 h-4 text-[#486681]" />
                 </div>
                 <div className="w-32">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    role="progressbar"
+                    aria-label={`Fortschritt im Modul ${module.title}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={getProgressPercentage()}
+                    className="w-full bg-gray-200 rounded-full h-2"
+                  >
                     <div
                       className="bg-[#486681] h-2 rounded-full transition-all duration-300"
                       style={{ width: `${getProgressPercentage()}%` }}
@@ -1393,7 +1435,7 @@ export default function ModuleDetailPage() {
             {user ? (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-[#486681] rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+                  <User aria-hidden="true" className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-sm">
                   <div className="font-medium text-gray-900">
@@ -1405,7 +1447,7 @@ export default function ModuleDetailPage() {
             ) : (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+                  <User aria-hidden="true" className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-sm">
                   <div className="font-medium text-gray-900">Gast</div>
@@ -1432,7 +1474,7 @@ export default function ModuleDetailPage() {
               href="/"
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-[#486681] transition-colors"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft aria-hidden="true" className="w-4 h-4" />
               Zurück zu Modulen
             </Link>
           </div>
@@ -1440,6 +1482,8 @@ export default function ModuleDetailPage() {
 
         {/* Sidebar */}
         <aside
+          id="module-sidebar"
+          aria-label="Modulnavigation"
           className={`fixed lg:sticky top-28 left-0 h-[calc(100vh-7rem)] max-w-full w-96 bg-white border-r border-gray-200 flex flex-col shadow-sm z-30 transition-transform duration-300 overflow-hidden ${
             isMobileSidebarOpen
               ? 'translate-x-0'
@@ -1466,7 +1510,10 @@ export default function ModuleDetailPage() {
                 >
                   {/* Course Header */}
                   <button
+                    type="button"
                     onClick={() => toggleCourseExpansion(course.id)}
+                    aria-expanded={expandedCourses.has(course.id)}
+                    aria-controls={`module-course-${course.id}`}
                     className="w-full px-4 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-3">
@@ -1474,21 +1521,21 @@ export default function ModuleDetailPage() {
                         {index + 1}
                       </span>
                       <div className="text-left">
-                        <h3 className="font-semibold text-gray-800 text-sm leading-tight">
+                        <h2 className="font-semibold text-gray-800 text-sm leading-tight">
                           {course.title}
-                        </h3>
+                        </h2>
                       </div>
                     </div>
                     {expandedCourses.has(course.id) ? (
-                      <ChevronUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <ChevronUp aria-hidden="true" className="h-5 w-5 text-gray-500 flex-shrink-0" />
                     ) : (
-                      <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <ChevronDown aria-hidden="true" className="h-5 w-5 text-gray-500 flex-shrink-0" />
                     )}
                   </button>
 
                   {/* Expanded Course Content */}
                   {expandedCourses.has(course.id) && (
-                    <div className="bg-white">
+                    <div id={`module-course-${course.id}`} className="bg-white">
                       <div className="px-4 py-2 space-y-1">
                         {/* Lessons */}
                         {[...course.lessons]
@@ -1508,8 +1555,14 @@ export default function ModuleDetailPage() {
                             return (
                               <div key={lesson.id}>
                                 <button
+                                  type="button"
                                   onClick={() => selectLesson(lesson)}
                                   disabled={isMarking}
+                                  aria-current={
+                                    selectedLesson?.id === lesson.id
+                                      ? 'page'
+                                      : undefined
+                                  }
                                   className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
                                     selectedLesson?.id === lesson.id
                                       ? 'bg-blue-50 text-blue-700'
@@ -1517,9 +1570,9 @@ export default function ModuleDetailPage() {
                                   } ${isCompleted ? 'text-green-700' : ''} ${isMarking ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                   {isCompleted ? (
-                                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                    <CheckCircle aria-hidden="true" className="h-4 w-4 text-green-600 flex-shrink-0" />
                                   ) : (
-                                    <FileText className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                    <FileText aria-hidden="true" className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                   )}
                                   <span
                                     className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
@@ -1548,8 +1601,14 @@ export default function ModuleDetailPage() {
                                     const isPassed = passedQuizzes.has(quiz.id)
                                     return (
                                       <button
+                                        type="button"
                                         key={quiz.id}
                                         onClick={() => selectQuiz(quiz)}
+                                        aria-current={
+                                          selectedQuiz?.id === quiz.id
+                                            ? 'page'
+                                            : undefined
+                                        }
                                         className={`flex items-center gap-3 py-2 px-2 ml-4 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
                                           selectedQuiz?.id === quiz.id
                                             ? 'bg-blue-50 text-blue-700'
@@ -1557,9 +1616,9 @@ export default function ModuleDetailPage() {
                                         } ${isPassed ? 'text-green-700' : ''}`}
                                       >
                                         {isPassed ? (
-                                          <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                          <CheckCircle aria-hidden="true" className="h-4 w-4 text-green-600 flex-shrink-0" />
                                         ) : (
-                                          <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                          <HelpCircle aria-hidden="true" className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                         )}
                                         <span
                                           className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
@@ -1589,8 +1648,14 @@ export default function ModuleDetailPage() {
                             const isPassed = passedQuizzes.has(quiz.id)
                             return (
                               <button
+                                type="button"
                                 key={quiz.id}
                                 onClick={() => selectQuiz(quiz)}
+                                aria-current={
+                                  selectedQuiz?.id === quiz.id
+                                    ? 'page'
+                                    : undefined
+                                }
                                 className={`flex items-center gap-3 py-2 px-2 hover:bg-gray-50 rounded transition-colors group w-full text-left cursor-pointer ${
                                   selectedQuiz?.id === quiz.id
                                     ? 'bg-blue-50 text-blue-700'
@@ -1598,9 +1663,9 @@ export default function ModuleDetailPage() {
                                 } ${isPassed ? 'text-green-700' : ''}`}
                               >
                                 {isPassed ? (
-                                  <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                  <CheckCircle aria-hidden="true" className="h-4 w-4 text-green-600 flex-shrink-0" />
                                 ) : (
-                                  <HelpCircle className="h-4 w-4 text-[#de0449] flex-shrink-0" />
+                                  <HelpCircle aria-hidden="true" className="h-4 w-4 text-[#de0449] flex-shrink-0" />
                                 )}
                                 <span
                                   className={`font-medium text-sm group-hover:text-[#b8043a] flex-1 ${
@@ -1671,9 +1736,9 @@ export default function ModuleDetailPage() {
 
                 {/* Centered Lesson Title */}
                 <div className="text-center mb-6">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                  <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
                     {selectedLesson.title}
-                  </h1>
+                  </h2>
                 </div>
               </div>
 
@@ -1697,7 +1762,7 @@ export default function ModuleDetailPage() {
                             <div className="flex items-center justify-center sm:justify-start">
                               {completedLessons.has(selectedLesson.id) ? (
                                 <div className="flex items-center gap-2 text-green-700">
-                                  <CheckCircle className="h-5 w-5" />
+                                  <CheckCircle aria-hidden="true" className="h-5 w-5" />
                                   <span className="font-medium">
                                     Lektion abgeschlossen
                                   </span>
@@ -1740,7 +1805,7 @@ export default function ModuleDetailPage() {
                                       ? 'Zum Quiz'
                                       : 'Nächste Lektion'}
                                   </span>
-                                  <ChevronRight className="h-4 w-4" />
+                                   <ChevronRight aria-hidden="true" className="h-4 w-4" />
                                 </button>
                               ) : null
                             })()}
@@ -1754,10 +1819,11 @@ export default function ModuleDetailPage() {
                                 Melde dich an, um deinen Fortschritt zu
                                 verfolgen und Zertifikate zu erhalten.
                               </p>
-                              <Link href="/auth/login">
-                                <button className="px-6 py-2 bg-[#486582] hover:bg-[#3f5970] text-white font-medium rounded-lg transition-colors">
-                                  Jetzt anmelden
-                                </button>
+                              <Link
+                                href="/auth/login"
+                                className="inline-block px-6 py-2 bg-[#486582] hover:bg-[#3f5970] text-white font-medium rounded-lg transition-colors"
+                              >
+                                Jetzt anmelden
                               </Link>
                             </div>
                             {(() => {
@@ -1778,7 +1844,7 @@ export default function ModuleDetailPage() {
                                         ? 'Zum Quiz'
                                         : 'Nächste Lektion'}
                                     </span>
-                                    <ChevronRight className="h-4 w-4" />
+                                    <ChevronRight aria-hidden="true" className="h-4 w-4" />
                                   </button>
                                 </div>
                               ) : null
@@ -1827,9 +1893,9 @@ export default function ModuleDetailPage() {
 
                 {/* Centered Quiz Title */}
                 <div className="text-center mb-6">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
+                  <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
                     {getQuizDisplayTitle(selectedQuiz.title)}
-                  </h1>
+                  </h2>
                   <div className="flex items-center justify-center gap-4 text-gray-600">
                     <span className="flex items-center gap-2">Quiz</span>
                     {selectedQuiz.description && (

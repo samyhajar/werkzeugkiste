@@ -186,7 +186,7 @@ export default function SetPasswordPage() {
                 className="rounded-full"
               />
             </div>
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Ungültiger Einladungslink</h2>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Ungültiger Einladungslink</h1>
             <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => router.push('/')}
@@ -214,29 +214,33 @@ export default function SetPasswordPage() {
               className="rounded-full"
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Willkommen</h2>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Willkommen</h1>
           <p className="text-sm text-gray-600">Erstellen Sie ein neues Passwort für Ihr Konto</p>
         </div>
 
         {error && (
-          <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200" role="alert">
+          <div id="set-password-error" className="p-4 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200" role="alert">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200" role="alert">
+          <div className="p-4 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200" role="status" aria-live="polite">
             {success}
           </div>
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <p className="text-sm text-gray-600">
+            Mit <span aria-hidden="true">*</span> markierte Felder sind
+            Pflichtfelder.
+          </p>
           <div>
             <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Neues Passwort
+              Neues Passwort <span aria-hidden="true">*</span>
             </label>
             <input
               id="password"
@@ -245,8 +249,10 @@ export default function SetPasswordPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#3b5169] focus:border-[#3b5169] sm:text-sm"
+              className="block w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#3b5169] focus:border-[#3b5169] sm:text-sm"
               placeholder="Mindestens 6 Zeichen"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'set-password-error' : undefined}
             />
           </div>
 
@@ -255,7 +261,7 @@ export default function SetPasswordPage() {
               htmlFor="confirm-password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Passwort bestätigen
+              Passwort bestätigen <span aria-hidden="true">*</span>
             </label>
             <input
               id="confirm-password"
@@ -264,8 +270,10 @@ export default function SetPasswordPage() {
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="block w-full px-3 py-2 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#3b5169] focus:border-[#3b5169] sm:text-sm"
+              className="block w-full px-3 py-2 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#3b5169] focus:border-[#3b5169] sm:text-sm"
               placeholder="Passwort wiederholen"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'set-password-error' : undefined}
             />
           </div>
 

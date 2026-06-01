@@ -133,6 +133,29 @@ body {
   color: hsl(var(--foreground));
 }
 
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 10000;
+  transform: translateY(-200%);
+  border-radius: 0.375rem;
+  background: white;
+  color: #24384c;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid #de0449;
+  outline-offset: 3px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -150,6 +173,17 @@ body {
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

@@ -346,9 +346,9 @@ export default function PasswordResetPage() {
                 className="rounded-full"
               />
             </div>
-            <h2 className="text-2xl font-bold text-red-600 mb-4">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">
               Ungültiger Link
-            </h2>
+            </h1>
             <p className="text-gray-600 mb-4">{error}</p>
             <p className="text-sm text-gray-500 mb-6">
               Der Link zum Zurücksetzen des Passworts ist abgelaufen oder
@@ -391,9 +391,9 @@ export default function PasswordResetPage() {
               className="rounded-full"
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Passwort zurücksetzen
-          </h2>
+          </h1>
           <p className="text-sm text-gray-600">
             Geben Sie Ihr neues Passwort ein
           </p>
@@ -401,6 +401,7 @@ export default function PasswordResetPage() {
 
         {error && (
           <div
+            id="password-reset-error"
             className="p-4 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200"
             role="alert"
           >
@@ -411,19 +412,24 @@ export default function PasswordResetPage() {
         {success && (
           <div
             className="p-4 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200"
-            role="alert"
+            role="status"
+            aria-live="polite"
           >
             {success}
           </div>
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <p className="text-sm text-gray-600">
+            Mit <span aria-hidden="true">*</span> markierte Felder sind
+            Pflichtfelder.
+          </p>
           <div>
             <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Neues Passwort
+              Neues Passwort <span aria-hidden="true">*</span>
             </label>
             <div className="relative">
               <input
@@ -433,23 +439,25 @@ export default function PasswordResetPage() {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="block w-full px-3 py-2 pr-12 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
+                className="block w-full px-3 py-2 pr-12 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
                 placeholder="Mindestens 6 Zeichen"
                 disabled={loading}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'password-reset-error' : undefined}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486682] transition-colors p-1 rounded-lg hover:bg-gray-100"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#486682] transition-colors p-1 rounded-lg hover:bg-gray-100"
                 disabled={loading}
                 aria-label={
                   showPassword ? 'Passwort verstecken' : 'Passwort anzeigen'
                 }
               >
                 {showPassword ? (
-                  <Eye className="w-5 h-5" />
+                  <Eye aria-hidden="true" className="w-5 h-5" />
                 ) : (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff aria-hidden="true" className="w-5 h-5" />
                 )}
               </button>
             </div>
@@ -460,7 +468,7 @@ export default function PasswordResetPage() {
               htmlFor="confirm-password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Passwort bestätigen
+              Passwort bestätigen <span aria-hidden="true">*</span>
             </label>
             <div className="relative">
               <input
@@ -470,25 +478,27 @@ export default function PasswordResetPage() {
                 required
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
-                className="block w-full px-3 py-2 pr-12 placeholder-gray-400 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
+                className="block w-full px-3 py-2 pr-12 placeholder-gray-500 border border-gray-300 rounded-md shadow-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#486682] focus:border-[#486682] sm:text-sm"
                 placeholder="Passwort wiederholen"
                 disabled={loading}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'password-reset-error' : undefined}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#486682] transition-colors p-1 rounded-lg hover:bg-gray-100"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#486682] transition-colors p-1 rounded-lg hover:bg-gray-100"
                 disabled={loading}
                 aria-label={
                   showConfirmPassword
-                    ? 'Passwort verstecken'
-                    : 'Passwort anzeigen'
+                    ? 'Bestätigungspasswort verstecken'
+                    : 'Bestätigungspasswort anzeigen'
                 }
               >
                 {showConfirmPassword ? (
-                  <Eye className="w-5 h-5" />
+                  <Eye aria-hidden="true" className="w-5 h-5" />
                 ) : (
-                  <EyeOff className="w-5 h-5" />
+                  <EyeOff aria-hidden="true" className="w-5 h-5" />
                 )}
               </button>
             </div>

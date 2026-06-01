@@ -47,7 +47,6 @@ export function CloudinaryImg({
   const altText = useCloudinaryAlt(src, fallbackAlt)
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={altText} {...props} />
   )
 }

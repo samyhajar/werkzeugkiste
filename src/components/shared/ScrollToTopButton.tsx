@@ -23,11 +23,11 @@ export default function ScrollToTopButton() {
   return (
     <button
       type="button"
-      aria-label="Scroll to top"
+      aria-label="Zum Seitenanfang"
       onClick={handleClick}
       className="fixed bottom-6 right-6 z-[9999] rounded-full bg-background p-3 shadow-lg ring-1 ring-foreground/10 hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition"
     >
-      <ArrowUp className="h-5 w-5 text-foreground" />
+      <ArrowUp aria-hidden="true" className="h-5 w-5 text-foreground" />
     </button>
   )
 }
