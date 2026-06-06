@@ -1,6 +1,7 @@
 'use client'
 
 import { isCloudinaryUrl } from '@/lib/cloudinary'
+import { isProtectedImageUrl } from '@/lib/image-protection'
 import { useEffect, useRef, useState } from 'react'
 
 interface CloudinaryHtmlContentProps {
@@ -55,9 +56,28 @@ export default function CloudinaryHtmlContent({
         // Collect Cloudinary image URLs
         const cloudinaryImages: { img: HTMLImageElement; url: string }[] = []
         images.forEach(img => {
+          img.setAttribute('draggable', 'false')
+          img.setAttribute('data-protect-image', 'true')
+
           const src = img.getAttribute('src')
           if (src && isCloudinaryUrl(src)) {
             cloudinaryImages.push({ img, url: src })
+          }
+        })
+
+        const links = doc.querySelectorAll('a')
+        links.forEach(link => {
+          const href = link.getAttribute('href')
+          const download = link.getAttribute('download')
+
+          if (isProtectedImageUrl(href) || isProtectedImageUrl(download)) {
+            link.removeAttribute('href')
+            link.removeAttribute('download')
+            link.removeAttribute('target')
+            link.removeAttribute('rel')
+            link.setAttribute('aria-disabled', 'true')
+            link.setAttribute('data-protected-image-link', 'true')
+            link.setAttribute('tabindex', '-1')
           }
         })
 

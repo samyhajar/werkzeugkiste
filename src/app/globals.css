@@ -133,6 +133,20 @@ body {
   color: hsl(var(--foreground));
 }
 
+img,
+picture,
+canvas,
+[role='img'],
+[data-protect-image] {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+a[data-protected-image-link] {
+  cursor: default;
+}
+
 .skip-link {
   position: fixed;
   top: 0.75rem;
