@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Trash2, UserPlus, Mail, Shield, User, ChevronUp, ChevronDown } from 'lucide-react'
+import { Trash2, UserPlus, Shield, User, Users, ChevronUp, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -17,12 +17,14 @@ interface UserProfile {
   last_sign_in_at: string | null
 }
 
+type RoleFilter = 'all' | 'admin' | 'student'
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [newUser, setNewUser] = useState({
@@ -148,6 +150,21 @@ export default function UsersPage() {
     })
   }, [sortedUsers, searchTerm, roleFilter])
 
+  const roleCounts = useMemo(() => {
+    return {
+      all: users.length,
+      admin: users.filter(user => user.role === 'admin').length,
+      student: users.filter(user => user.role === 'student').length,
+    }
+  }, [users])
+
+  const selectedRoleLabel =
+    roleFilter === 'admin'
+      ? 'Admins'
+      : roleFilter === 'student'
+        ? 'Teilnehmer'
+        : 'Alle Benutzer'
+
   useEffect(() => {
     void fetchUsers()
   }, [fetchUsers])
@@ -183,14 +200,67 @@ export default function UsersPage() {
           />
           <select
             value={roleFilter}
-            onChange={e => setRoleFilter(e.target.value)}
+            onChange={e => setRoleFilter(e.target.value as RoleFilter)}
             className="w-[200px] h-12 px-4 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white"
           >
-            <option value="all">Alle Rollen</option>
-            <option value="admin">Admins</option>
-            <option value="student">Teilnehmer</option>
+            <option value="all">Alle Rollen ({roleCounts.all})</option>
+            <option value="admin">Admins ({roleCounts.admin})</option>
+            <option value="student">Teilnehmer ({roleCounts.student})</option>
           </select>
         </div>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => setRoleFilter('all')}
+            className={`flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors ${
+              roleFilter === 'all'
+                ? 'border-[#486681] bg-[#486681]/10 text-[#486681]'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <Users size={18} />
+              Alle
+            </span>
+            <span className="text-xl font-bold">{roleCounts.all}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('admin')}
+            className={`flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors ${
+              roleFilter === 'admin'
+                ? 'border-[#486681] bg-[#486681]/10 text-[#486681]'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <Shield size={18} />
+              Admins
+            </span>
+            <span className="text-xl font-bold">{roleCounts.admin}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('student')}
+            className={`flex items-center justify-between rounded-md border px-4 py-3 text-left transition-colors ${
+              roleFilter === 'student'
+                ? 'border-[#486681] bg-[#486681]/10 text-[#486681]'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <User size={18} />
+              Teilnehmer
+            </span>
+            <span className="text-xl font-bold">{roleCounts.student}</span>
+          </button>
+        </div>
+
+        <p className="mt-4 text-sm text-gray-600">
+          {selectedRoleLabel}: {roleCounts[roleFilter]}
+          {searchTerm.trim() ? `, angezeigt nach Suche: ${filteredUsers.length}` : ''}
+        </p>
       </div>
 
       {/* Users Table */}
