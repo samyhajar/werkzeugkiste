@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type { User } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const USERS_PER_PAGE = 1000
+const USERS_PER_PAGE = 100
 
 async function listAllAuthUsers(): Promise<User[]> {
   const supabase = createAdminClient()
@@ -22,9 +22,13 @@ async function listAllAuthUsers(): Promise<User[]> {
       throw error
     }
 
+    if (data.users.length === 0) {
+      break
+    }
+
     users.push(...data.users)
 
-    if (!data.nextPage) {
+    if (data.users.length < USERS_PER_PAGE) {
       break
     }
 

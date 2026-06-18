@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { User, Calendar, Award } from 'lucide-react'
+import { User, Calendar, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatDistance } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -13,17 +13,23 @@ export const dynamic = 'force-dynamic'
 
 interface Student {
   id: string
-  email: string
+  email?: string
   full_name: string | null
   role: string
   created_at: string
 }
+
+type PageSize = 25 | 50 | 100 | 'all'
+
+const PAGE_SIZE_OPTIONS: PageSize[] = [25, 50, 100, 'all']
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(25)
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -37,7 +43,10 @@ export default function StudentsPage() {
         if (response.ok) {
           const data = await response.json()
           if (data.success) {
-            setStudents(data.users || [])
+            const participantUsers = (data.users || []).filter(
+              (user: Student) => user.role === 'student'
+            )
+            setStudents(participantUsers)
           } else {
             setError(data.error || 'Failed to fetch students')
           }
@@ -55,10 +64,44 @@ export default function StudentsPage() {
     void fetchStudents()
   }, [])
 
-  const filteredStudents = students.filter(student =>
-    student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredStudents = useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase()
+
+    return students.filter(student =>
+      student.full_name?.toLowerCase().includes(normalizedSearch) ||
+      (student.email || '').toLowerCase().includes(normalizedSearch)
+    )
+  }, [students, searchTerm])
+
+  const totalPages = useMemo(() => {
+    if (pageSize === 'all') return 1
+    return Math.max(1, Math.ceil(filteredStudents.length / pageSize))
+  }, [filteredStudents.length, pageSize])
+
+  const paginatedStudents = useMemo(() => {
+    if (pageSize === 'all') return filteredStudents
+
+    const startIndex = (currentPage - 1) * pageSize
+    return filteredStudents.slice(startIndex, startIndex + pageSize)
+  }, [filteredStudents, currentPage, pageSize])
+
+  const visibleStart =
+    filteredStudents.length === 0 || pageSize === 'all'
+      ? filteredStudents.length === 0 ? 0 : 1
+      : (currentPage - 1) * pageSize + 1
+
+  const visibleEnd =
+    pageSize === 'all'
+      ? filteredStudents.length
+      : Math.min(currentPage * pageSize, filteredStudents.length)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, pageSize])
+
+  useEffect(() => {
+    setCurrentPage(page => Math.min(page, totalPages))
+  }, [totalPages])
 
   const totalStudents = students.length
   const recentStudents = students.filter(student => {
@@ -208,6 +251,11 @@ export default function StudentsPage() {
         </Card>
       ) : (
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="flex flex-col gap-3 border-b border-gray-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-gray-600">
+              Zeigt {visibleStart}-{visibleEnd} von {filteredStudents.length} Teilnehmern
+            </p>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -227,7 +275,7 @@ export default function StudentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredStudents.map((student, index) => (
+                {paginatedStudents.map((student, index) => (
                   <tr
                     key={student.id}
                     className={`
@@ -240,7 +288,7 @@ export default function StudentsPage() {
                         <div className="flex-shrink-0 h-10 w-10">
                           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#486681] to-[#3e5570] flex items-center justify-center shadow-sm">
                             <span className="text-white font-medium text-sm">
-                              {(student.full_name || student.email).charAt(0).toUpperCase()}
+                              {(student.full_name || student.email || '?').charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -255,7 +303,7 @@ export default function StudentsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{student.email}</div>
+                      <div className="text-sm text-gray-900">{student.email || 'Keine E-Mail'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
@@ -283,6 +331,48 @@ export default function StudentsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-gray-200 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-sm text-gray-600">
+              Seite {currentPage} von {totalPages}
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                Pro Seite
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setPageSize(value === 'all' ? 'all' : Number(value) as PageSize)
+                  }}
+                  className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm focus:border-[#486681] focus:outline-none focus:ring-2 focus:ring-[#486681]/20"
+                >
+                  {PAGE_SIZE_OPTIONS.map(option => (
+                    <option key={option} value={option}>
+                      {option === 'all' ? 'Alle' : option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                disabled={currentPage === 1 || pageSize === 'all'}
+                className="h-10 gap-2"
+              >
+                <ChevronLeft size={16} />
+                Zurueck
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                disabled={currentPage === totalPages || pageSize === 'all'}
+                className="h-10 gap-2"
+              >
+                Weiter
+                <ChevronRight size={16} />
+              </Button>
+            </div>
           </div>
         </div>
       )}

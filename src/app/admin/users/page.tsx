@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Trash2, UserPlus, Shield, User, Users, ChevronUp, ChevronDown } from 'lucide-react'
+import { Trash2, UserPlus, Shield, User, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 
@@ -18,6 +18,9 @@ interface UserProfile {
 }
 
 type RoleFilter = 'all' | 'admin' | 'student'
+type PageSize = 25 | 50 | 100 | 'all'
+
+const PAGE_SIZE_OPTIONS: PageSize[] = [25, 50, 100, 'all']
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -36,6 +39,8 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null)
   const [sortField, setSortField] = useState<'email' | 'role' | 'created_at'>('created_at')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(25)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -165,6 +170,36 @@ export default function UsersPage() {
         ? 'Teilnehmer'
         : 'Alle Benutzer'
 
+  const totalPages = useMemo(() => {
+    if (pageSize === 'all') return 1
+    return Math.max(1, Math.ceil(filteredUsers.length / pageSize))
+  }, [filteredUsers.length, pageSize])
+
+  const paginatedUsers = useMemo(() => {
+    if (pageSize === 'all') return filteredUsers
+
+    const startIndex = (currentPage - 1) * pageSize
+    return filteredUsers.slice(startIndex, startIndex + pageSize)
+  }, [filteredUsers, currentPage, pageSize])
+
+  const visibleStart =
+    filteredUsers.length === 0 || pageSize === 'all'
+      ? filteredUsers.length === 0 ? 0 : 1
+      : (currentPage - 1) * pageSize + 1
+
+  const visibleEnd =
+    pageSize === 'all'
+      ? filteredUsers.length
+      : Math.min(currentPage * pageSize, filteredUsers.length)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, roleFilter, pageSize])
+
+  useEffect(() => {
+    setCurrentPage(page => Math.min(page, totalPages))
+  }, [totalPages])
+
   useEffect(() => {
     void fetchUsers()
   }, [fetchUsers])
@@ -207,6 +242,24 @@ export default function UsersPage() {
             <option value="admin">Admins ({roleCounts.admin})</option>
             <option value="student">Teilnehmer ({roleCounts.student})</option>
           </select>
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <span className="sr-only">Pro Seite</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                const value = e.target.value
+                setPageSize(value === 'all' ? 'all' : Number(value) as PageSize)
+              }}
+              className="w-[160px] h-12 rounded-md border border-gray-300 bg-white px-4 text-base focus:border-[#486681] focus:outline-none focus:ring-2 focus:ring-[#486681]/20"
+              aria-label="Benutzer pro Seite"
+            >
+              {PAGE_SIZE_OPTIONS.map(option => (
+                <option key={option} value={option}>
+                  {option === 'all' ? 'Alle anzeigen' : `${option} pro Seite`}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -265,6 +318,11 @@ export default function UsersPage() {
 
       {/* Users Table */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-gray-600">
+            Zeigt {visibleStart}-{visibleEnd} von {filteredUsers.length} Benutzern
+          </p>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="bg-gradient-to-r from-[#486681] to-[#3e5570]">
@@ -275,7 +333,7 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredUsers.map(user => (
+            {paginatedUsers.map(user => (
               <tr key={user.id} className="bg-white hover:bg-gray-100 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
@@ -292,6 +350,31 @@ export default function UsersPage() {
             ))}
           </tbody>
         </table>
+        <div className="flex flex-col gap-3 border-t border-gray-200 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <p className="text-sm text-gray-600">
+            Seite {currentPage} von {totalPages}
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              disabled={currentPage === 1 || pageSize === 'all'}
+              className="h-10 gap-2"
+            >
+              <ChevronLeft size={16} />
+              Zurueck
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages || pageSize === 'all'}
+              className="h-10 gap-2"
+            >
+              Weiter
+              <ChevronRight size={16} />
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Invite User Dialog */}
