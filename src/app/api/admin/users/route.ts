@@ -1,20 +1,50 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import type { User } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+
+const USERS_PER_PAGE = 1000
+
+async function listAllAuthUsers(): Promise<User[]> {
+  const supabase = createAdminClient()
+  const users: User[] = []
+  let page = 1
+
+  while (true) {
+    const {
+      data,
+      error,
+    } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: USERS_PER_PAGE,
+    })
+
+    if (error) {
+      throw error
+    }
+
+    users.push(...data.users)
+
+    if (!data.nextPage) {
+      break
+    }
+
+    page += 1
+  }
+
+  return users
+}
 
 export async function GET() {
   const supabase = createAdminClient()
 
   try {
-    const {
-      data: { users },
-      error: usersError,
-    } = await supabase.auth.admin.listUsers()
-
-    if (usersError) {
-      throw usersError
-    }
+    const users = await listAllAuthUsers()
 
     const userIds = users.map(user => user.id)
+    if (userIds.length === 0) {
+      return NextResponse.json({ success: true, users: [] })
+    }
+
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, role, full_name')
@@ -85,11 +115,7 @@ export async function POST(request: Request) {
 
     // After invite or if user exists, get the user to update their role
     // We need to list users and find the one with the matching email, since the invite might not return the user if they already exist.
-    const {
-      data: { users },
-      error: listError,
-    } = await supabase.auth.admin.listUsers()
-    if (listError) throw listError
+    const users = await listAllAuthUsers()
 
     const user = users.find(u => u.email === email)
 
