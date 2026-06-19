@@ -154,17 +154,6 @@ export default function ModuleOverlay({
                   Modul starten
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="default"
-                className="w-full min-h-10 whitespace-normal border-[#486681] text-[#486681] hover:bg-[#486681]/10 font-semibold px-3 py-2 text-sm leading-tight sm:text-base"
-              >
-                <a href={modulePdfUrl}>
-                  <Download aria-hidden="true" className="mr-2 h-4 w-4" />
-                  <span>PDF herunterladen</span>
-                </a>
-              </Button>
             </div>
           </div>
 
@@ -343,17 +332,6 @@ export default function ModuleOverlay({
                       Modul starten
                     </Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="default"
-                    className="w-full min-h-10 whitespace-normal border-[#486681] text-[#486681] hover:bg-[#486681]/10 font-semibold px-3 py-2 text-sm leading-tight xl:text-base"
-                  >
-                    <a href={modulePdfUrl}>
-                      <Download aria-hidden="true" className="mr-2 h-4 w-4" />
-                      <span>PDF herunterladen</span>
-                    </a>
-                  </Button>
                 </div>
               </div>
             </div>
@@ -369,6 +347,19 @@ export default function ModuleOverlay({
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Materialien für Vortragende
               </h2>
+              <div className="rounded-lg border border-[#486681]/20 bg-[#486681]/5 p-4">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="default"
+                  className="min-h-10 w-full justify-start border-[#486681] bg-white px-3 py-2 text-sm font-semibold leading-tight text-[#486681] hover:bg-[#486681]/10 sm:w-auto sm:text-base"
+                >
+                  <a href={modulePdfUrl}>
+                    <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+                    <span>Modul als PDF herunterladen</span>
+                  </a>
+                </Button>
+              </div>
               {hasPresenterMaterialsContent ? (
                 <CloudinaryHtmlContent
                   html={presenterMaterialsContent}
