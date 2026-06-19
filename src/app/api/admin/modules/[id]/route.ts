@@ -12,6 +12,22 @@ interface UpdateModuleRequest {
   presenter_materials_urls?: { url: string; title: string }[]
 }
 
+const normalizePresenterMaterialUrls = (
+  urls: UpdateModuleRequest['presenter_materials_urls']
+) =>
+  (urls || [])
+    .filter(
+      item =>
+        item &&
+        typeof item.url === 'string' &&
+        typeof item.title === 'string' &&
+        item.url.trim() !== ''
+    )
+    .map(item => ({
+      url: item.url.trim(),
+      title: item.title.trim(),
+    }))
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -103,8 +119,6 @@ export async function PUT(
       title,
       description,
       hero_image,
-      presenter_materials_content,
-      presenter_materials_urls,
     } = body
 
     if (!title || !title.trim()) {
@@ -119,9 +133,18 @@ export async function PUT(
       title: title.trim(),
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
-      presenter_materials_content: presenter_materials_content?.trim() || null,
-      presenter_materials_urls: presenter_materials_urls || [],
       updated_at: new Date().toISOString(),
+    }
+
+    if ('presenter_materials_content' in body) {
+      updateData.presenter_materials_content =
+        body.presenter_materials_content?.trim() || null
+    }
+
+    if ('presenter_materials_urls' in body) {
+      updateData.presenter_materials_urls = normalizePresenterMaterialUrls(
+        body.presenter_materials_urls
+      )
     }
 
     const { data: module, error } = await (supabase as any)

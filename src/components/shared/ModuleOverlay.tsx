@@ -10,7 +10,14 @@ import {
 } from '@/components/ui/dialog'
 import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import { Tables } from '@/types/supabase'
-import { Book, ChevronDown, ChevronRight, FileText, X } from 'lucide-react'
+import {
+  Book,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FileText,
+  X,
+} from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
@@ -73,6 +80,8 @@ export default function ModuleOverlay({
     // The link will navigate automatically for both cases
   }
 
+  const modulePdfUrl = `/api/modules/${module.id}/pdf`
+
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       return
@@ -132,15 +141,31 @@ export default function ModuleOverlay({
         <div className="flex-1 overflow-y-auto p-8">
           {/* Mobile: Modul starten button at top */}
           <div className="lg:hidden mb-6">
-            <Button
-              asChild
-              size="lg"
-              className="w-full bg-[#486681] hover:bg-[#486681]/90 text-white font-bold py-4 text-lg"
-            >
-              <Link href={`/modules/${module.id}`} onClick={handleStartClick}>
-                Modul starten
-              </Link>
-            </Button>
+            <div className="space-y-3">
+              <Button
+                asChild
+                size="lg"
+                className="w-full bg-[#486681] hover:bg-[#486681]/90 text-white font-bold py-4 text-lg"
+              >
+                <Link
+                  href={`/modules/${module.id}`}
+                  onClick={handleStartClick}
+                >
+                  Modul starten
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="default"
+                className="w-full min-h-10 whitespace-normal border-[#486681] text-[#486681] hover:bg-[#486681]/10 font-semibold px-3 py-2 text-sm leading-tight sm:text-base"
+              >
+                <a href={modulePdfUrl}>
+                  <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+                  <span>PDF herunterladen</span>
+                </a>
+              </Button>
+            </div>
           </div>
 
           <div className="mb-8">
@@ -305,7 +330,7 @@ export default function ModuleOverlay({
               {/* Right Column */}
               <div className="space-y-8">
                 {/* Desktop: Modul starten button (hidden on mobile) */}
-                <div className="text-center hidden lg:block">
+                <div className="text-center hidden lg:block space-y-3">
                   <Button
                     asChild
                     size="lg"
@@ -317,6 +342,17 @@ export default function ModuleOverlay({
                     >
                       Modul starten
                     </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="default"
+                    className="w-full min-h-10 whitespace-normal border-[#486681] text-[#486681] hover:bg-[#486681]/10 font-semibold px-3 py-2 text-sm leading-tight xl:text-base"
+                  >
+                    <a href={modulePdfUrl}>
+                      <Download aria-hidden="true" className="mr-2 h-4 w-4" />
+                      <span>PDF herunterladen</span>
+                    </a>
                   </Button>
                 </div>
               </div>

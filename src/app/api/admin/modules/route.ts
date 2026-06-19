@@ -13,6 +13,22 @@ interface CreateModuleRequest {
   presenter_materials_urls?: { url: string; title: string }[]
 }
 
+const normalizePresenterMaterialUrls = (
+  urls: CreateModuleRequest['presenter_materials_urls']
+) =>
+  (urls || [])
+    .filter(
+      item =>
+        item &&
+        typeof item.url === 'string' &&
+        typeof item.title === 'string' &&
+        item.url.trim() !== ''
+    )
+    .map(item => ({
+      url: item.url.trim(),
+      title: item.title.trim(),
+    }))
+
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -46,10 +62,11 @@ export async function GET(_request: NextRequest) {
       )
     }
 
-    // Fetch all modules
+    // Fetch all modules. The admin editor needs the full row so hidden fields
+    // are not blanked when an existing module is opened and saved.
     const { data: modules, error } = await supabase
       .from('modules')
-      .select('id, title, description, hero_image, created_at, updated_at')
+      .select('*')
       .order('title', { ascending: true })
 
     if (error) {
@@ -125,7 +142,8 @@ export async function POST(request: NextRequest) {
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
       presenter_materials_content: presenter_materials_content?.trim() || null,
-      presenter_materials_urls: presenter_materials_urls || [],
+      presenter_materials_urls:
+        normalizePresenterMaterialUrls(presenter_materials_urls),
     }
 
     const { data: module, error } = await (supabase as any)
