@@ -4,19 +4,18 @@ import { CloudinaryImg } from '@/components/shared/CloudinaryImage'
 
 interface SlideImageProps {
   src: string
-  title: string
+  alt: string
   className?: string
 }
 
 /**
- * Client component wrapper for slide images
- * Fetches ALT text from Cloudinary automatically
+ * Client component wrapper for slide images.
  */
-export default function SlideImage({ src, title, className }: SlideImageProps) {
+export default function SlideImage({ src, alt, className }: SlideImageProps) {
   return (
     <CloudinaryImg
       src={src}
-      fallbackAlt={title}
+      alt={alt}
       className={className || 'max-h-28 w-auto object-contain'}
     />
   )

@@ -166,7 +166,10 @@ export default async function DigiSammlungPage() {
                       <div className="flex items-center gap-3">
                         {r.logo_url && (
                           <div className="h-10 w-28 flex items-center justify-center overflow-hidden">
-                            <ResourceLogo src={r.logo_url} title={r.title} />
+                            <ResourceLogo
+                              src={r.logo_url}
+                              alt={r.logo_alt || r.title}
+                            />
                           </div>
                         )}
                         <a

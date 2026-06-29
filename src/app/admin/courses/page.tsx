@@ -36,7 +36,8 @@ export default function CoursesPage() {
     title: '',
     description: '',
     module_id: '',
-    hero_image: ''
+    hero_image: '',
+    hero_image_alt: ''
   })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -149,7 +150,8 @@ export default function CoursesPage() {
             title: formData.title,
             description: formData.description,
             module_id: formData.module_id,
-            hero_image: formData.hero_image
+            hero_image: formData.hero_image,
+            hero_image_alt: formData.hero_image_alt
           }),
         })
 
@@ -165,7 +167,8 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: ''
+            hero_image: '',
+            hero_image_alt: ''
           })
           setCreateModalOpen(false)
           setEditingCourse(null)
@@ -195,7 +198,8 @@ export default function CoursesPage() {
             title: '',
             description: '',
             module_id: '',
-            hero_image: ''
+            hero_image: '',
+            hero_image_alt: ''
           })
           setCreateModalOpen(false)
         } else {
@@ -249,7 +253,8 @@ export default function CoursesPage() {
       title: course.title,
       description: course.description || '',
       module_id: course.module_id || '',
-      hero_image: course.hero_image || ''
+      hero_image: course.hero_image || '',
+      hero_image_alt: course.hero_image_alt || ''
     })
     setEditingCourse(course)
 
@@ -375,6 +380,10 @@ export default function CoursesPage() {
 
   const handleHeroImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, hero_image: e.target.value }))
+  }, [])
+
+  const handleHeroImageAltChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, hero_image_alt: e.target.value }))
   }, [])
 
 
@@ -597,18 +606,33 @@ export default function CoursesPage() {
                   <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
-                  <input
-                    type="url"
-                    id="hero_image"
-                    value={formData.hero_image}
-                    onChange={handleHeroImageChange}
-                    placeholder="https://example.com/image.jpg"
-                    className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ userSelect: 'text' }}
-                  />
-                  <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
+                    <input
+                      type="url"
+                      id="hero_image"
+                      value={formData.hero_image}
+                      onChange={handleHeroImageChange}
+                      placeholder="https://example.com/image.jpg"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
+                    />
+                    <p className="text-xs text-gray-500">Optional: Add a hero image for the course</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="hero_image_alt" className="text-xs font-semibold text-gray-700">Course Hero Image Alt Text</label>
+                    <input
+                      type="text"
+                      id="hero_image_alt"
+                      value={formData.hero_image_alt}
+                      onChange={handleHeroImageAltChange}
+                      placeholder="Describe the image for screen readers"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
+                    />
+                    <p className="text-xs text-gray-500">Describe the image for screen readers. Leave empty only if decorative.</p>
+                  </div>
                 </div>
               </div>
 

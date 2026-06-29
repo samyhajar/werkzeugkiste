@@ -44,6 +44,8 @@ export function sanitizeLessonHtml(html: string | null | undefined): string {
       ADD_ATTR: [
         'class',
         'src',
+        'alt',
+        'title',
         'allow',
         'allowfullscreen',
         'frameborder',

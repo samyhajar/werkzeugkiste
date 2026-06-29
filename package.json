@@ -14,6 +14,8 @@
     "db-types": "npx supabase gen types typescript --project-id bdjluwlwxqdgkulkjozj > src/types/supabase.ts",
     "db-reset": "supabase db reset",
     "db-push": "supabase db push",
+    "report:image-alt": "node scripts/report-course-module-image-alt.js",
+    "backfill:image-metadata": "node scripts/backfill-cloudinary-image-metadata.js",
     "prepare": "husky"
   },
   "dependencies": {

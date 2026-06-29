@@ -1,33 +1,22 @@
 'use client'
 
-import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import Image, { ImageProps } from 'next/image'
 
 interface CloudinaryImageProps extends Omit<ImageProps, 'alt'> {
   src: string
-  fallbackAlt: string
+  alt: string
 }
 
 /**
- * Image component that automatically fetches ALT text from Cloudinary
- * If no ALT text is set in Cloudinary, falls back to the provided fallbackAlt
- *
- * Usage:
- * <CloudinaryImage
- *   src={imageUrl}
- *   fallbackAlt="Description"
- *   width={400}
- *   height={300}
- * />
+ * Image wrapper kept for existing Cloudinary image call sites.
+ * ALT text must come from application data, not runtime Cloudinary fetches.
  */
 export default function CloudinaryImage({
   src,
-  fallbackAlt,
+  alt,
   ...props
 }: CloudinaryImageProps) {
-  const altText = useCloudinaryAlt(src, fallbackAlt)
-
-  return <Image src={src} alt={altText} {...props} />
+  return <Image src={src} alt={alt} {...props} />
 }
 
 /**
@@ -36,17 +25,13 @@ export default function CloudinaryImage({
 interface CloudinaryImgProps
   extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'alt'> {
   src: string
-  fallbackAlt: string
+  alt: string
 }
 
 export function CloudinaryImg({
   src,
-  fallbackAlt,
+  alt,
   ...props
 }: CloudinaryImgProps) {
-  const altText = useCloudinaryAlt(src, fallbackAlt)
-
-  return (
-    <img src={src} alt={altText} {...props} />
-  )
+  return <img src={src} alt={alt} {...props} />
 }

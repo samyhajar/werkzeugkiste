@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { resolveImageMetadataUpdate } from '@/lib/cloudinary-metadata.server'
 import type { Database } from '@/types/supabase'
 
 type CourseUpdate = Database['public']['Tables']['courses']['Update']
@@ -9,6 +10,7 @@ interface UpdateCourseRequest {
   description?: string
   module_id?: string
   hero_image?: string
+  hero_image_alt?: string
 }
 
 export async function DELETE(
@@ -133,13 +135,45 @@ export async function PUT(
       )
     }
 
+    const { data: existingCourse } = await supabase
+      .from('courses')
+      .select(
+        'hero_image, hero_image_alt, hero_image_public_id, hero_image_width, hero_image_height, hero_image_format'
+      )
+      .eq('id', courseId)
+      .single()
+
+    const previousCourseImage = existingCourse as any
+
+    const imageMetadata = await resolveImageMetadataUpdate({
+      prefix: 'hero_image',
+      imageUrl: body.hero_image,
+      previousImageUrl: previousCourseImage?.hero_image,
+      previousMetadata: previousCourseImage
+        ? {
+            alt: previousCourseImage.hero_image_alt,
+            publicId: previousCourseImage.hero_image_public_id,
+            width: previousCourseImage.hero_image_width,
+            height: previousCourseImage.hero_image_height,
+            format: previousCourseImage.hero_image_format,
+          }
+        : undefined,
+    })
+
+    const explicitHeroImageAlt =
+      'hero_image_alt' in body
+        ? body.hero_image_alt?.trim() || null
+        : previousCourseImage?.hero_image_alt ?? null
+
     // Update the course
     const updateData: CourseUpdate = {
       title: body.title.trim(),
       description: body.description || null,
       module_id: body.module_id || null,
-      hero_image: body.hero_image || null,
+      hero_image: body.hero_image?.trim() || null,
       updated_at: new Date().toISOString(),
+      ...(imageMetadata as any),
+      hero_image_alt: explicitHeroImageAlt,
     }
 
     const { data: updatedCourse, error: updateError } = await (supabase as any)

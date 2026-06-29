@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import { Tables } from '@/types/supabase'
 import Image from 'next/image'
 import { useRef, useState } from 'react'
@@ -31,8 +30,7 @@ export default function ModuleCard({
   const loginModalRef = useRef<LoginModalRef>(null)
   const detailsButtonRef = useRef<HTMLButtonElement>(null)
 
-  // Fetch ALT text from Cloudinary, fallback to module title
-  const imageAlt = useCloudinaryAlt(module.hero_image, module.title)
+  const imageAlt = module.hero_image_alt || module.title
 
   const handleShowLogin = () => {
     loginModalRef.current?.show('login', `/modules/${module.id}`)

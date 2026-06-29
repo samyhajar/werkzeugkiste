@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { resolveImageMetadataUpdate } from '@/lib/cloudinary-metadata.server'
 import type { Database } from '@/types/supabase'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -74,6 +75,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
+  const { data: existingResource } = id
+    ? await supabase
+        .from('digi_resources')
+        .select('logo_url, logo_alt, logo_public_id, logo_width, logo_height, logo_format')
+        .eq('id', id)
+        .maybeSingle()
+    : { data: null }
+
+  const previousResourceImage = existingResource as any
+
+  const imageMetadata = await resolveImageMetadataUpdate({
+    prefix: 'logo',
+    imageUrl: logo_url,
+    previousImageUrl: previousResourceImage?.logo_url,
+    previousMetadata: previousResourceImage
+      ? {
+          alt: previousResourceImage.logo_alt,
+          publicId: previousResourceImage.logo_public_id,
+          width: previousResourceImage.logo_width,
+          height: previousResourceImage.logo_height,
+          format: previousResourceImage.logo_format,
+        }
+      : undefined,
+    fallbackAlt: title,
+  })
+
   const payload = {
     id,
     category_id,
@@ -82,6 +109,7 @@ export async function POST(req: NextRequest) {
     url,
     logo_url,
     sort_order,
+    ...(imageMetadata as any),
   }
   const { data, error } = await (supabase
     .from('digi_resources')

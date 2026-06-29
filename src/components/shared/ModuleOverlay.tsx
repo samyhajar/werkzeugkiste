@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useCloudinaryAlt } from '@/hooks/useCloudinaryAlt'
 import { Tables } from '@/types/supabase'
 import {
   Book,
@@ -62,8 +61,7 @@ export default function ModuleOverlay({
   const hasPresenterMaterialsContent =
     presenterMaterialsContent.trim().length > 0
 
-  // Fetch ALT text from Cloudinary, fallback to module title
-  const imageAlt = useCloudinaryAlt(module.hero_image, module.title)
+  const imageAlt = module.hero_image_alt || module.title
 
   const toggleCourse = (courseId: string) => {
     const newExpanded = new Set(expandedCourses)

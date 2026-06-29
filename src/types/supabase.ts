@@ -101,6 +101,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           hero_image: string | null
+          hero_image_alt: string | null
+          hero_image_format: string | null
+          hero_image_height: number | null
+          hero_image_public_id: string | null
+          hero_image_width: number | null
           id: string
           legacy_id: string | null
           module_id: string | null
@@ -114,6 +119,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           hero_image?: string | null
+          hero_image_alt?: string | null
+          hero_image_format?: string | null
+          hero_image_height?: number | null
+          hero_image_public_id?: string | null
+          hero_image_width?: number | null
           id?: string
           legacy_id?: string | null
           module_id?: string | null
@@ -127,6 +137,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           hero_image?: string | null
+          hero_image_alt?: string | null
+          hero_image_format?: string | null
+          hero_image_height?: number | null
+          hero_image_public_id?: string | null
+          hero_image_width?: number | null
           id?: string
           legacy_id?: string | null
           module_id?: string | null
@@ -190,7 +205,12 @@ export type Database = {
           body: string | null
           created_at: string
           id: string
+          image_alt: string | null
+          image_format: string | null
+          image_height: number | null
+          image_public_id: string | null
           image_url: string | null
+          image_width: number | null
           link_url: string | null
           resource_id: string
           sort_order: number
@@ -201,7 +221,12 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          image_alt?: string | null
+          image_format?: string | null
+          image_height?: number | null
+          image_public_id?: string | null
           image_url?: string | null
+          image_width?: number | null
           link_url?: string | null
           resource_id: string
           sort_order?: number
@@ -212,7 +237,12 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
+          image_alt?: string | null
+          image_format?: string | null
+          image_height?: number | null
+          image_public_id?: string | null
           image_url?: string | null
+          image_width?: number | null
           link_url?: string | null
           resource_id?: string
           sort_order?: number
@@ -235,7 +265,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          logo_alt: string | null
+          logo_format: string | null
+          logo_height: number | null
+          logo_public_id: string | null
           logo_url: string | null
+          logo_width: number | null
           sort_order: number
           title: string
           updated_at: string
@@ -246,7 +281,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          logo_alt?: string | null
+          logo_format?: string | null
+          logo_height?: number | null
+          logo_public_id?: string | null
           logo_url?: string | null
+          logo_width?: number | null
           sort_order?: number
           title: string
           updated_at?: string
@@ -257,7 +297,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          logo_alt?: string | null
+          logo_format?: string | null
+          logo_height?: number | null
+          logo_public_id?: string | null
           logo_url?: string | null
+          logo_width?: number | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -572,6 +617,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           hero_image: string | null
+          hero_image_alt: string | null
+          hero_image_format: string | null
+          hero_image_height: number | null
+          hero_image_public_id: string | null
+          hero_image_width: number | null
           id: string
           legacy_id: number | null
           order: number | null
@@ -584,6 +634,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           hero_image?: string | null
+          hero_image_alt?: string | null
+          hero_image_format?: string | null
+          hero_image_height?: number | null
+          hero_image_public_id?: string | null
+          hero_image_width?: number | null
           id?: string
           legacy_id?: number | null
           order?: number | null
@@ -596,6 +651,11 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           hero_image?: string | null
+          hero_image_alt?: string | null
+          hero_image_format?: string | null
+          hero_image_height?: number | null
+          hero_image_public_id?: string | null
+          hero_image_width?: number | null
           id?: string
           legacy_id?: number | null
           order?: number | null

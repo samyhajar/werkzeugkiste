@@ -391,7 +391,7 @@ export default async function ModulePrintPage({
             moduleData.hero_image || '/placeholder.png',
             moduleData.updated_at || moduleData.created_at || moduleData.id
           )}
-          alt=""
+          alt={moduleData.hero_image_alt || moduleData.title || ''}
         />
         <h1>{moduleData.title}</h1>
       </section>

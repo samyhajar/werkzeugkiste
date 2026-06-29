@@ -51,6 +51,7 @@ const RichTextEditor = ({
 }: RichTextEditorProps) => {
   const [linkUrl, setLinkUrl] = useState('')
   const [imageUrl, setImageUrl] = useState('')
+  const [imageAlt, setImageAlt] = useState('')
   const [imageWidth, setImageWidth] = useState('')
   const [imageHeight, setImageHeight] = useState('')
   const [imageSize, setImageSize] = useState('medium')
@@ -208,7 +209,17 @@ const RichTextEditor = ({
         height = imageHeight ? `${imageHeight}px` : undefined
       }
 
-      const imageAttributes: any = { src: imageUrl }
+      const normalizedAlt = Array.from(imageAlt)
+        .filter(char => {
+          const code = char.charCodeAt(0)
+          return code > 31 && code !== 127
+        })
+        .join('')
+        .trim()
+      const imageAttributes: any = {
+        src: imageUrl,
+        alt: normalizedAlt,
+      }
       if (width) imageAttributes.width = width
       if (height && height !== 'auto') imageAttributes.height = height
 
@@ -216,6 +227,7 @@ const RichTextEditor = ({
 
       // Reset form
       setImageUrl('')
+      setImageAlt('')
       setImageWidth('')
       setImageHeight('')
       setImageSize('medium')
@@ -496,6 +508,19 @@ const RichTextEditor = ({
                   onChange={e => setImageUrl(e.target.value)}
                   placeholder="https://example.com/image.jpg"
                 />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="image-alt">Alt Text</Label>
+                <Input
+                  id="image-alt"
+                  value={imageAlt}
+                  onChange={e => setImageAlt(e.target.value)}
+                  placeholder="Describe the image for screen readers"
+                />
+                <p className="text-xs text-gray-500">
+                  Leave empty only if the image is decorative.
+                </p>
               </div>
 
               <div className="grid gap-2">

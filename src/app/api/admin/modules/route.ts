@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { resolveImageMetadataUpdate } from '@/lib/cloudinary-metadata.server'
 import type { Database } from '@/types/supabase'
 
 type ModuleInsert = Database['public']['Tables']['modules']['Insert']
@@ -9,6 +10,7 @@ interface CreateModuleRequest {
   title: string
   description?: string
   hero_image?: string
+  hero_image_alt?: string
   presenter_materials_content?: string
   presenter_materials_urls?: { url: string; title: string }[]
 }
@@ -125,6 +127,7 @@ export async function POST(request: NextRequest) {
       title,
       description,
       hero_image,
+      hero_image_alt,
       presenter_materials_content,
       presenter_materials_urls,
     } = body
@@ -137,6 +140,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new module
+    const imageMetadata = await resolveImageMetadataUpdate({
+      prefix: 'hero_image',
+      imageUrl: hero_image,
+    })
+
     const moduleData: ModuleInsert = {
       title: title.trim(),
       description: description?.trim() || null,
@@ -144,6 +152,8 @@ export async function POST(request: NextRequest) {
       presenter_materials_content: presenter_materials_content?.trim() || null,
       presenter_materials_urls:
         normalizePresenterMaterialUrls(presenter_materials_urls),
+      ...(imageMetadata as any),
+      hero_image_alt: hero_image_alt?.trim() || null,
     }
 
     const { data: module, error } = await (supabase as any)

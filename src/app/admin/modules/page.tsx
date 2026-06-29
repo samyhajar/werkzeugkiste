@@ -52,6 +52,7 @@ export default function ModulesPage() {
     title: '',
     description: '',
     hero_image: '',
+    hero_image_alt: '',
     presenter_materials_content: '',
     presenter_materials_urls: [{ url: '', title: '' }]
   })
@@ -136,6 +137,7 @@ export default function ModulesPage() {
             title: newModule.title,
             description: newModule.description,
             hero_image: newModule.hero_image,
+            hero_image_alt: newModule.hero_image_alt,
             presenter_materials_content: newModule.presenter_materials_content,
             presenter_materials_urls: newModule.presenter_materials_urls
           }),
@@ -149,7 +151,7 @@ export default function ModulesPage() {
 
         if (data.success) {
           setModules(modules.map(m => m.id === editingModule.id ? { ...editingModule, ...newModule } : m))
-          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
+          setNewModule({ title: '', description: '', hero_image: '', hero_image_alt: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
           setIsCreateDialogOpen(false)
           setEditingModule(null)
         } else {
@@ -174,7 +176,7 @@ export default function ModulesPage() {
 
         if (data.success && data.module) {
           setModules([data.module, ...modules])
-          setNewModule({ title: '', description: '', hero_image: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
+          setNewModule({ title: '', description: '', hero_image: '', hero_image_alt: '', presenter_materials_content: '', presenter_materials_urls: [{ url: '', title: '' }] })
           setIsCreateDialogOpen(false)
         } else {
           throw new Error(data.error || 'Failed to create module')
@@ -243,6 +245,7 @@ export default function ModulesPage() {
       title: module.title,
       description: module.description || '',
       hero_image: module.hero_image ?? '',
+      hero_image_alt: module.hero_image_alt ?? '',
       presenter_materials_content: module.presenter_materials_content || '',
       presenter_materials_urls: presenterUrls
     })
@@ -475,18 +478,33 @@ export default function ModulesPage() {
                   <h3 className="font-semibold text-gray-900 text-sm">Visual Design</h3>
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
-                  <input
-                    type="url"
-                    id="hero_image"
-                    value={newModule.hero_image}
-                    onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
-                    placeholder="https://example.com/module-image.jpg (optional)"
-                    className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ userSelect: 'text' }}
-                  />
-                  <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label htmlFor="hero_image" className="text-xs font-semibold text-gray-700">Hero Image URL</label>
+                    <input
+                      type="url"
+                      id="hero_image"
+                      value={newModule.hero_image}
+                      onChange={(e) => setNewModule({ ...newModule, hero_image: e.target.value })}
+                      placeholder="https://example.com/module-image.jpg (optional)"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
+                    />
+                    <p className="text-xs text-gray-500">Add an image to make your module more engaging (800x400px)</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="hero_image_alt" className="text-xs font-semibold text-gray-700">Hero Image Alt Text</label>
+                    <input
+                      type="text"
+                      id="hero_image_alt"
+                      value={newModule.hero_image_alt}
+                      onChange={(e) => setNewModule({ ...newModule, hero_image_alt: e.target.value })}
+                      placeholder="Describe the image for screen readers"
+                      className="flex h-9 w-full min-w-0 rounded-md border border-[#486681]/20 bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-gray-400 focus:border-[#486681] focus:ring-[3px] focus:ring-[#486681]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      style={{ userSelect: 'text' }}
+                    />
+                    <p className="text-xs text-gray-500">Describe the image for screen readers. Leave empty only if decorative.</p>
+                  </div>
                 </div>
               </div>
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { resolveImageMetadataUpdate } from '@/lib/cloudinary-metadata.server'
 import type { Database } from '@/types/supabase'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
@@ -99,7 +100,13 @@ export async function POST(request: NextRequest) {
       description?: string
       module_id?: string
       hero_image?: string
+      hero_image_alt?: string
     }
+
+    const imageMetadata = await resolveImageMetadataUpdate({
+      prefix: 'hero_image',
+      imageUrl: body.hero_image,
+    })
 
     const { data: course, error } = await (supabase as any)
       .from('courses')
@@ -107,7 +114,9 @@ export async function POST(request: NextRequest) {
         title: body.title,
         description: body.description,
         module_id: body.module_id || null, // Convert empty string to null
-        hero_image: body.hero_image,
+        hero_image: body.hero_image?.trim() || null,
+        ...(imageMetadata as any),
+        hero_image_alt: body.hero_image_alt?.trim() || null,
         admin_id: user.id,
       })
       .select()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { resolveImageMetadataUpdate } from '@/lib/cloudinary-metadata.server'
 import type { Database } from '@/types/supabase'
 
 type ModuleUpdate = Database['public']['Tables']['modules']['Update']
@@ -8,6 +9,7 @@ interface UpdateModuleRequest {
   title: string
   description?: string
   hero_image?: string
+  hero_image_alt?: string
   presenter_materials_content?: string
   presenter_materials_urls?: { url: string; title: string }[]
 }
@@ -119,6 +121,7 @@ export async function PUT(
       title,
       description,
       hero_image,
+      hero_image_alt,
     } = body
 
     if (!title || !title.trim()) {
@@ -128,12 +131,44 @@ export async function PUT(
       )
     }
 
+    const { data: existingModule } = await supabase
+      .from('modules')
+      .select(
+        'hero_image, hero_image_alt, hero_image_public_id, hero_image_width, hero_image_height, hero_image_format'
+      )
+      .eq('id', id)
+      .single()
+
+    const previousModuleImage = existingModule as any
+
+    const imageMetadata = await resolveImageMetadataUpdate({
+      prefix: 'hero_image',
+      imageUrl: hero_image,
+      previousImageUrl: previousModuleImage?.hero_image,
+      previousMetadata: previousModuleImage
+        ? {
+            alt: previousModuleImage.hero_image_alt,
+            publicId: previousModuleImage.hero_image_public_id,
+            width: previousModuleImage.hero_image_width,
+            height: previousModuleImage.hero_image_height,
+            format: previousModuleImage.hero_image_format,
+          }
+        : undefined,
+    })
+
+    const explicitHeroImageAlt =
+      'hero_image_alt' in body
+        ? hero_image_alt?.trim() || null
+        : previousModuleImage?.hero_image_alt ?? null
+
     // Update module
     const updateData: ModuleUpdate = {
       title: title.trim(),
       description: description?.trim() || null,
       hero_image: hero_image?.trim() || null,
       updated_at: new Date().toISOString(),
+      ...(imageMetadata as any),
+      hero_image_alt: explicitHeroImageAlt,
     }
 
     if ('presenter_materials_content' in body) {

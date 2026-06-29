@@ -34,7 +34,7 @@ export default async function ResourceCarousel({
         >
           {s.image_url && (
             <div className="h-28 w-full flex items-center justify-center overflow-hidden rounded mb-3">
-              <SlideImage src={s.image_url} title={s.title} />
+              <SlideImage src={s.image_url} alt={s.image_alt || s.title} />
             </div>
           )}
           <div className="font-medium mb-1">{s.title}</div>
