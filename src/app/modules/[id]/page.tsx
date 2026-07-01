@@ -858,19 +858,6 @@ export default function ModuleDetailPage() {
   )
 
   // Handle authentication and data fetching
-  useEffect(() => {
-    if (authLoading) {
-      return
-    }
-    // Allow both authenticated and guest users to access modules
-    if (moduleId) {
-      void fetchModule()
-      if (user) {
-        void fetchUserAndProgress()
-      }
-    }
-  }, [user, authLoading, moduleId, router])
-
   const fetchModule = useCallback(async () => {
     // Prevent duplicate requests
     if (fetchInProgress.current) {
@@ -910,6 +897,15 @@ export default function ModuleDetailPage() {
       fetchInProgress.current = false
     }
   }, [moduleId])
+
+  useEffect(() => {
+    if (authLoading) {
+      return
+    }
+    if (moduleId) {
+      void fetchModule()
+    }
+  }, [authLoading, moduleId, fetchModule])
 
   // Debounced refetch function to prevent too many API calls
   const _debouncedRefetch = useCallback(() => {
@@ -976,11 +972,20 @@ export default function ModuleDetailPage() {
   }, [user, moduleId, module])
 
   useEffect(() => {
-    if (moduleId) {
-      void fetchModule()
+    if (authLoading || !moduleId) {
+      return
+    }
+
+    if (!user) {
+      setCompletedLessons(new Set())
+      setPassedQuizzes(new Set())
+      return
+    }
+
+    if (module) {
       void fetchUserAndProgress()
     }
-  }, [moduleId, fetchModule, fetchUserAndProgress])
+  }, [authLoading, user, moduleId, module, fetchUserAndProgress])
 
   // Helper function to get module-specific progress data
   const getModuleProgressData = () => {
@@ -1019,13 +1024,6 @@ export default function ModuleDetailPage() {
   useEffect(() => {
     // This will trigger a re-render of the progress bar when completedLessons changes
   }, [completedLessons])
-
-  useEffect(() => {
-    if (moduleId) {
-      void fetchModule()
-      void fetchUserAndProgress()
-    }
-  }, [moduleId, fetchModule, fetchUserAndProgress])
 
   useEffect(() => {
     if (!user || !module) {

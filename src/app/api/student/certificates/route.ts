@@ -47,28 +47,39 @@ export async function GET(_request: NextRequest) {
       })
     }
 
-    // Now let's get the course information for each certificate
-    const certificatesWithModules = await Promise.all(
-      certificatesData.map(async (cert, index) => {
-        const { data: module } = await supabase
-          .from('modules')
-          .select('id, title')
-          .eq('id', cert.module_id)
-          .single()
+    const moduleIds = [...new Set(certificatesData.map(cert => cert.module_id))]
 
-        const moduleData = module as Module | null
+    const { data: modules, error: modulesError } = await supabase
+      .from('modules')
+      .select('id, title')
+      .in('id', moduleIds)
 
-        return {
-          id: cert.id || `cert-${cert.user_id}-${cert.module_id}-${index}`,
-          courseName: moduleData?.title || 'Unknown Module',
-          moduleName: moduleData?.title || 'Unknown Module',
-          completedDate: cert.issued_at,
-          fileUrl: cert.pdf_url,
-          status: 'completed' as const,
-          score: 100, // Default score for completed certificates
-        }
-      })
+    if (modulesError) {
+      console.error('Error fetching certificate modules:', modulesError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch certificates' },
+        { status: 500 }
+      )
+    }
+
+    const modulesById = new Map(
+      ((modules || []) as Module[]).map(module => [module.id, module])
     )
+
+    // Preserve the existing response shape while avoiding one module query per certificate.
+    const certificatesWithModules = certificatesData.map((cert, index) => {
+      const moduleData = modulesById.get(cert.module_id) ?? null
+
+      return {
+        id: cert.id || `cert-${cert.user_id}-${cert.module_id}-${index}`,
+        courseName: moduleData?.title || 'Unknown Module',
+        moduleName: moduleData?.title || 'Unknown Module',
+        completedDate: cert.issued_at,
+        fileUrl: cert.pdf_url,
+        status: 'completed' as const,
+        score: 100, // Default score for completed certificates
+      }
+    })
 
     return NextResponse.json({
       success: true,

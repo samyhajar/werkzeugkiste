@@ -1,25 +1,14 @@
-import { createClient } from '@/lib/supabase/server-client'
-import type { Database } from '@/types/supabase'
+import { loadDigiResourceSlides } from '@/lib/digi-sammlung/public-data'
 import SlideImage from './SlideImage'
 
-type DigiResourceSlide =
-  Database['public']['Tables']['digi_resource_slides']['Row']
-
-export const revalidate = 60
+export const revalidate = 3600
 
 export default async function ResourceCarousel({
   resourceId,
 }: {
   resourceId: string
 }) {
-  const supabase = await createClient()
-  const { data: slides } = await supabase
-    .from('digi_resource_slides')
-    .select('*')
-    .eq('resource_id', resourceId)
-    .order('sort_order', { ascending: true })
-
-  const slidesData = (slides || []) as DigiResourceSlide[]
+  const slidesData = await loadDigiResourceSlides(resourceId)
 
   if (!slidesData || slidesData.length === 0) {
     return null

@@ -1,17 +1,13 @@
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/server-client'
-import type { Database } from '@/types/supabase'
+import { loadDigiSammlungContent } from '@/lib/digi-sammlung/public-data'
 import { Briefcase, LifeBuoy, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import ResourceCarousel from './ResourceCarousel'
 import ResourceLogo from './ResourceLogo'
 
-type DigiCategory = Database['public']['Tables']['digi_categories']['Row']
-type DigiResource = Database['public']['Tables']['digi_resources']['Row']
-
 export const metadata = { title: 'Digi-Sammlung' }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 const defaultCategories = [
   {
@@ -70,24 +66,8 @@ function slugify(text: string) {
     .replace(/^(-)+|(-)+$/g, '')
 }
 
-async function fetchStructured() {
-  const supabase = await createClient()
-  const { data: cats } = await supabase
-    .from('digi_categories')
-    .select('*')
-    .order('sort_order', { ascending: true })
-  const { data: res } = await supabase
-    .from('digi_resources')
-    .select('*')
-    .order('sort_order', { ascending: true })
-  return {
-    cats: (cats || []) as DigiCategory[],
-    res: (res || []) as DigiResource[],
-  }
-}
-
 export default async function DigiSammlungPage() {
-  const { cats, res } = await fetchStructured()
+  const { cats, res } = await loadDigiSammlungContent()
   const categories =
     cats.length > 0
       ? cats.map(c => ({

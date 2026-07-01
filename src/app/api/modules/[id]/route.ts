@@ -1,115 +1,32 @@
-import { createClient } from '@/lib/supabase/server-client'
-import type { Database } from '@/types/supabase'
+import { loadPublicModuleById } from '@/lib/modules/public-module-data'
 import { NextRequest, NextResponse } from 'next/server'
 
-type Course = Database['public']['Tables']['courses']['Row']
-type Module = Database['public']['Tables']['modules']['Row']
-type Lesson = Database['public']['Tables']['lessons']['Row']
-
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    const supabase = await createClient()
+    const moduleData = await loadPublicModuleById(id)
 
-    // Get current user (optional for public modules, but good for progress tracking)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    // Fetch module details
-    const { data: module, error: moduleError } = await supabase
-      .from('modules')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    const moduleData = module as Module | null
-
-    if (moduleError || !moduleData) {
+    if (!moduleData) {
       return NextResponse.json(
         { success: false, error: 'Module not found' },
         { status: 404 }
       )
     }
 
-    // Fetch courses for this module
-    const { data: courses, error: coursesError } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('module_id', id)
-      .order('order', { ascending: true, nullsFirst: false })
-      .order('id', { ascending: true })
-
-    const coursesData = (courses || []) as Course[]
-
-    if (coursesError) {
-      console.error('Error fetching courses:', coursesError)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch courses' },
-        { status: 500 }
-      )
-    }
-
-    // For each course, fetch its lessons and quizzes
-    const coursesWithContent = await Promise.all(
-      coursesData.map(async (course: Course) => {
-        // Fetch lessons for this course
-        const { data: lessons, error: _lessonsError } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('course_id', course.id)
-          .order('order', { ascending: true })
-
-        // Fetch course-level quizzes from enhanced_quizzes table
-        const { data: courseQuizzes, error: _courseQuizzesError } =
-          await supabase
-            .from('enhanced_quizzes')
-            .select('*')
-            .eq('course_id', course.id)
-            .eq('scope', 'course')
-            .order('sort_order', { ascending: true })
-
-        // Fetch lesson-specific quizzes from enhanced_quizzes table
-        const lessonIds = (lessons || ([] as Lesson[])).map((l: Lesson) => l.id)
-        let lessonQuizzes: any[] = []
-        if (lessonIds.length > 0) {
-          const { data: lessonQuizzesData, error: lessonQuizzesError } =
-            await supabase
-              .from('enhanced_quizzes')
-              .select('*')
-              .in('lesson_id', lessonIds)
-              .eq('scope', 'lesson')
-              .order('sort_order', { ascending: true })
-
-          if (!lessonQuizzesError) {
-            lessonQuizzes = lessonQuizzesData || []
-          }
-        }
-
-        // Combine all quizzes
-        const allQuizzes = [...(courseQuizzes || []), ...lessonQuizzes]
-
-        return {
-          ...course,
-          lessons: lessons || [],
-          quizzes: allQuizzes,
-        }
-      })
+    return NextResponse.json(
+      {
+        success: true,
+        module: moduleData,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        },
+      }
     )
-
-    // Combine module with its courses
-    const moduleWithContent = {
-      ...moduleData,
-      courses: coursesWithContent,
-    }
-
-    return NextResponse.json({
-      success: true,
-      module: moduleWithContent,
-    })
   } catch (error) {
     console.error('Module API error:', error)
     return NextResponse.json(

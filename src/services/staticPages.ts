@@ -1,3 +1,4 @@
+import { createPublicClient } from '@/lib/supabase/public-client'
 import { createClient } from '@/lib/supabase/server-client'
 import { Tables, TablesInsert, TablesUpdate } from '@/types/supabase'
 
@@ -42,6 +43,23 @@ export async function getStaticPageBySlug(
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116: No rows returned
+    throw error
+  }
+
+  return data ? (data as StaticPage) : null
+}
+
+export async function getPublicStaticPageBySlug(
+  slug: string
+): Promise<StaticPage | null> {
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('static_pages')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
     throw error
   }
 

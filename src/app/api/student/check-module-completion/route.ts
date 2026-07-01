@@ -13,7 +13,7 @@ type Course = Pick<
 >
 type Lesson = Pick<
   Database['public']['Tables']['lessons']['Row'],
-  'id' | 'title'
+  'id' | 'title' | 'course_id'
 >
 type LessonProgress = Pick<
   Database['public']['Tables']['lesson_progress']['Row'],
@@ -99,39 +99,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let allLessonsCompleted = true
-    let completedCourseCount = 0
+    const courseIds = moduleCoursesData.map(course => course.id)
 
-    for (const course of moduleCoursesData) {
-      const { data: lessons, error: lessonsError } = await supabase
-        .from('lessons')
-        .select('id, title')
-        .eq('course_id', course.id)
-        .order('sort_order', { ascending: true })
+    const { data: lessons, error: lessonsError } = await supabase
+      .from('lessons')
+      .select('id, title, course_id')
+      .in('course_id', courseIds)
+      .order('sort_order', { ascending: true })
 
-      const lessonsData = (lessons || []) as Lesson[]
+    const lessonsData = (lessons || []) as Lesson[]
 
-      if (lessonsError) {
-        console.error('Error fetching lessons:', lessonsError)
-        return NextResponse.json(
-          { success: false, error: 'Failed to fetch lessons' },
-          { status: 500 }
-        )
-      }
+    if (lessonsError) {
+      console.error('Error fetching lessons:', lessonsError)
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch lessons' },
+        { status: 500 }
+      )
+    }
 
-      if (!lessonsData || lessonsData.length === 0) {
-        completedCourseCount += 1
-        continue
-      }
+    const lessonIds = lessonsData.map(lesson => lesson.id)
 
+    let completedLessonIds = new Set<string>()
+
+    if (lessonIds.length > 0) {
       const { data: completedLessons, error: progressError } = await supabase
         .from('lesson_progress')
         .select('lesson_id')
         .eq('student_id', user.id)
-        .in(
-          'lesson_id',
-          lessonsData.map(lesson => lesson.id)
-        )
+        .in('lesson_id', lessonIds)
 
       const completedLessonsData = (completedLessons || []) as LessonProgress[]
 
@@ -143,10 +138,35 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const completedLessonIds =
-        completedLessonsData.map(lesson => lesson.lesson_id) || []
-      const allLessonsInCourse = lessonsData.every(lesson =>
-        completedLessonIds.includes(lesson.id)
+      completedLessonIds = new Set(
+        completedLessonsData.map(lesson => lesson.lesson_id)
+      )
+    }
+
+    const lessonsByCourseId = new Map<string, Lesson[]>()
+    for (const lesson of lessonsData) {
+      if (!lesson.course_id) {
+        continue
+      }
+
+      const courseLessons = lessonsByCourseId.get(lesson.course_id) ?? []
+      courseLessons.push(lesson)
+      lessonsByCourseId.set(lesson.course_id, courseLessons)
+    }
+
+    let allLessonsCompleted = true
+    let completedCourseCount = 0
+
+    for (const course of moduleCoursesData) {
+      const courseLessons = lessonsByCourseId.get(course.id) ?? []
+
+      if (courseLessons.length === 0) {
+        completedCourseCount += 1
+        continue
+      }
+
+      const allLessonsInCourse = courseLessons.every(lesson =>
+        completedLessonIds.has(lesson.id)
       )
 
       if (allLessonsInCourse) {
@@ -159,10 +179,7 @@ export async function POST(request: NextRequest) {
     const { data: allQuizzes, error: quizzesError } = await supabase
       .from('enhanced_quizzes')
       .select('id, title, course_id, lesson_id')
-      .in(
-        'course_id',
-        moduleCoursesData.map(course => course.id)
-      )
+      .in('course_id', courseIds)
 
     const allQuizzesData = (allQuizzes || []) as Quiz[]
 

@@ -80,14 +80,6 @@ export default function Navbar() {
     return () => clearTimeout(timer)
   }, [loading, user])
 
-  // Fetch modules on component mount (for both mobile and desktop)
-  useEffect(() => {
-    if (modules.length === 0) {
-      void fetchModules()
-    }
-  }, [modules.length])
-
-  // Also fetch modules when dropdown opens (backup for any edge cases)
   useEffect(() => {
     if (isModulesOpen && modules.length === 0) {
       void fetchModules()
@@ -95,6 +87,10 @@ export default function Navbar() {
   }, [isModulesOpen, modules.length])
 
   const fetchModules = async () => {
+    if (modules.length > 0) {
+      return
+    }
+
     // Prevent duplicate requests
     if (fetchInProgress.current) {
       return
@@ -110,6 +106,7 @@ export default function Navbar() {
     lastFetchTime.current = now
 
     try {
+      setModulesLoading(true)
       const response = await fetch('/api/modules')
       if (response.ok) {
         const data = await response.json()
@@ -120,6 +117,7 @@ export default function Navbar() {
     } catch (error) {
       console.error('Error fetching modules:', error)
     } finally {
+      setModulesLoading(false)
       fetchInProgress.current = false
     }
   }

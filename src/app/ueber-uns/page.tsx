@@ -1,13 +1,13 @@
 import StaticPageContent from '@/components/shared/StaticPageContent'
-import { getStaticPageBySlug } from '@/services/staticPages'
+import { getPublicStaticPageBySlug } from '@/services/staticPages'
 import Image from 'next/image'
 
 export const metadata = { title: 'Über Uns' }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600
 
 export default async function UeberUnsPage() {
-  const page = await getStaticPageBySlug('ueber-uns')
+  const page = await getPublicStaticPageBySlug('ueber-uns')
   if (page?.content_html) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12">

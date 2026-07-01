@@ -1,7 +1,6 @@
 'use client'
 
 import { Tables } from '@/types/supabase'
-import { useCallback, useEffect, useRef, useState } from 'react'
 import ModuleCard from './ModuleCard'
 
 type Module = Tables<'modules'> & {
@@ -22,49 +21,11 @@ export default function LiveModulesSection({
   userProgress,
   isLoggedIn,
 }: LiveModulesSectionProps) {
-  const [modules, setModules] = useState<Module[]>(initialModules)
-  const fetchInProgress = useRef(false)
-  const lastFetchTime = useRef<number>(0)
-
-  const _fetchModules = useCallback(async () => {
-    // Prevent duplicate requests
-    if (fetchInProgress.current) {
-      return
-    }
-
-    // Debounce requests
-    const now = Date.now()
-    if (now - lastFetchTime.current < 2000) {
-      return
-    }
-
-    fetchInProgress.current = true
-    lastFetchTime.current = now
-
-    try {
-      const response = await fetch('/api/modules', { cache: 'no-store' })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setModules(data.modules || [])
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching modules:', error)
-    } finally {
-      fetchInProgress.current = false
-    }
-  }, [])
-
-  useEffect(() => {
-    void _fetchModules()
-  }, [_fetchModules])
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {modules.length > 0 ? (
+      {initialModules.length > 0 ? (
         <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {modules.map(moduleItem => (
+          {initialModules.map(moduleItem => (
             <ModuleCard
               key={moduleItem.id}
               module={moduleItem}

@@ -1,10 +1,21 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { hasSupabaseAuthCookieNames } from '@/lib/supabase/auth-cookies'
 import { Database } from '@/types/supabase'
 
-type Profile = Database['public']['Tables']['profiles']['Row']
+type Profile = Pick<Database['public']['Tables']['profiles']['Row'], 'role'>
 
 export async function middleware(request: NextRequest) {
+  const hasAuthCookies = hasSupabaseAuthCookieNames(
+    request.cookies.getAll().map(cookie => cookie.name)
+  )
+
+  if (!hasAuthCookies) {
+    return NextResponse.next({
+      request,
+    })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -70,7 +81,7 @@ export async function middleware(request: NextRequest) {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('*')
+      .select('role')
       .eq('id', user.id)
       .single()
     profile = data as Profile | null

@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
+import { hasSupabaseAuthCookieNames } from '@/lib/supabase/auth-cookies'
 import type { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
@@ -36,6 +37,9 @@ interface UserProfile {
   created_at: string | null
   updated_at: string | null
 }
+
+const PROFILE_SELECT =
+  'id, email, full_name, role, first_name, created_at, updated_at'
 
 interface AuthContextType {
   user: User | null
@@ -156,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_SELECT)
         .eq('id', userId)
         .single()
 
@@ -332,6 +336,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return
     // If we already have a profile or are loading it via Supabase, skip
     if (profile || profileLoading) return
+
+    const cookieNames = document.cookie
+      .split(';')
+      .map(cookie => cookie.trim().split('=')[0])
+      .filter(Boolean)
+
+    if (!hasSupabaseAuthCookieNames(cookieNames)) {
+      return
+    }
 
     let aborted = false
     const loadFromServer = async () => {

@@ -1,10 +1,16 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import { useRef } from 'react'
 import LoginModal, { LoginModalRef } from './LoginModal'
 
 export default function RegistrationButton() {
+  const { user } = useAuth()
   const loginModalRef = useRef<LoginModalRef>(null)
+
+  if (user) {
+    return null
+  }
 
   return (
     <>
