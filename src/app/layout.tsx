@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Assistant } from "next/font/google";
 import "./globals.css";
 import ConditionalLayout from "@/components/shared/ConditionalLayout";
+import { Analytics } from '@vercel/analytics/next';
 
 const assistant = Assistant({
   variable: '--font-assistant',
@@ -39,6 +40,7 @@ export default function RootLayout({
         className={`${assistant.variable} antialiased`}
       >
         <ConditionalLayout>{children}</ConditionalLayout>
+        <Analytics />
       </body>
     </html>
   );
