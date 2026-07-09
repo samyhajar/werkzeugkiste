@@ -1,5 +1,5 @@
 import { Tables } from '@/types/supabase'
-import { createPublicClient } from '@/lib/supabase/public-client'
+import { createPublicContentClient } from '@/lib/supabase/public-content-client'
 
 type Module = Tables<'modules'>
 type Course = Tables<'courses'>
@@ -14,13 +14,45 @@ export type PublicModule = Module & {
 }
 
 function getCourseSortKey(course: Course) {
-  return typeof course.order === 'number' ? course.order : Number.MAX_SAFE_INTEGER
+  return typeof course.order === 'number'
+    ? course.order
+    : Number.MAX_SAFE_INTEGER
+}
+
+function getLessonSortKey(lesson: Lesson) {
+  const order =
+    typeof lesson.order === 'number' ? lesson.order : lesson.sort_order
+
+  return typeof order === 'number' ? order : Number.MAX_SAFE_INTEGER
+}
+
+function getModuleSortKey(moduleItem: Module) {
+  return typeof moduleItem.order === 'number'
+    ? moduleItem.order
+    : Number.MAX_SAFE_INTEGER
+}
+
+function getQuizSortKey(quiz: Quiz) {
+  return typeof quiz.sort_order === 'number'
+    ? quiz.sort_order
+    : Number.MAX_SAFE_INTEGER
+}
+
+function sortByNumericKeyAndId<T extends { id: string }>(
+  items: T[],
+  getSortKey: (item: T) => number
+) {
+  return [...items].sort((a, b) => {
+    const diff = getSortKey(a) - getSortKey(b)
+    if (diff !== 0) return diff
+    return a.id.localeCompare(b.id)
+  })
 }
 
 export async function loadPublicModuleById(
   id: string
 ): Promise<PublicModule | null> {
-  const supabase = createPublicClient()
+  const supabase = createPublicContentClient()
 
   const { data: module, error: moduleError } = await supabase
     .from('modules')
@@ -41,14 +73,15 @@ export async function loadPublicModuleById(
     .from('courses')
     .select('*')
     .eq('module_id', id)
-    .order('order', { ascending: true, nullsFirst: false })
-    .order('id', { ascending: true })
 
   if (coursesError) {
     throw coursesError
   }
 
-  const coursesData = (courses || []) as Course[]
+  const coursesData = sortByNumericKeyAndId(
+    (courses || []) as Course[],
+    getCourseSortKey
+  )
   const courseIds = coursesData.map(course => course.id)
 
   let lessonsData: Lesson[] = []
@@ -59,21 +92,22 @@ export async function loadPublicModuleById(
       .from('lessons')
       .select('*')
       .in('course_id', courseIds)
-      .order('order', { ascending: true })
 
     if (lessonsError) {
       throw lessonsError
     }
 
-    lessonsData = (lessons || []) as Lesson[]
+    lessonsData = sortByNumericKeyAndId(
+      (lessons || []) as Lesson[],
+      getLessonSortKey
+    )
     const lessonIds = lessonsData.map(lesson => lesson.id)
     const quizQueries = [
       supabase
         .from('enhanced_quizzes')
         .select('*')
         .in('course_id', courseIds)
-        .eq('scope', 'course')
-        .order('sort_order', { ascending: true }),
+        .eq('scope', 'course'),
     ]
 
     if (lessonIds.length > 0) {
@@ -83,7 +117,6 @@ export async function loadPublicModuleById(
           .select('*')
           .in('lesson_id', lessonIds)
           .eq('scope', 'lesson')
-          .order('sort_order', { ascending: true })
       )
     }
 
@@ -91,11 +124,17 @@ export async function loadPublicModuleById(
 
     for (const result of quizResults) {
       if (result.error) {
-        throw result.error
+        console.warn(
+          '[public-module-data] Failed to fetch public quizzes:',
+          result.error
+        )
+        continue
       }
 
       quizzesData.push(...((result.data || []) as Quiz[]))
     }
+
+    quizzesData = sortByNumericKeyAndId(quizzesData, getQuizSortKey)
   }
 
   const lessonsByCourse = new Map<string, Lesson[]>()
@@ -114,35 +153,39 @@ export async function loadPublicModuleById(
     quizzesByCourse.set(quiz.course_id, existingQuizzes)
   }
 
-  const moduleCourses = [...coursesData].sort((a, b) => {
-    const diff = getCourseSortKey(a) - getCourseSortKey(b)
-    if (diff !== 0) return diff
-    return a.id.localeCompare(b.id)
-  })
+  const moduleCourses = sortByNumericKeyAndId(coursesData, getCourseSortKey)
 
   return {
     ...moduleData,
     courses: moduleCourses.map(course => ({
       ...course,
-      lessons: lessonsByCourse.get(course.id) || [],
-      quizzes: quizzesByCourse.get(course.id) || [],
+      lessons: sortByNumericKeyAndId(
+        lessonsByCourse.get(course.id) || [],
+        getLessonSortKey
+      ),
+      quizzes: sortByNumericKeyAndId(
+        quizzesByCourse.get(course.id) || [],
+        getQuizSortKey
+      ),
     })),
   }
 }
 
 export async function loadPublicModules(): Promise<PublicModule[]> {
-  const supabase = createPublicClient()
+  const supabase = createPublicContentClient()
 
   const { data: modules, error: modulesError } = await supabase
     .from('modules')
     .select('*')
-    .order('order', { ascending: true })
 
   if (modulesError) {
     throw modulesError
   }
 
-  const modulesData = (modules || []) as Module[]
+  const modulesData = sortByNumericKeyAndId(
+    (modules || []) as Module[],
+    getModuleSortKey
+  )
   if (modulesData.length === 0) {
     return []
   }
@@ -155,15 +198,15 @@ export async function loadPublicModules(): Promise<PublicModule[]> {
       modulesData.map(moduleItem => moduleItem.id)
     )
     .not('module_id', 'is', null)
-    .order('module_id', { ascending: true })
-    .order('order', { ascending: true, nullsFirst: false })
-    .order('id', { ascending: true })
 
   if (coursesError) {
     throw coursesError
   }
 
-  const coursesData = (courses || []) as Course[]
+  const coursesData = sortByNumericKeyAndId(
+    (courses || []) as Course[],
+    getCourseSortKey
+  )
   const courseIds = coursesData.map(course => course.id)
 
   let lessonsData: Lesson[] = []
@@ -174,17 +217,12 @@ export async function loadPublicModules(): Promise<PublicModule[]> {
       { data: lessons, error: lessonsError },
       { data: quizzes, error: quizzesError },
     ] = await Promise.all([
-      supabase
-        .from('lessons')
-        .select('*')
-        .in('course_id', courseIds)
-        .order('order', { ascending: true }),
+      supabase.from('lessons').select('*').in('course_id', courseIds),
       supabase
         .from('enhanced_quizzes')
         .select('*')
         .in('course_id', courseIds)
-        .eq('scope', 'course')
-        .order('sort_order', { ascending: true }),
+        .eq('scope', 'course'),
     ])
 
     if (lessonsError) {
@@ -192,11 +230,20 @@ export async function loadPublicModules(): Promise<PublicModule[]> {
     }
 
     if (quizzesError) {
-      throw quizzesError
+      console.warn(
+        '[public-module-data] Failed to fetch public module quizzes:',
+        quizzesError
+      )
     }
 
-    lessonsData = (lessons || []) as Lesson[]
-    quizzesData = (quizzes || []) as Quiz[]
+    lessonsData = sortByNumericKeyAndId(
+      (lessons || []) as Lesson[],
+      getLessonSortKey
+    )
+    quizzesData = sortByNumericKeyAndId(
+      (quizzes || []) as Quiz[],
+      getQuizSortKey
+    )
   }
 
   const lessonsByCourse = new Map<string, Lesson[]>()
@@ -224,20 +271,23 @@ export async function loadPublicModules(): Promise<PublicModule[]> {
   }
 
   return modulesData.map(moduleItem => {
-    const moduleCourses = [...(coursesByModule.get(moduleItem.id) || [])].sort(
-      (a, b) => {
-        const diff = getCourseSortKey(a) - getCourseSortKey(b)
-        if (diff !== 0) return diff
-        return a.id.localeCompare(b.id)
-      }
+    const moduleCourses = sortByNumericKeyAndId(
+      coursesByModule.get(moduleItem.id) || [],
+      getCourseSortKey
     )
 
     return {
       ...moduleItem,
       courses: moduleCourses.map(course => ({
         ...course,
-        lessons: lessonsByCourse.get(course.id) || [],
-        quizzes: quizzesByCourse.get(course.id) || [],
+        lessons: sortByNumericKeyAndId(
+          lessonsByCourse.get(course.id) || [],
+          getLessonSortKey
+        ),
+        quizzes: sortByNumericKeyAndId(
+          quizzesByCourse.get(course.id) || [],
+          getQuizSortKey
+        ),
       })),
     }
   })

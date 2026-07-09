@@ -9,7 +9,13 @@ import { Suspense } from 'react'
 export const revalidate = 3600
 
 export default async function Home() {
-  const modulesWithCourses = await loadPublicModules()
+  let modulesWithCourses: Awaited<ReturnType<typeof loadPublicModules>> = []
+
+  try {
+    modulesWithCourses = await loadPublicModules()
+  } catch (error) {
+    console.error('Failed to load public modules for homepage:', error)
+  }
 
   return (
     <>

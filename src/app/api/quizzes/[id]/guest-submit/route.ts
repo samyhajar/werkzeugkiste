@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server-client'
+import { createPublicContentClient } from '@/lib/supabase/public-content-client'
 import type { Database } from '@/types/supabase'
 
 type Question = Database['public']['Tables']['quiz_questions']['Row'] & {
@@ -14,7 +14,7 @@ export async function POST(
   try {
     const { id } = await params
     const { answers, textAnswers = {} } = await request.json()
-    const supabase = await createClient()
+    const supabase = createPublicContentClient()
 
     // Fetch quiz and questions to validate answers
     const { data: quiz, error: quizError } = await supabase

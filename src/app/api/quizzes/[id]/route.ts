@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
+import { createPublicContentClient } from '@/lib/supabase/public-content-client'
 import type { Database } from '@/types/supabase'
 
 type Quiz = Database['public']['Tables']['enhanced_quizzes']['Row'] & {
-  lessons?: Array<{
+  lessons?: {
     id: string
-    title: string
-    course_id: string
+    title: string | null
+    course_id: string | null
     courses?: {
       id: string
       title: string
-    }
-  }>
+    } | null
+  } | null
 }
 type Question = Database['public']['Tables']['quiz_questions']['Row'] & {
   quiz_answers?: Array<Database['public']['Tables']['quiz_answers']['Row']>
@@ -24,6 +25,7 @@ export async function GET(
   try {
     const { id } = await params
     const supabase = await createClient()
+    const contentSupabase = createPublicContentClient()
 
     // Get current user (optional for guest access, but good for progress tracking)
     const {
@@ -31,7 +33,7 @@ export async function GET(
     } = await supabase.auth.getUser()
 
     // Fetch quiz details with related data from enhanced_quizzes table
-    const { data: quiz, error: quizError } = await supabase
+    const { data: quiz, error: quizError } = await contentSupabase
       .from('enhanced_quizzes')
       .select(
         `
@@ -59,7 +61,7 @@ export async function GET(
     }
 
     // Fetch quiz questions with answers
-    const { data: questions, error: questionsError } = await supabase
+    const { data: questions, error: questionsError } = await contentSupabase
       .from('quiz_questions')
       .select(
         `
