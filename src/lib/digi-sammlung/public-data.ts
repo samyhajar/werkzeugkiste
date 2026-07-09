@@ -22,17 +22,16 @@ export async function loadDigiSammlungContent(): Promise<{
         .order('sort_order', { ascending: true }),
     ])
 
-  if (catsError) {
-    throw catsError
-  }
-
-  if (resError) {
-    throw resError
+  if (catsError || resError) {
+    console.error('Failed to load Digi-Sammlung content:', {
+      catsError,
+      resError,
+    })
   }
 
   return {
-    cats: (cats || []) as DigiCategory[],
-    res: (res || []) as DigiResource[],
+    cats: catsError ? [] : ((cats || []) as DigiCategory[]),
+    res: resError ? [] : ((res || []) as DigiResource[]),
   }
 }
 
@@ -47,7 +46,8 @@ export async function loadDigiResourceSlides(
     .order('sort_order', { ascending: true })
 
   if (error) {
-    throw error
+    console.error('Failed to load Digi-Sammlung resource slides:', error)
+    return []
   }
 
   return (data || []) as DigiResourceSlide[]
