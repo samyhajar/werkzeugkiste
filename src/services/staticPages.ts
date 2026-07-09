@@ -60,7 +60,8 @@ export async function getPublicStaticPageBySlug(
     .single()
 
   if (error && error.code !== 'PGRST116') {
-    throw error
+    console.error(`Failed to load public static page "${slug}":`, error)
+    return null
   }
 
   return data ? (data as StaticPage) : null
