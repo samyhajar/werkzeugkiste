@@ -49,7 +49,7 @@ try {
     $template = [string]::Concat((Get-Content -Raw -Encoding UTF8 (Join-Path $PSScriptRoot '../supabase/templates/confirmation.html')))
     $patch = @{
       mailer_templates_confirmation_content = $template
-      mailer_subjects_confirmation = 'Werkzeugkiste: E-Mail-Adresse bestaetigen'
+      mailer_subjects_confirmation = 'Werkzeugkiste: Neuesten Link zur Registrierung verwenden'
     } | ConvertTo-Json
     $null = Invoke-RestMethod -Uri $registrationUri -Headers $registrationHeaders -Method Patch -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($patch))
     $config = Invoke-RestMethod -Uri $registrationUri -Headers $registrationHeaders
