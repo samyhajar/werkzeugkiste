@@ -13,15 +13,20 @@ export default function ConfirmRegistration() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // The email template puts the token in the fragment: no server logs or referrers.
+    // Query parameters survive email-security redirects; remove them immediately
+    // after reading so the token is not retained in browser history or referrers.
     const hash = new URLSearchParams(window.location.hash.slice(1))
     const query = new URLSearchParams(window.location.search)
-    setTokenHash(hash.get('token_hash') || query.get('token_hash') || '')
+    const nextTokenHash = hash.get('token_hash') || query.get('token_hash') || ''
+    setTokenHash(nextTokenHash)
     setType(
       (hash.get('type') || query.get('type')) === 'recovery'
         ? 'recovery'
         : 'email'
     )
+    if (query.has('token_hash')) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
     setReady(true)
   }, [])
 

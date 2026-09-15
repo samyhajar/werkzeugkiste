@@ -57,6 +57,15 @@ function route(name, auth) {
   return load('src/app/api/auth/' + name + '/route.ts', { auth })
 }
 
+test('confirmation email token survives mail tracking redirects', () => {
+  const template = fs.readFileSync(
+    path.join(root, 'supabase/templates/confirmation.html'),
+    'utf8'
+  )
+  assert.match(template, /auth\/confirm\?token_hash=\{\{ \.TokenHash \}\}/)
+  assert.doesNotMatch(template, /auth\/confirm#token_hash=/)
+})
+
 test('signup normalizes email/names and cannot accept admin role', async () => {
   let sent
   const api = route('signup', {
