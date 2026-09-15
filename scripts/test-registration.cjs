@@ -117,6 +117,35 @@ test('signup duplicate response does not disclose account or claim a session', a
   assert.equal(result.confirmation_required, true)
   assert.equal(result.user, undefined)
 })
+test('a 30-person group signup burst has no application-level shared limiter', async () => {
+  let calls = 0
+  const api = route('signup', {
+    signUp: async () => {
+      calls++
+      return {
+        data: { user: { id: `test-${calls}` }, session: null },
+        error: null,
+      }
+    },
+  })
+  const responses = await Promise.all(
+    Array.from({ length: 30 }, (_, index) =>
+      api.POST(
+        request({
+          email: `person-${index}@example.org`,
+          password: 'strong-password',
+          first_name: 'Group',
+          last_name: `Member ${index}`,
+        })
+      )
+    )
+  )
+  assert.equal(calls, 30)
+  assert.deepEqual(
+    responses.map(response => response.status),
+    Array(30).fill(200)
+  )
+})
 test('resend uses signup resend, normalized email and no admin operation', async () => {
   let sent
   const api = route('resend-confirmation', {

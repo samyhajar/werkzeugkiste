@@ -1,4 +1,7 @@
-param([switch]$ApplyTemplates)
+param(
+  [switch]$ApplyTemplates,
+  [switch]$ApplyGroupRateLimit
+)
 $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System;
@@ -52,7 +55,17 @@ try {
     $config = Invoke-RestMethod -Uri $registrationUri -Headers $registrationHeaders
     if ($config.mailer_templates_confirmation_content -ne $template) { throw 'Remote template verification failed.' }
   }
-  $config | Select-Object site_url, mailer_otp_exp, smtp_host, smtp_port, smtp_admin_email, smtp_sender_name, rate_limit_email_sent, rate_limit_signup, mailer_autoconfirm, mailer_templates_confirmation_content, mailer_templates_recovery_content | ConvertTo-Json -Depth 4
+  if ($ApplyGroupRateLimit) {
+    $groupRateLimit = 100
+    if ($config.smtp_host -ne 'rw1537.webhosting.systems') { throw 'SMTP host changed; review provider capacity before applying.' }
+    if ($config.rate_limit_email_sent -lt $groupRateLimit) {
+      $patch = @{ rate_limit_email_sent = $groupRateLimit } | ConvertTo-Json
+      $null = Invoke-RestMethod -Uri $registrationUri -Headers $registrationHeaders -Method Patch -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($patch))
+      $config = Invoke-RestMethod -Uri $registrationUri -Headers $registrationHeaders
+    }
+    if ($config.rate_limit_email_sent -ne $groupRateLimit) { throw 'Remote group email rate-limit verification failed.' }
+  }
+  $config | Select-Object site_url, mailer_otp_exp, smtp_host, smtp_port, smtp_admin_email, smtp_sender_name, smtp_max_frequency, rate_limit_email_sent, rate_limit_signup, mailer_autoconfirm, mailer_templates_confirmation_content, mailer_templates_recovery_content | ConvertTo-Json -Depth 4
 } finally {
   $registrationToken = $null
   $registrationHeaders = $null
