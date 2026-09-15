@@ -108,23 +108,45 @@ test('signup rejects malformed, empty and invalid input before contacting provid
   }
   assert.equal(calls, 0)
 })
-test('signup duplicate response does not disclose account or claim a session', async () => {
+test('signup reports explicit provider duplicates in German', async () => {
   const api = route('signup', {
     signUp: async () => ({ data: {}, error: { code: 'user_already_exists' } }),
   })
-  const result = await (
-    await api.POST(
-      request({
-        email: 'p@example.com',
-        password: 'abcdef',
-        first_name: 'P',
-        last_name: 'Q',
-      })
-    )
-  ).json()
-  assert.equal(result.success, true)
-  assert.equal(result.confirmation_required, true)
+  const response = await api.POST(
+    request({
+      email: 'p@example.com',
+      password: 'abcdef',
+      first_name: 'P',
+      last_name: 'Q',
+    })
+  )
+  const result = await response.json()
+  assert.equal(response.status, 409)
+  assert.equal(result.success, false)
+  assert.equal(result.error_code, 'user_already_exists')
+  assert.match(result.error, /Benutzer.*existiert bereits/)
   assert.equal(result.user, undefined)
+})
+
+test('signup detects Supabase obfuscated duplicate users', async () => {
+  const api = route('signup', {
+    signUp: async () => ({
+      data: { user: { id: 'obfuscated', identities: [] }, session: null },
+      error: null,
+    }),
+  })
+  const response = await api.POST(
+    request({
+      email: 'p@example.com',
+      password: 'abcdef',
+      first_name: 'P',
+      last_name: 'Q',
+    })
+  )
+  const result = await response.json()
+  assert.equal(response.status, 409)
+  assert.equal(result.error_code, 'user_already_exists')
+  assert.match(result.error, /Benutzer.*existiert bereits/)
 })
 test('a 30-person group signup burst has no application-level shared limiter', async () => {
   let calls = 0

@@ -4,6 +4,18 @@ import { registrationSchema, registrationError } from '@/lib/auth/registration'
 
 export const dynamic = 'force-dynamic'
 
+function existingAccountResponse() {
+  return NextResponse.json(
+    {
+      success: false,
+      error:
+        'Ein Benutzer mit dieser E-Mail-Adresse existiert bereits. Bitte melden Sie sich an oder fordern Sie einen neuen Bestätigungslink an.',
+      error_code: 'user_already_exists',
+    },
+    { status: 409, headers: { 'Cache-Control': 'no-store' } }
+  )
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const parsed = registrationSchema.safeParse(body)
@@ -44,7 +56,7 @@ export async function POST(request: NextRequest) {
           'email_address_exists',
         ].includes(error.code || '')
       ) {
-        return NextResponse.json({ success: true, confirmation_required: true })
+        return existingAccountResponse()
       }
       const mapped = registrationError(error.code)
       return NextResponse.json(
@@ -57,6 +69,14 @@ export async function POST(request: NextRequest) {
         { success: false, error: registrationError().message },
         { status: 503 }
       )
+    }
+    // Supabase deliberately obfuscates duplicate signups as a successful response.
+    // An empty identities list distinguishes that response from a newly created user.
+    if (
+      Array.isArray(data.user.identities) &&
+      data.user.identities.length === 0
+    ) {
+      return existingAccountResponse()
     }
     // The auth.users trigger creates the profile; the SSR client writes session cookies.
     // Avoid returning obfuscated duplicate-user IDs or copying a previous user's session.
