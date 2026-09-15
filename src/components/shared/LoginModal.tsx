@@ -530,18 +530,21 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                         </div>
                         <div className="ml-3">
                           <h3 className="text-sm font-medium text-green-800">
-                            E-Mail-Bestätigung erforderlich
+                            Registrierungsanfrage erhalten
                           </h3>
                           <div className="mt-1 text-sm text-green-700">
                             <p>
-                              Vielen Dank! Falls für{' '}
+                              Falls für{' '}
                               <span className="font-medium">{email}</span>{' '}
-                              eine Bestätigung aussteht, erhalten Sie eine E-Mail.
+                              eine neue Bestätigung erforderlich ist, erhalten Sie
+                              eine E-Mail. Aus Sicherheitsgründen können wir hier
+                              nicht anzeigen, ob bereits ein Konto existiert.
                             </p>
                             <p className="mt-1">
-                              Bitte überprüfen Sie Ihr E-Mail-Postfach und
-                              klicken Sie auf den Bestätigungslink, um Ihre
-                              Registrierung abzuschließen.
+                              Bereits registriert oder keine E-Mail erhalten?
+                              Melden Sie sich an oder setzen Sie Ihr Passwort
+                              zurück. Bei einem bereits bestätigten Konto wird
+                              keine neue Bestätigungs-E-Mail versendet.
                             </p>
                             <p className="mt-1 text-xs text-green-600">
                               Falls Sie die E-Mail nicht erhalten haben,
