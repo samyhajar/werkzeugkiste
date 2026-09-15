@@ -20,10 +20,6 @@ export default function SetPasswordPage() {
   useEffect(() => {
     const checkInvitationTokens = async () => {
       try {
-        console.log('*** SET_PASSWORD PAGE LOADED *** FULL_URL:', window.location.href)
-        console.log('[SetPassword] URL hash:', window.location.hash)
-        console.log('[SetPassword] URL search:', window.location.search)
-
         // Check both hash and query parameters for tokens
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
         const queryParams = new URLSearchParams(window.location.search)
@@ -39,14 +35,6 @@ export default function SetPasswordPage() {
           refreshToken = refreshToken || queryParams.get('refresh_token')
           type = type || queryParams.get('type')
         }
-
-        console.log('[SetPassword] Parsed tokens:', {
-          type,
-          hasAccessToken: !!accessToken,
-          hasRefreshToken: !!refreshToken,
-          accessTokenLength: accessToken?.length || 0,
-          refreshTokenLength: refreshToken?.length || 0
-        })
 
         if (accessToken && refreshToken) {
           console.log('[SetPassword] Valid invitation tokens found')

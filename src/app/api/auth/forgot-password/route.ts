@@ -1,96 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server-client'
-
-export const dynamic = 'force-dynamic'
-
-interface ForgotPasswordRequest {
-  email: string
-}
+import {
+  registrationEmailSchema,
+  registrationError,
+} from '@/lib/auth/registration'
 
 export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => null)
+  const email = registrationEmailSchema.safeParse(body?.email)
+  if (!email.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+      },
+      { status: 400 }
+    )
+  }
   try {
-    console.log('[Forgot Password API] Starting forgot password process')
-
-    // Validate request body
-    let body: ForgotPasswordRequest
-    try {
-      body = (await request.json()) as ForgotPasswordRequest
-    } catch (parseError) {
-      console.error(
-        '[Forgot Password API] Failed to parse request body:',
-        parseError
-      )
-      return NextResponse.json(
-        { success: false, error: 'Invalid request body' },
-        { status: 400 }
-      )
-    }
-
-    if (!body.email) {
-      console.error('[Forgot Password API] Missing email')
-      return NextResponse.json(
-        { success: false, error: 'Email is required' },
-        { status: 400 }
-      )
-    }
-
-    // Validate email format
-    const emailRegex = /^\S+@\S+\.\S+$/
-    if (!emailRegex.test(body.email)) {
-      console.error('[Forgot Password API] Invalid email format')
-      return NextResponse.json(
-        { success: false, error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-
     const supabase = await createClient()
-
-    // Dynamically determine the base URL so we always send a correct redirect no matter where we are (local, preview, prod)
-    const reqUrl = new URL(request.url)
-    const baseUrl = `${reqUrl.protocol}//${reqUrl.host}`
-    // Use server callback to exchange ?code for a session, then forward tokens to the reset page
-    const redirectUrl = `${baseUrl}/auth/callback?type=recovery`
-
-    console.log(
-      '[Forgot Password API] Sending password reset email to:',
-      body.email
-    )
-    console.log('[Forgot Password API] Using redirect URL:', redirectUrl)
-    console.log(
-      '[Forgot Password API] Base URL from env:',
-      process.env.NEXT_PUBLIC_BASE_URL
-    )
-
-    // Send password reset email with redirect to our reset page
-    const { error } = await supabase.auth.resetPasswordForEmail(body.email, {
-      redirectTo: redirectUrl,
+    const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
+      redirectTo: new URL(
+        '/auth/callback?type=recovery',
+        request.url
+      ).toString(),
     })
-
-    if (error) {
-      console.error('[Forgot Password API] Supabase error:', error)
-
-      // Don't reveal if the email exists or not for security reasons
-      // Always return success to prevent email enumeration attacks
-      return NextResponse.json({
+    if (error && error.code !== 'user_not_found') {
+      const mapped = registrationError(error.code)
+      return NextResponse.json(
+        { success: false, error: mapped.message },
+        { status: mapped.status }
+      )
+    }
+    return NextResponse.json(
+      {
         success: true,
         message:
-          'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.',
-      })
-    }
-
-    console.log('[Forgot Password API] Password reset email sent successfully')
-
-    return NextResponse.json({
-      success: true,
-      message:
-        'Falls ein Konto mit dieser E-Mail-Adresse existiert, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet.',
-    })
-  } catch (error) {
-    console.error('[Forgot Password API] Unexpected error:', error)
+          'Falls ein Konto mit dieser E-Mail-Adresse existiert, erhalten Sie eine E-Mail zum Zurücksetzen des Passworts. Bitte prüfen Sie auch den Spam-Ordner.',
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
+  } catch {
     return NextResponse.json(
-      { success: false, error: 'Ein unerwarteter Fehler ist aufgetreten' },
-      { status: 500 }
+      { success: false, error: registrationError().message },
+      { status: 503 }
     )
   }
 }

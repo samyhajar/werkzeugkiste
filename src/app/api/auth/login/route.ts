@@ -22,10 +22,6 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     console.log('[Login API] Starting login process')
-    console.log(
-      '[Login API] Request headers:',
-      Object.fromEntries(request.headers.entries())
-    )
     console.log('[Login API] Request URL:', request.url)
 
     // Validate request body
@@ -54,14 +50,14 @@ export async function POST(request: NextRequest) {
 
     const { data: authData, error: signInError } =
       await supabase.auth.signInWithPassword({
-        email: body.email,
+        email: body.email.trim().toLowerCase(),
         password: body.password,
       })
 
     if (signInError || !authData.user) {
       console.error('[Login API] Login error:', signInError)
       return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
+        { success: false, error_code: signInError?.code, error: signInError?.code === 'email_not_confirmed' ? 'Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse. Sie können einen neuen Bestätigungslink anfordern.' : 'E-Mail-Adresse oder Passwort ist nicht korrekt. Falls Sie Ihr Passwort nicht mehr wissen, verwenden Sie „Passwort vergessen“.' },
         { status: 401 }
       )
     }

@@ -12,6 +12,7 @@ import { de } from 'date-fns/locale'
 interface UserProfile {
   id: string
   email: string | undefined
+  full_name?: string | null
   role: string
   created_at: string
   last_sign_in_at: string | null
@@ -148,8 +149,11 @@ export default function UsersPage() {
   }, [users, sortField, sortDirection])
 
   const filteredUsers = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase().replace(/\s+/g, ' ')
     return sortedUsers.filter(user => {
-      const matchesSearch = user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch = [user.email, user.full_name].some(value =>
+        (value || '').toLowerCase().replace(/\s+/g, ' ').includes(query)
+      )
       const matchesRole = roleFilter === 'all' || user.role === roleFilter
       return matchesSearch && matchesRole
     })
@@ -228,7 +232,8 @@ export default function UsersPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <input
             type="text"
-            placeholder="Search by email..."
+            placeholder="Nach Name oder E-Mail suchen …"
+            aria-label="Nach Name oder E-Mail suchen"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full h-12 px-4 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#486681]/20 focus:border-[#486681] bg-white"
@@ -335,7 +340,10 @@ export default function UsersPage() {
           <tbody className="divide-y divide-gray-200">
             {paginatedUsers.map(user => (
               <tr key={user.id} className="bg-white hover:bg-gray-100 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                <td className="px-6 py-4">
+                  {user.full_name && <div className="font-medium">{user.full_name}</div>}
+                  <div>{user.email}</div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: de })}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">

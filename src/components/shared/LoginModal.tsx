@@ -15,8 +15,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getBrowserClient } from '@/lib/supabase/browser-client'
 import { CheckCircle, X } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { forwardRef, useImperativeHandle, useState } from 'react'
+import ResendConfirmationForm from './ResendConfirmationForm'
 
 export interface LoginModalRef {
   show: (tab?: 'login' | 'signup', redirectUrl?: string) => void
@@ -181,22 +183,15 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
           success: boolean
           error?: string
           error_code?: string | null
+          confirmation_required?: boolean
         } = await response.json()
 
         if (data.success) {
-          console.log(
-            '[LoginModal] Signup successful, showing email confirmation toast...'
-          )
-
-          // Show email confirmation toast
+          if (data.confirmation_required === false) {
+            window.location.assign('/')
+            return
+          }
           setShowEmailToast(true)
-
-          // Hide toast after 5 seconds
-          setTimeout(() => {
-            setShowEmailToast(false)
-          }, 5000)
-
-          console.log('[LoginModal] Email confirmation toast shown')
         } else {
           const errorCode = data.error_code || ''
           const errorText = (data.error || '').toLowerCase()
@@ -539,10 +534,9 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                           </h3>
                           <div className="mt-1 text-sm text-green-700">
                             <p>
-                              Vielen Dank für Ihre Registrierung! Wir haben eine
-                              Bestätigungs-E-Mail an{' '}
+                              Vielen Dank! Falls für{' '}
                               <span className="font-medium">{email}</span>{' '}
-                              gesendet.
+                              eine Bestätigung aussteht, erhalten Sie eine E-Mail.
                             </p>
                             <p className="mt-1">
                               Bitte überprüfen Sie Ihr E-Mail-Postfach und
@@ -559,7 +553,8 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                     </div>
                   )}
 
-                  <form onSubmit={handleSignUp} className="space-y-6">
+                  {showEmailToast && <ResendConfirmationForm initialEmail={email} />}
+                  {!showEmailToast && <form onSubmit={handleSignUp} className="space-y-6">
                     <p className="text-sm text-gray-600">
                       Mit <span aria-hidden="true">*</span> markierte Felder sind
                       Pflichtfelder.
@@ -878,9 +873,10 @@ const LoginModal = forwardRef<LoginModalRef, LoginModalProps>(
                         </div>
                       )}
                     </Button>
-                  </form>
+                  </form>}
                 </TabsContent>
               </Tabs>
+              <p className="mt-4 text-sm text-gray-600">Bestätigungs-E-Mail fehlt? <Link href="/auth/confirm" className="underline" onClick={handleClose}>Neuen Link anfordern</Link></p>
             </div>
           </DialogContent>
         </Dialog>

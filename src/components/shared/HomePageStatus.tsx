@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import ResendConfirmationForm from './ResendConfirmationForm'
+import { CONFIRMATION_VALIDITY_TEXT } from '@/lib/auth/registration'
 
 export default function HomePageStatus() {
   const router = useRouter()
@@ -18,6 +20,8 @@ export default function HomePageStatus() {
 
     const isAuthLinkError =
       error === 'email_link_expired' ||
+      error === 'email_link_invalid' ||
+      error === 'email_link_session' ||
       ((error === 'session_error' || error === 'server_error') &&
         (normalizedErrorDescription.includes('code verifier') ||
           normalizedErrorDescription.includes('flow state') ||
@@ -25,9 +29,6 @@ export default function HomePageStatus() {
           normalizedErrorDescription.includes('otp') ||
           normalizedErrorDescription.includes('expired')))
 
-    const shouldHideAuthErrorBanner = normalizedErrorDescription.includes(
-      'both auth code and code verifier should be non-empty'
-    )
 
     return {
       code,
@@ -37,13 +38,19 @@ export default function HomePageStatus() {
       passwordResetStatus,
       logout,
       isAuthLinkError,
-      shouldHideAuthErrorBanner,
     }
   }, [searchParams])
 
   useEffect(() => {
+    const fragment = new URLSearchParams(window.location.hash.slice(1))
+    if (fragment.has('error') || fragment.has('error_code')) {
+      router.replace('/?error=email_link_invalid')
+      return
+    }
     if (status.code) {
-      router.replace(`/auth/callback?code=${encodeURIComponent(status.code)}`)
+      const params = new URLSearchParams({ code: status.code })
+      if (searchParams.get('type') === 'recovery') params.set('type', 'recovery')
+      router.replace(`/auth/callback?${params.toString()}`)
       return
     }
 
@@ -65,7 +72,10 @@ export default function HomePageStatus() {
 
   return (
     <>
-      {status.error && !status.shouldHideAuthErrorBanner && (
+      {searchParams.get('registration') === 'confirmed' && (
+        <section role="status" className="bg-green-50 p-4 text-green-800">Ihre E-Mail-Adresse wurde bestätigt. Sie können die Werkzeugkiste jetzt nutzen.</section>
+      )}
+      {status.error && (
         <section
           role="alert"
           className="w-full bg-red-50 border-l-4 border-red-400 p-4"
@@ -88,16 +98,19 @@ export default function HomePageStatus() {
               <div className="ml-3">
                 <h2 className="text-sm font-medium text-red-800">
                   {status.isAuthLinkError
-                    ? 'E-Mail-Link abgelaufen'
+                    ? 'E-Mail-Link nicht mehr verwendbar'
                     : 'Authentifizierungsfehler'}
                 </h2>
                 <div className="mt-2 text-sm text-red-700">
                   <p>
                     {status.isAuthLinkError
-                      ? 'Der E-Mail-Link ist abgelaufen oder ungültig. Bitte fordern Sie einen neuen Link an oder melden Sie sich direkt an.'
-                      : status.errorDescription ||
+                      ? (status.error === 'email_link_session'
+                        ? 'Ihre E-Mail wurde möglicherweise bereits bestätigt, aber die Anmeldung konnte in diesem Browser nicht abgeschlossen werden. Bitte melden Sie sich mit Ihrer E-Mail-Adresse und Ihrem Passwort an. Falls die Bestätigung noch aussteht, fordern Sie einen neuen Link an.'
+                        : `Der Link ist abgelaufen, bereits verwendet oder ungültig. ${CONFIRMATION_VALIDITY_TEXT} Falls Sie bereits bestätigt haben, können Sie sich direkt anmelden.`)
+                      :
                         'Es ist ein Fehler bei der Anmeldung aufgetreten. Versuchen Sie es erneut.'}
                   </p>
+                  {status.isAuthLinkError && <div className="mt-4 max-w-lg"><ResendConfirmationForm /></div>}
                 </div>
               </div>
             </div>

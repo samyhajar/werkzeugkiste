@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { Database } from '@/types/supabase'
+import { classifyConfirmationFailure } from '@/lib/auth/registration'
 
 type Profile = Database['public']['Tables']['profiles']['Row']
-
-function isAuthLinkStateError(message?: string | null): boolean {
-  const m = (message || '').toLowerCase()
-  return (
-    m.includes('code verifier') ||
-    m.includes('flow state') ||
-    m.includes('invalid flow') ||
-    m.includes('invalid grant') ||
-    m.includes('otp') ||
-    m.includes('expired')
-  )
-}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url)
@@ -23,31 +12,33 @@ export async function GET(request: NextRequest) {
   const errorCode = url.searchParams.get('error_code')
   const errorDescription = url.searchParams.get('error_description')
   const type = url.searchParams.get('type')
-
-  console.log('[Auth Callback] URL params:', {
-    code,
-    error,
-    errorCode,
-    errorDescription,
-    type,
-  })
+  const requestId = crypto.randomUUID()
 
   // Handle authentication errors
   if (error) {
+    const reason = classifyConfirmationFailure({
+      code: errorCode,
+      message: errorDescription,
+    })
     console.error('[Auth Callback] Authentication error:', {
-      error,
+      requestId,
+      route: '/auth/callback',
+      operation: 'providerRedirect',
+      errorName: error,
       errorCode,
-      errorDescription,
+      reason,
     })
     let redirectPath = '/'
 
-    if (
-      errorCode === 'otp_expired' ||
-      error === 'access_denied' ||
-      isAuthLinkStateError(errorDescription)
-    ) {
-      // For expired or invalid email links, redirect to login with a specific error
+    if (reason === 'expired') {
       redirectPath = '/?error=email_link_expired'
+    } else if (reason === 'pkce_state_error') {
+      redirectPath = '/?error=email_link_session'
+    } else if (
+      error === 'access_denied' ||
+      reason === 'already_used_or_invalid'
+    ) {
+      redirectPath = '/?error=email_link_invalid'
     } else {
       redirectPath = `/?error=${error}&error_description=${encodeURIComponent(errorDescription || 'Authentication failed')}`
     }
@@ -89,10 +80,21 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code)
 
   if (sessionError) {
-    console.error('[Auth Callback] Session exchange error:', sessionError)
+    const reason = classifyConfirmationFailure(sessionError)
+    console.error('[Auth Callback] Session exchange failed', {
+      requestId,
+      route: '/auth/callback',
+      operation: 'exchangeCodeForSession',
+      errorCode: sessionError.code || null,
+      errorName: sessionError.name || null,
+      reason,
+      status: sessionError.status || null,
+    })
 
-    if (isAuthLinkStateError(sessionError.message)) {
-      return NextResponse.redirect(new URL('/?error=email_link_expired', request.url))
+    if (reason === 'pkce_state_error') {
+      return NextResponse.redirect(
+        new URL('/?error=email_link_session', request.url)
+      )
     }
 
     return NextResponse.redirect(

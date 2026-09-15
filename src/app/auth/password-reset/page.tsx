@@ -25,14 +25,6 @@ export default function PasswordResetPage() {
   useEffect(() => {
     const checkResetTokens = async () => {
       try {
-        // Debug: Log the full URL
-        console.log(
-          '*** PASSWORD_RESET PAGE LOADED *** FULL_URL:',
-          window.location.href
-        )
-        console.log('[PasswordReset] URL hash:', window.location.hash)
-        console.log('[PasswordReset] URL search:', window.location.search)
-
         // Check both hash and query parameters for tokens or a PKCE/OTP code
         const hashParams = new URLSearchParams(
           window.location.hash.substring(1)
@@ -98,10 +90,13 @@ export default function PasswordResetPage() {
             hasCode: !!code,
           })
 
-          // More helpful error message
-          setError(
-            'Fehlende Authentifizierungs-Tokens. Bitte öffnen Sie den Link erneut oder fordern Sie einen neuen Reset-Link an.'
-          )
+          // The new explicit confirmation flow already established an SSR cookie session.
+          const { data: current, error: sessionError } = await supabase.auth.getUser()
+          if (current.user && !sessionError) {
+            setIsValidSession(true)
+          } else {
+            setError('Der Link ist abgelaufen oder wurde bereits verwendet. Links sind 24 Stunden gültig. Bitte fordern Sie einen neuen Passwort-Link an.')
+          }
         }
       } catch (error) {
         console.error('[PasswordReset] Error checking tokens:', error)

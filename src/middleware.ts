@@ -123,6 +123,7 @@ export async function middleware(request: NextRequest) {
     isAuthPage &&
     request.nextUrl.pathname !== '/auth/set-password' &&
     request.nextUrl.pathname !== '/auth/password-reset' &&
+    request.nextUrl.pathname !== '/auth/confirm' &&
     request.nextUrl.pathname !== '/auth/callback'
   ) {
     const url = request.nextUrl.clone()
